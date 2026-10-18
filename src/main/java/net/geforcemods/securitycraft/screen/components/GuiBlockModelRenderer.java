@@ -27,7 +27,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.client.RenderTypeHelper;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
 
 public class GuiBlockModelRenderer extends PictureInPictureRenderer<GuiBlockModelRenderState> {
 	private static final Quaternionf DEFAULT_ROTATION = ClientUtils.fromXYZDegrees(-15.0F, -135.0F, 0.0F).mul(Axis.XP.rotationDegrees(180.0F));
@@ -75,9 +75,7 @@ public class GuiBlockModelRenderer extends PictureInPictureRenderer<GuiBlockMode
 		if (state.getRenderShape() == RenderShape.MODEL) {
 			BlockRenderDispatcher blockRenderer = mc.getBlockRenderer();
 			BlockStateModel blockModel = blockRenderer.getBlockModel(state);
-			Function<ChunkSectionLayer, RenderType> toRenderType = RenderTypeHelper::getMovingBlockRenderType;
-
-			blockRenderer.getModelRenderer().tesselateWithoutAO(blockAndTintGetter, blockModel.collectParts(mc.level, BlockPos.ZERO, state, RandomSource.create(42L)), state, BlockPos.ZERO, pose, toRenderType.andThen(bufferSource::getBuffer), false, OverlayTexture.NO_OVERLAY);
+			blockRenderer.getModelRenderer().tesselateWithoutAO(blockAndTintGetter, blockModel.collectParts(RandomSource.create(42L)), state, BlockPos.ZERO, pose, bufferSource.getBuffer(ItemBlockRenderTypes.getMovingBlockRenderType(state)), false, OverlayTexture.NO_OVERLAY);
 		}
 	}
 }

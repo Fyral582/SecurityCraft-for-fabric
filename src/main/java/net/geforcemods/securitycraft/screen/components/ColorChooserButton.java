@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.screen.components;
 
+import net.geforcemods.securitycraft.platform.gui.ScreenLayers;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -26,9 +27,9 @@ public class ColorChooserButton extends Button.Plain {
 	@Override
 	public void onPress(InputWithModifiers input) {
 		if (colorChooser.disabled)
-			Minecraft.getInstance().pushGuiLayer(colorChooser);
+			ScreenLayers.pushGuiLayer(colorChooser);
 		else
-			Minecraft.getInstance().popGuiLayer();
+			ScreenLayers.popGuiLayer();
 
 		colorChooser.disabled = !colorChooser.disabled;
 	}

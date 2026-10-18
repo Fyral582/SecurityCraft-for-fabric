@@ -84,7 +84,7 @@ public class ReinforcedDoorBlock extends OwnableBlock {
 
 	@Override
 	public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
-		if (!level.isClientSide() && (player.isCreative() || !player.hasCorrectToolForDrops(state, level, pos)))
+		if (!level.isClientSide() && (player.isCreative() || !player.hasCorrectToolForDrops(state)))
 			DoublePlantBlock.preventDropFromBottomPart(level, pos, state, player);
 
 		return super.playerWillDestroy(level, pos, state, player);

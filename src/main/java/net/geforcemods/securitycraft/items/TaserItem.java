@@ -41,8 +41,8 @@ public class TaserItem extends Item {
 	}
 
 	@Override
-	public boolean shouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged) {
-		return slotChanged || oldStack.getItem() != newStack.getItem();
+	public boolean allowComponentsUpdateAnimation(Player player, InteractionHand hand, ItemStack oldStack, ItemStack newStack) {
+		return false; //only re-equip when the item changes, like NeoForge's shouldCauseReequipAnimation did
 	}
 
 	@Override

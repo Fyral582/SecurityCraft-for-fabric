@@ -25,7 +25,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.fml.ModList;
+import net.geforcemods.securitycraft.platform.SCPlatform;
 
 public final class WTHITClientDataProvider extends HudModHandler implements IWailaClientPlugin, IBlockComponentProvider, IEntityComponentProvider, IEventListener {
 	@Override
@@ -67,7 +67,7 @@ public final class WTHITClientDataProvider extends HudModHandler implements IWai
 		ItemStack disguisedAs = ((IOverlayDisplay) accessor.getBlock()).getDisplayStack(accessor.getWorld(), accessor.getBlockState(), accessor.getPosition());
 
 		if (disguisedAs != null)
-			tooltip.setLine(WailaConstants.MOD_NAME_TAG, Component.literal(ModList.get().getModContainerById(Utils.getRegistryName(disguisedAs.getItem()).getNamespace()).get().getModInfo().getDisplayName()).setStyle(MOD_NAME_STYLE));
+			tooltip.setLine(WailaConstants.MOD_NAME_TAG, Component.literal(SCPlatform.getModName(Utils.getRegistryName(disguisedAs.getItem()).getNamespace())).setStyle(MOD_NAME_STYLE));
 	}
 
 	@Override

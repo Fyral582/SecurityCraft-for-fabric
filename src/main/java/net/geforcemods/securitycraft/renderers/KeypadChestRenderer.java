@@ -64,14 +64,14 @@ public class KeypadChestRenderer extends ChestRenderer<ChestBlockEntity> {
 		if (state instanceof KeypadChestRenderState keypadChestRenderState) {
 			keypadChestRenderState.disguiseRenderState = ClientHandler.DISGUISED_BLOCK_RENDER_DELEGATE.tryExtractFromDelegate(be, partialTick, cameraPos, crumblingOverlay);
 			keypadChestRenderState.isDisguised = be instanceof IModuleInventory moduleInv && moduleInv.isModuleEnabled(ModuleType.DISGUISE);
-		}
 
-		if (isChristmas)
-			state.customMaterial = getMaterialForType(state.type, CHRISTMAS_LEFT, CHRISTMAS_RIGHT, CHRISTMAS);
-		else if (be.getOpenNess(0.0F) >= 0.9F)
-			state.customMaterial = getMaterialForType(state.type, LEFT_ACTIVE, RIGHT_ACTIVE, ACTIVE);
-		else
-			state.customMaterial = getMaterialForType(state.type, LEFT_INACTIVE, RIGHT_INACTIVE, INACTIVE);
+			if (isChristmas)
+				keypadChestRenderState.customMaterial = getMaterialForType(state.type, CHRISTMAS_LEFT, CHRISTMAS_RIGHT, CHRISTMAS);
+			else if (be.getOpenNess(0.0F) >= 0.9F)
+				keypadChestRenderState.customMaterial = getMaterialForType(state.type, LEFT_ACTIVE, RIGHT_ACTIVE, ACTIVE);
+			else
+				keypadChestRenderState.customMaterial = getMaterialForType(state.type, LEFT_INACTIVE, RIGHT_INACTIVE, INACTIVE);
+		}
 	}
 
 	private Material getMaterialForType(ChestType type, Material left, Material right, Material single) {

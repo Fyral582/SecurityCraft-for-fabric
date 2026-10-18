@@ -13,7 +13,7 @@ import net.minecraft.network.chat.MutableComponent;
  * Replacement for NeoForge's CommonHooks#newChatWithLinks: creates a component in which all URLs are clickable
  */
 public final class ChatLinks {
-	private static final Pattern URL_PATTERN = Pattern.compile("(?:https?://)?(?:[-\w_.]{2,}\.[a-z]{2,4})(?:/\S*)?", Pattern.CASE_INSENSITIVE);
+	private static final Pattern URL_PATTERN = Pattern.compile("(?:https?://)?(?:[-\\w_.]{2,}\\.[a-z]{2,4})(?:/\\S*)?", Pattern.CASE_INSENSITIVE);
 
 	private ChatLinks() {}
 

@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.screen;
 
+import net.geforcemods.securitycraft.platform.gui.ScreenLayers;
 import java.util.List;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -98,7 +99,7 @@ public class BlockPocketManagerScreen extends AbstractContainerScreen<BlockPocke
 		int colorChooserX = colorChooserButtonX + (hasStorageModule ? -145 : 20);
 		boolean enabled = be.isEnabled();
 		Button toggleButton, sizeButton;
-		Button.Builder manageStructureButtonBuilder = enabled ? Button.builder(Utils.localize("gui.securitycraft:blockPocketManager.disassemble"), b-> Minecraft.getInstance().pushGuiLayer(new BlockPocketManagerConfirmScreen(be))) : Button.builder(Utils.localize("gui.securitycraft:blockPocketManager.assemble"), this::assembleButtonClicked);
+		Button.Builder manageStructureButtonBuilder = enabled ? Button.builder(Utils.localize("gui.securitycraft:blockPocketManager.disassemble"), b-> ScreenLayers.pushGuiLayer(new BlockPocketManagerConfirmScreen(be))) : Button.builder(Utils.localize("gui.securitycraft:blockPocketManager.assemble"), this::assembleButtonClicked);
 
 		toggleButton = addRenderableWidget(Button.builder(Utils.localize("gui.securitycraft:blockPocketManager." + (!enabled ? "activate" : "deactivate")), this::toggleButtonClicked).pos(leftPos + guiWidth / 2 - widgetOffset, topPos + imageHeight / 2 + yOffset[0]).size(widgetWidth, 20).build());
 		sizeButton = addRenderableWidget(new ToggleComponentButton(leftPos + guiWidth / 2 - widgetOffset, topPos + imageHeight / 2 + yOffset[1], widgetWidth, 20, this::updateSizeButtonText, ArrayUtils.indexOf(allowedSizes, size), allowedSizes.length, this::sizeButtonClicked));

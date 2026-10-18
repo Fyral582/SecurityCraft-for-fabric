@@ -34,7 +34,7 @@ public class InventoryUtils {
 			return stackToInsert;
 
 		ItemStack slotStack = container.getItem(slot);
-		int limit = stackToInsert.getItem().getMaxStackSize(stackToInsert);
+		int limit = stackToInsert.getMaxStackSize();
 
 		if (slotStack.isEmpty()) {
 			container.set(slot, stackToInsert);
@@ -104,7 +104,7 @@ public class InventoryUtils {
 	public static int checkItemsInItemContainer(ItemStack itemContainer, ItemStack stackToMatch, int itemsLeftToFind, boolean exactStackCheck, boolean shouldRemoveItems, Consumer<ItemStack> handleRemovedItem) {
 		if (itemsLeftToFind > 0 && itemContainer != null && itemContainer.has(DataComponents.CONTAINER)) {
 			ItemContainerContents contents = itemContainer.get(DataComponents.CONTAINER);
-			NonNullList<ItemStack> containerItems = NonNullList.withSize(contents.getSlots(), ItemStack.EMPTY);
+			NonNullList<ItemStack> containerItems = NonNullList.withSize(contents.items.size(), ItemStack.EMPTY);
 
 			contents.copyInto(containerItems);
 			itemsLeftToFind = checkInventoryForItem(ItemAccess.forList(containerItems), stackToMatch, itemsLeftToFind, exactStackCheck, shouldRemoveItems, handleRemovedItem, containerItems::set);

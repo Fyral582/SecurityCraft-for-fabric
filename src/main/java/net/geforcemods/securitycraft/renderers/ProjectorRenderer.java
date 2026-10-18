@@ -85,12 +85,5 @@ public class ProjectorRenderer implements BlockEntityRenderer<ProjectorBlockEnti
 		return true; //Projected blocks should always render, regardless of distance
 	}
 
-	@Override
-	public AABB getRenderBoundingBox(ProjectorBlockEntity be) {
-		AABB projectorBoundingBox = new AABB(be.getBlockPos());
-
-		return be.isEmpty() ? projectorBoundingBox.inflate(1.0D) : be.getProjectedBlocksArea().move(be.getBlockPos()).minmax(projectorBoundingBox).inflate(1.0D);
-	}
-
 	public record ProjectionInfo(Vec3i positionalOffset, MovingBlockRenderState movingBlockRenderState) {}
 }

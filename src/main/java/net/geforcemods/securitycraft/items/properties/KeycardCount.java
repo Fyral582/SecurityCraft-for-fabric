@@ -16,7 +16,7 @@ public record KeycardCount() implements RangeSelectItemModelProperty {
 	@Override
 	public float get(ItemStack stack, ClientLevel level, ItemOwner entity, int seed) {
 		ItemContainerContents containerContents = stack.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY);
-		int size = containerContents.getSlots();
+		int size = containerContents.items.size();
 
 		if (size == 0)
 			return 0.0F;

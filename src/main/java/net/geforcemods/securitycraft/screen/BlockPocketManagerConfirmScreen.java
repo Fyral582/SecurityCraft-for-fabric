@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.screen;
 
+import net.geforcemods.securitycraft.platform.gui.ScreenLayers;
 import com.mojang.blaze3d.platform.InputConstants;
 
 import net.geforcemods.securitycraft.SecurityCraft;
@@ -36,7 +37,7 @@ public class BlockPocketManagerConfirmScreen extends Screen {
 		int buttonX = leftPos + 10;
 		int buttonY = topPos + 30;
 
-		addRenderableWidget(Button.builder(Component.translatable("gui.securitycraft:blockPocketManager.cancel"), b -> Minecraft.getInstance().popGuiLayer()).pos(buttonX, buttonY).size(98, 20).build());
+		addRenderableWidget(Button.builder(Component.translatable("gui.securitycraft:blockPocketManager.cancel"), b -> ScreenLayers.popGuiLayer()).pos(buttonX, buttonY).size(98, 20).build());
 		addRenderableWidget(Button.builder(Component.translatable("gui.securitycraft:blockPocketManager.confirm"), this::confirmDisassemblyButtonClicked).pos(buttonX + 106, buttonY).size(98, 20).build());
 	}
 

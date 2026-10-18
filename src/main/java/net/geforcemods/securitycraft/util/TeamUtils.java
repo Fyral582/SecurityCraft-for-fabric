@@ -7,7 +7,6 @@ import java.util.function.Supplier;
 import net.geforcemods.securitycraft.ClientHandler;
 import net.geforcemods.securitycraft.ConfigHandler;
 import net.geforcemods.securitycraft.api.Owner;
-import net.geforcemods.securitycraft.compat.ftbteams.FTBTeamsCompat;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.scores.PlayerTeam;
@@ -85,12 +84,7 @@ public class TeamUtils {
 	public record TeamRepresentation(String name, int color) {}
 
 	public enum TeamType {
-		FTB_TEAMS(() -> {
-			if (SCPlatform.isModLoaded("ftbteams"))
-				return new FTBTeamsCompat();
-			else
-				return null;
-		}),
+		FTB_TEAMS(() -> null), //FTB Teams is not available for Fabric on this Minecraft version
 		VANILLA(VanillaTeamHandler::new),
 		NO_OP(() -> null);
 

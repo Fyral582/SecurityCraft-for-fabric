@@ -539,7 +539,7 @@ public class SCEventHandler {
 	public static void onFurnaceFuelBurnTime(FuelValues.Builder builder) {
 		for (Item item : BuiltInRegistries.ITEM) {
 			if (item instanceof BlockItem blockItem && (blockItem.getBlock() instanceof ReinforcedCarpetBlock || blockItem.getBlock() == SCContent.ELECTRIFIED_IRON_FENCE_GATE.get()))
-				builder.remove(item);
+				builder.values.removeInt(item);
 		}
 	}
 

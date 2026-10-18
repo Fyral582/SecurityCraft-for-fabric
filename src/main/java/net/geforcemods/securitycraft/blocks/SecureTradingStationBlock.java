@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.blocks;
 
+import net.geforcemods.securitycraft.platform.menu.MenuOpening;
 import net.geforcemods.securitycraft.SCContent;
 import net.geforcemods.securitycraft.blockentities.SecureTradingStationBlockEntity;
 import net.geforcemods.securitycraft.util.BlockUtils;
@@ -66,7 +67,7 @@ public class SecureTradingStationBlock extends DisguisableBlock {
 				else if (be.isDenied(player))
 					PlayerUtils.sendMessageToPlayer(player, Utils.localize(getDescriptionId()), Utils.localize("messages.securitycraft:module.onDenylist"), ChatFormatting.RED);
 				else
-					serverPlayer.openMenu(be, pos);
+					MenuOpening.openMenu(serverPlayer, be, pos);
 			}
 
 			return InteractionResult.SUCCESS;

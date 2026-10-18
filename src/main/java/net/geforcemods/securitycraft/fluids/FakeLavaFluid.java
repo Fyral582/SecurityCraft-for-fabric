@@ -3,6 +3,7 @@ package net.geforcemods.securitycraft.fluids;
 import org.jetbrains.annotations.Nullable;
 
 import net.geforcemods.securitycraft.SCContent;
+import net.fabricmc.fabric.api.registry.FlammableBlockRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleOptions;
@@ -123,7 +124,7 @@ public abstract class FakeLavaFluid extends BaseFlowingFluid {
 
 		BlockState state = level.getBlockState(pos);
 
-		return state.ignitedByLava() && state.isFlammable(level, pos, face);
+		return state.ignitedByLava() && FlammableBlockRegistry.getDefaultInstance().get(state.getBlock()).getBurnChance() > 0;
 	}
 
 	@Nullable

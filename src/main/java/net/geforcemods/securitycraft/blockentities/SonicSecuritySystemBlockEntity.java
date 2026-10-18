@@ -455,7 +455,7 @@ public class SonicSecuritySystemBlockEntity extends DisguisableBlockEntity imple
 	protected void applyImplicitComponents(DataComponentGetter input) {
 		super.applyImplicitComponents(input);
 
-		GlobalPositions sssLinkedBlocks = input.get(SCContent.SSS_LINKED_BLOCKS);
+		GlobalPositions sssLinkedBlocks = input.get(SCContent.SSS_LINKED_BLOCKS.get());
 
 		if (sssLinkedBlocks != null)
 			linkedBlocks = new ArrayList<>(sssLinkedBlocks.positions()); //needs to be modifiable
@@ -463,7 +463,7 @@ public class SonicSecuritySystemBlockEntity extends DisguisableBlockEntity imple
 			linkedBlocks = new ArrayList<>();
 
 		linkedBlocks.removeIf(Objects::isNull);
-		recordedNotes = new ArrayList<>(input.getOrDefault(SCContent.NOTES, Notes.EMPTY).notes());
+		recordedNotes = new ArrayList<>(input.getOrDefault(SCContent.NOTES.get(), Notes.EMPTY).notes());
 	}
 
 	@Override
@@ -481,8 +481,8 @@ public class SonicSecuritySystemBlockEntity extends DisguisableBlockEntity imple
 		else if (linkedBlocksCount > MAX_LINKED_BLOCKS)
 			linkedBlocks = new ArrayList<>(linkedBlocks.subList(0, MAX_LINKED_BLOCKS));
 
-		builder.set(SCContent.SSS_LINKED_BLOCKS, new GlobalPositions(new ArrayList<>(linkedBlocks)));
-		builder.set(SCContent.NOTES, new Notes(new ArrayList<>(recordedNotes)));
+		builder.set(SCContent.SSS_LINKED_BLOCKS.get(), new GlobalPositions(new ArrayList<>(linkedBlocks)));
+		builder.set(SCContent.NOTES.get(), new Notes(new ArrayList<>(recordedNotes)));
 	}
 
 	@Override

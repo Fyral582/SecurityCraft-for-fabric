@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.geforcemods.securitycraft.SCEventHandler;
 import net.geforcemods.securitycraft.platform.event.EntityTeleportEvent;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.arguments.coordinates.LookAt;
+import net.minecraft.server.commands.LookAt;
 import net.minecraft.server.commands.TeleportCommand;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;

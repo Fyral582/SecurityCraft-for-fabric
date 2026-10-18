@@ -1,5 +1,5 @@
 plugins {
-	id 'fabric-loom' version '1.14.10'
+	id 'fabric-loom' version '1.17.21'
 	id 'idea'
 }
 
@@ -65,6 +65,16 @@ dependencies {
 	// Provides NeoForge's ModConfigSpec API on Fabric
 	modApi "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${project.fcap_version}"
 	include "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${project.fcap_version}"
+
+	// optional integrations, only used when the respective mod is installed
+	modCompileOnly "maven.modrinth:jei:vdRSQCTb"
+	modCompileOnly "maven.modrinth:jade:swJhAyak"
+	modCompileOnly "maven.modrinth:wthit:46pFaMf5"
+	modCompileOnly "maven.modrinth:badpackets:SZTlaMHp"
+	modCompileOnly "maven.modrinth:distanthorizons:oNqCUHFk"
+	modCompileOnly "maven.modrinth:sodium:RB7CDjTS"
+	modCompileOnly "maven.modrinth:betterf3:Qw1nhj7u"
+	modCompileOnly "maven.modrinth:cloth-config:xuX40TN5"
 }
 
 sourceSets.main.resources {

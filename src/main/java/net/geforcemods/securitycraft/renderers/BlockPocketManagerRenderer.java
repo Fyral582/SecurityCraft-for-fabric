@@ -76,9 +76,4 @@ public class BlockPocketManagerRenderer implements BlockEntityRenderer<BlockPock
 	public boolean shouldRenderOffScreen() {
 		return true;
 	}
-
-	@Override
-	public AABB getRenderBoundingBox(BlockPocketManagerBlockEntity be) {
-		return new AABB(be.getBlockPos()).inflate(RENDER_DISTANCE);
-	}
 }

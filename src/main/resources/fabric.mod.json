@@ -42,7 +42,8 @@
 			"net/minecraft/class_1792$class_1793": ["net/geforcemods/securitycraft/platform/ext/SCItemPropertiesExtension"],
 			"net/minecraft/class_3908": ["net/geforcemods/securitycraft/platform/ext/SCMenuProviderExtension"],
 			"net/minecraft/class_304": ["net/geforcemods/securitycraft/platform/ext/SCKeyMappingExtension"],
-			"net/minecraft/class_1922": ["net/geforcemods/securitycraft/platform/ext/SCBlockGetterExtension"]
+			"net/minecraft/class_1922": ["net/geforcemods/securitycraft/platform/ext/SCBlockGetterExtension"],
+			"net/minecraft/class_339": ["net/geforcemods/securitycraft/platform/ext/SCAbstractWidgetExtension"]
 		}
 	},
 	"depends": {

@@ -210,6 +210,7 @@ import java.util.function.Consumer;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.geforcemods.securitycraft.compat.ium.IumCompat;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientChunkEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.FriendlyByteBuf;
@@ -217,11 +218,9 @@ import net.minecraft.network.protocol.game.ClientboundLevelChunkPacketData;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.Heightmap;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.level.ChunkEvent;
 
 // Taken and modified from Immersive Portals
-// Modifications include simplifications, adaptation to NeoForge, MC version porting-related changes, and removals of code unused by SecurityCraft
+// Modifications include simplifications, adaptation to NeoForge (and later Fabric), MC version porting-related changes, and removals of code unused by SecurityCraft
 // https://github.com/iPortalTeam/ImmersivePortalsMod/blob/1.21/src/main/java/qouteall/imm_ptl/core/chunk_loading/ImmPtlClientChunkMap.java
 public class CameraClientChunkCacheExtension {
 	private static final Long2ObjectOpenHashMap<LevelChunk> CHUNK_MAP = new Long2ObjectOpenHashMap<>();
@@ -236,7 +235,7 @@ public class CameraClientChunkCacheExtension {
 
 			if (chunk != null) {
 				modifyChunkMaps(map -> map.remove(chunkPosLong));
-				NeoForge.EVENT_BUS.post(new ChunkEvent.Unload(chunk));
+				ClientChunkEvents.CHUNK_UNLOAD.invoker().onChunkUnload(level, chunk);
 				level.unload(chunk);
 				IumCompat.get().onChunkStatusRemoved(level, chunkPos.x, chunkPos.z);
 			}
@@ -273,7 +272,7 @@ public class CameraClientChunkCacheExtension {
 
 		level.onChunkLoaded(chunkPos);
 		IumCompat.get().onChunkStatusAdded(level, x, z);
-		NeoForge.EVENT_BUS.post(new ChunkEvent.Load(chunk, false));
+		ClientChunkEvents.CHUNK_LOAD.invoker().onChunkLoad(level, chunk);
 		return chunk;
 	}
 

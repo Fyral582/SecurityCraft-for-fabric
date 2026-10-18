@@ -85,7 +85,7 @@ public class ReinforcedPistonHeadRenderer implements BlockEntityRenderer<Reinfor
 	}
 
 	@Override
-	public AABB getRenderBoundingBox(ReinforcedPistonMovingBlockEntity be) {
-		return AABB.INFINITE;
+	public boolean shouldRenderOffScreen() {
+		return true; //replaces NeoForge's getRenderBoundingBox
 	}
 }

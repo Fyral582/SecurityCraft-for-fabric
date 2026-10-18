@@ -1,6 +1,6 @@
 package net.geforcemods.securitycraft.screen.components;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import org.joml.Matrix3x2f;
 

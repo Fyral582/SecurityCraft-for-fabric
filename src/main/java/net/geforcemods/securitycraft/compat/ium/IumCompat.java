@@ -27,9 +27,7 @@ public class IumCompat {
 	}
 
 	private static IumMod getInstalledIumMod() {
-		if (SCPlatform.isModLoaded("embeddium"))
-			return new Embeddium();
-		else if (SCPlatform.isModLoaded("sodium"))
+		if (SCPlatform.isModLoaded("sodium"))
 			return new Sodium();
 		else
 			return NONE;

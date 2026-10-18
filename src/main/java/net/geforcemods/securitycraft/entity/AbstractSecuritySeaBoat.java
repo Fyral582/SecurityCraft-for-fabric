@@ -66,8 +66,6 @@ import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.common.NeoForgeMod;
-import net.neoforged.neoforge.fluids.FluidType;
 import net.geforcemods.securitycraft.platform.network.PacketDistributor;
 
 public abstract class AbstractSecuritySeaBoat extends AbstractChestBoat implements IOwnable, IPasscodeProtected, IModuleInventory, ICustomizable {
@@ -235,16 +233,6 @@ public abstract class AbstractSecuritySeaBoat extends AbstractChestBoat implemen
 	@Override
 	public void openSetPasscodeScreen(ServerPlayer player, BlockPos pos) {
 		PacketDistributor.sendToPlayer(player, new OpenScreen(DataType.SET_PASSCODE_FOR_ENTITY, getId()));
-	}
-
-	@Override
-	public boolean canBoatInFluid(FluidState state) {
-		return super.canBoatInFluid(state) || state.is(Fluids.LAVA);
-	}
-
-	@Override
-	public boolean canBoatInFluid(FluidType type) {
-		return super.canBoatInFluid(type) || type == NeoForgeMod.LAVA_TYPE;
 	}
 
 	@Override

@@ -41,7 +41,9 @@
 		"teleport.SpreadPlayersCommandMixin",
 		"teleport.TeleportCommandMixin",
 		"teleport.TeleportRandomlyConsumeEffectMixin",
-		"teleport.ThrownEnderpearlMixin"
+		"teleport.ThrownEnderpearlMixin",
+		"AbstractBoatMixin",
+		"ResultSlotMixin"
 	],
 	"client": [
 		"KeyMappingExtensionImplMixin",
@@ -50,7 +52,12 @@
 		"client.MultiPlayerGameModeMixin",
 		"client.MinecraftInputMixin",
 		"client.GameRendererHandMixin",
-		"client.ScreenshotMixin"
+		"client.ScreenshotMixin",
+		"client.ChestRendererMixin",
+		"client.ScreenLayersMinecraftMixin",
+		"client.ScreenLayersGameRendererMixin",
+		"client.AbstractWidgetMixin",
+		"client.AbstractButtonMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

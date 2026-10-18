@@ -84,9 +84,4 @@ public class TrophySystemRenderer implements BlockEntityRenderer<TrophySystemBlo
 	public boolean shouldRenderOffScreen() {
 		return true;
 	}
-
-	@Override
-	public AABB getRenderBoundingBox(TrophySystemBlockEntity be) {
-		return new AABB(be.getBlockPos()).inflate(RENDER_DISTANCE);
-	}
 }

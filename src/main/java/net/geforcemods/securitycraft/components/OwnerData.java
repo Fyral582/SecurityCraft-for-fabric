@@ -34,7 +34,7 @@ public record OwnerData(String name, String uuid) implements TooltipProvider {
 	//@formatter:on
 	@Override
 	public void addToTooltip(TooltipContext ctx, Consumer<Component> lineAdder, TooltipFlag flag, DataComponentGetter componentGetter) {
-		KeycardData keycardData = componentGetter.get(SCContent.KEYCARD_DATA);
+		KeycardData keycardData = componentGetter.get(SCContent.KEYCARD_DATA.get());
 
 		if (keycardData != null)
 			lineAdder.accept(Component.translatable("tooltip.securitycraft:keycard.reader_owner", name).setStyle(Utils.GRAY_STYLE));

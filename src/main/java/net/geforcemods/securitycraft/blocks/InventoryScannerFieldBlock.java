@@ -6,7 +6,6 @@ import java.util.List;
 import net.geforcemods.securitycraft.SCContent;
 import net.geforcemods.securitycraft.api.OwnableBlockEntity;
 import net.geforcemods.securitycraft.blockentities.InventoryScannerBlockEntity;
-import net.geforcemods.securitycraft.compat.curios.CuriosCompat;
 import net.geforcemods.securitycraft.misc.ModuleType;
 import net.geforcemods.securitycraft.util.BlockUtils;
 import net.geforcemods.securitycraft.util.InventoryUtils;
@@ -107,19 +106,13 @@ public class InventoryScannerFieldBlock extends OwnableBlock implements SimpleWa
 
 				foundItem = checkInventory(ItemAccess.forContainer(player.getInventory()), be, allowInteraction);
 
-				if (SCPlatform.isModLoaded("curios") && CuriosCompat.hasCuriosInventory(player)) {
-					for (ItemAccess itemAccess : CuriosCompat.getCuriosItemAccess(player)) {
-						foundItem |= checkInventory(itemAccess, be, allowInteraction);
-					}
-				}
-
 				return foundItem;
 			}
 
 			foundItem = checkInventory(ItemAccess.forEntityEquipment(living), be, allowInteraction);
 
 			if (living instanceof AbstractChestedHorse horse)
-				foundItem |= checkInventory(ItemAccess.forContainer(horse.getInventory()), be, allowInteraction);
+				foundItem |= checkInventory(ItemAccess.forContainer(horse.inventory), be, allowInteraction);
 
 			return foundItem;
 		}

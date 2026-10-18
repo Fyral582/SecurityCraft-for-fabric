@@ -1,6 +1,6 @@
 package net.geforcemods.securitycraft.blocks.reinforced;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import net.geforcemods.securitycraft.SCContent;
 import net.geforcemods.securitycraft.blocks.OwnableBlock;

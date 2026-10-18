@@ -126,7 +126,7 @@ public class StateSelector extends Screen implements GuiEventListener, Narratabl
 		super.render(guiGraphics, mouseX, mouseY, partialTick);
 		previousPageButton.render(guiGraphics, mouseX, mouseY, partialTick);
 		nextPageButton.render(guiGraphics, mouseX, mouseY, partialTick);
-		guiGraphics.submitPictureInPictureRenderState(new GuiBlockModelRenderState(state, be, beRenderer, fullbrightBlockAndTintGetter, dragRotation, x, y, x + wh, y + wh, 1.0F, guiGraphics.peekScissorStack()));
+		guiGraphics.guiRenderState.submitPicturesInPictureState(new GuiBlockModelRenderState(state, be, beRenderer, fullbrightBlockAndTintGetter, dragRotation, x, y, x + wh, y + wh, 1.0F, guiGraphics.scissorStack.peek()));
 
 		for (int i = 0; i < propertyButtons.size(); i++) {
 			String propertyName = propertyButtons.get(i).getProperty().getName();

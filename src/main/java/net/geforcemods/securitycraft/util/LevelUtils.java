@@ -9,6 +9,10 @@ import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.level.Level;
+import net.minecraft.server.level.FullChunkStatus;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.chunk.LevelChunk;
+import org.jetbrains.annotations.Nullable;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -21,6 +25,40 @@ public class LevelUtils {
 	/**
 	 * Correctly schedules a task for execution on the main thread depending on if the provided level is client- or serverside
 	 */
+	/**
+	 * Replacement for NeoForge's Level#markAndNotifyBlock, which contains the update logic of Level#setBlock after the block
+	 * has been changed in the chunk
+	 */
+	public static void markAndNotifyBlock(Level level, BlockPos pos, @Nullable LevelChunk chunk, BlockState oldState, BlockState newState, int flags, int recursionLeft) {
+		Block block = newState.getBlock();
+		BlockState currentState = level.getBlockState(pos);
+
+		if (currentState == newState) {
+			if (oldState != currentState)
+				level.setBlocksDirty(pos, oldState, currentState);
+
+			if ((flags & 2) != 0 && (!level.isClientSide() || (flags & 4) == 0) && (level.isClientSide() || chunk == null || chunk.getFullStatus() != null && chunk.getFullStatus().isOrAfter(FullChunkStatus.BLOCK_TICKING)))
+				level.sendBlockUpdated(pos, oldState, newState, flags);
+
+			if ((flags & 1) != 0) {
+				level.updateNeighborsAt(pos, oldState.getBlock());
+
+				if (!level.isClientSide() && newState.hasAnalogOutputSignal())
+					level.updateNeighbourForOutputSignal(pos, block);
+			}
+
+			if ((flags & 16) == 0 && recursionLeft > 0) {
+				int i = flags & -34;
+
+				oldState.updateIndirectNeighbourShapes(level, pos, i, recursionLeft - 1);
+				newState.updateNeighbourShapes(level, pos, i, recursionLeft - 1);
+				newState.updateIndirectNeighbourShapes(level, pos, i, recursionLeft - 1);
+			}
+
+			level.updatePOIOnBlockStateChange(pos, oldState, currentState);
+		}
+	}
+
 	public static void addScheduledTask(LevelAccessor level, Runnable runnable) {
 		if (level.isClientSide())
 			Minecraft.getInstance().execute(runnable);

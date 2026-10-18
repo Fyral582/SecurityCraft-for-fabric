@@ -45,7 +45,6 @@ import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.level.redstone.ExperimentalRedstoneUtils;
 import net.minecraft.world.level.redstone.Orientation;
-import net.neoforged.neoforge.event.EventHooks;
 
 public class ReinforcedPistonBaseBlock extends PistonBaseBlock implements IReinforcedBlock, EntityBlock {
 	private final float destroyTimeForOwner;
@@ -138,7 +137,7 @@ public class ReinforcedPistonBaseBlock extends PistonBaseBlock implements IReinf
 		}
 
 		if (id == 0) {
-			if (EventHooks.onPistonMovePre(level, pos, direction, true))
+			if (false)
 				return false;
 
 			if (!moveBlocks(level, pos, direction, true))
@@ -149,7 +148,7 @@ public class ReinforcedPistonBaseBlock extends PistonBaseBlock implements IReinf
 			level.gameEvent(GameEvent.BLOCK_ACTIVATE, pos, GameEvent.Context.of(extendedState));
 		}
 		else if (id == 1 || id == 2) {
-			if (EventHooks.onPistonMovePre(level, pos, direction, false))
+			if (false)
 				return false;
 
 			if (level.getBlockEntity(pos.relative(direction)) instanceof ReinforcedPistonMovingBlockEntity pistonBe)
@@ -187,7 +186,6 @@ public class ReinforcedPistonBaseBlock extends PistonBaseBlock implements IReinf
 			level.gameEvent(GameEvent.BLOCK_DEACTIVATE, pos, GameEvent.Context.of(movingPiston));
 		}
 
-		EventHooks.onPistonMovePost(level, pos, direction, id == 0);
 		return true;
 	}
 

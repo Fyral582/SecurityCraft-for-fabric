@@ -1,6 +1,6 @@
 package net.geforcemods.securitycraft.blocks.reinforced;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;

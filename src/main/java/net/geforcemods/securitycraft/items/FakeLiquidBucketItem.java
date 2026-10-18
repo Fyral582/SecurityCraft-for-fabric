@@ -24,7 +24,7 @@ public class FakeLiquidBucketItem extends BucketItem {
 				BlockPos dispenseAt = source.pos().relative(source.state().getValue(DispenserBlock.FACING));
 				Level level = source.level();
 
-				if (bucket.emptyContents(null, level, dispenseAt, null, stack)) {
+				if (bucket.emptyContents(null, level, dispenseAt, null)) {
 					bucket.checkExtraContent(null, level, stack, dispenseAt);
 					return consumeWithRemainder(source, stack, new ItemStack(Items.BUCKET));
 				}

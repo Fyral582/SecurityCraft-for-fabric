@@ -96,7 +96,7 @@ public class DeferredRegister<T> {
 
 		registered = true;
 
-		if (registryKey == ENTITY_DATA_SERIALIZERS) {
+		if ((Object) registryKey == ENTITY_DATA_SERIALIZERS) {
 			for (Map.Entry<DeferredHolder<T, ? extends T>, Supplier<? extends T>> entry : entries.entrySet()) {
 				T value = entry.getValue().get();
 

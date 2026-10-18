@@ -24,20 +24,26 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.WoodType;
+import net.minecraft.world.level.block.state.properties.BlockSetType;
+import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.redstone.Orientation;
 
 public class OwnableFenceGateBlock extends FenceGateBlock implements EntityBlock {
 	private final float destroyTimeForOwner;
+	protected final SoundEvent openSound;
+	protected final SoundEvent closeSound;
 
 	public OwnableFenceGateBlock(BlockBehaviour.Properties properties, WoodType woodType) {
 		super(woodType, OwnableBlock.withReinforcedDestroyTime(properties));
 		destroyTimeForOwner = OwnableBlock.getStoredDestroyTime();
+		openSound = woodType.fenceGateOpen();
+		closeSound = woodType.fenceGateClose();
 	}
 
 	public OwnableFenceGateBlock(BlockBehaviour.Properties properties, SoundEvent openSound, SoundEvent closeSound) {
-		super(OwnableBlock.withReinforcedDestroyTime(properties), openSound, closeSound);
-		destroyTimeForOwner = OwnableBlock.getStoredDestroyTime();
+		//vanilla fence gates get their sounds from their wood type, so a wood type with the given sounds is created
+		this(properties, new WoodType("securitycraft_custom_fence_gate", BlockSetType.IRON, SoundType.METAL, SoundType.METAL, closeSound, openSound));
 	}
 
 	@Override

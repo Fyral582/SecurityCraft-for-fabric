@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.screen;
 
+import net.geforcemods.securitycraft.platform.gui.ScreenLayers;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -83,7 +84,7 @@ public class AlarmScreen extends Screen implements StillValid {
 		searchBar.setHint(searchText);
 		searchBar.setFilter(s -> s.matches("[a-zA-Z0-9\\._]*"));
 		searchBar.setResponder(soundList::updateFilteredEntries);
-		addRenderableWidget(Button.builder(Utils.localize("menu.options"), b -> Minecraft.getInstance().pushGuiLayer(new AlarmOptionsScreen(this))).pos(leftPos + imageWidth / 2 - 170 / 2, topPos + 215).size(170, 20).build());
+		addRenderableWidget(Button.builder(Utils.localize("menu.options"), b -> ScreenLayers.pushGuiLayer(new AlarmOptionsScreen(this))).pos(leftPos + imageWidth / 2 - 170 / 2, topPos + 215).size(170, 20).build());
 	}
 
 	@Override

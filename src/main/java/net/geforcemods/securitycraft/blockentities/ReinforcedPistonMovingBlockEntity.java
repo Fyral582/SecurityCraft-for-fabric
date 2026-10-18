@@ -4,6 +4,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import net.geforcemods.securitycraft.SCContent;
+import net.geforcemods.securitycraft.util.LevelUtils;
 import net.geforcemods.securitycraft.SecurityCraft;
 import net.geforcemods.securitycraft.api.IModuleInventory;
 import net.geforcemods.securitycraft.api.IOwnable;
@@ -325,7 +326,7 @@ public class ReinforcedPistonMovingBlockEntity extends BlockEntity implements IO
 					}
 				}
 
-				level.markAndNotifyBlock(worldPosition, level.getChunkAt(worldPosition), pushedState, level.getBlockState(worldPosition), 3, 512);
+				LevelUtils.markAndNotifyBlock(level, worldPosition, level.getChunkAt(worldPosition), pushedState, level.getBlockState(worldPosition), 3, 512);
 				level.neighborChanged(worldPosition, pushedState.getBlock(), ExperimentalRedstoneUtils.initialOrientation(level, getPushDirection(), null));
 			}
 		}
@@ -385,7 +386,7 @@ public class ReinforcedPistonMovingBlockEntity extends BlockEntity implements IO
 							}
 						}
 
-						level.markAndNotifyBlock(pos, level.getChunkAt(pos), pushedState, level.getBlockState(pos), 67, 512);
+						LevelUtils.markAndNotifyBlock(level, pos, level.getChunkAt(pos), pushedState, level.getBlockState(pos), 67, 512);
 						level.neighborChanged(pos, pushedState.getBlock(), ExperimentalRedstoneUtils.initialOrientation(level, be.getPushDirection(), null));
 					}
 				}

@@ -26,8 +26,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ResolvableProfile;
-import net.neoforged.fml.LogicalSide;
-import net.neoforged.fml.util.thread.EffectiveSide;
 import net.geforcemods.securitycraft.platform.SCPlatform;
 
 public class PlayerUtils {
@@ -39,7 +37,7 @@ public class PlayerUtils {
 	public static <T extends Player> T getPlayerFromName(String name) {
 		List<T> players = null;
 
-		if (EffectiveSide.get() == LogicalSide.CLIENT)
+		if (SCPlatform.isLogicalClient())
 			players = (List<T>) Minecraft.getInstance().level.players();
 		else
 			players = (List<T>) SCPlatform.getCurrentServer().getPlayerList().getPlayers();
@@ -58,7 +56,7 @@ public class PlayerUtils {
 	 * Returns true if a player with the given name is in the world.
 	 */
 	public static boolean isPlayerOnline(String name) {
-		if (EffectiveSide.get() == LogicalSide.CLIENT) {
+		if (SCPlatform.isLogicalClient()) {
 			for (AbstractClientPlayer player : Minecraft.getInstance().level.players()) {
 				if (player != null && player.getName().getString().equals(name))
 					return true;
