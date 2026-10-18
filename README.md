@@ -1,6 +1,4 @@
-[![](http://cf.way2muchnoise.eu/full_security-craft_downloads.svg)](https://www.curseforge.com/minecraft/mc-mods/security-craft) [![](http://cf.way2muchnoise.eu/versions/For%20MC_security-craft_all.svg)](https://www.curseforge.com/minecraft/mc-mods/security-craft/files/all)
-
 SecurityCraft for Fabric
 =============
 
-Source code for the Minecraft mod "SecurityCraft for fabric".
+Source code for the Minecraft mod "SecurityCraft for fabric". This is an unofficial SecurityCraft Mod.
