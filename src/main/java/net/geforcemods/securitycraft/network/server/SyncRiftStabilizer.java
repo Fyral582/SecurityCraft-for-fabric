@@ -11,7 +11,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.network.codec.NeoForgeStreamCodecs;
+import net.geforcemods.securitycraft.platform.network.ExtraStreamCodecs;
 import net.geforcemods.securitycraft.platform.network.IPayloadContext;
 
 public record SyncRiftStabilizer(BlockPos pos, TeleportationType teleportationType, boolean allowed) implements CustomPacketPayload {
@@ -20,7 +20,7 @@ public record SyncRiftStabilizer(BlockPos pos, TeleportationType teleportationTy
 	//@formatter:off
 	public static final StreamCodec<RegistryFriendlyByteBuf, SyncRiftStabilizer> STREAM_CODEC = StreamCodec.composite(
 			BlockPos.STREAM_CODEC, SyncRiftStabilizer::pos,
-			NeoForgeStreamCodecs.enumCodec(TeleportationType.class), SyncRiftStabilizer::teleportationType,
+			ExtraStreamCodecs.enumCodec(TeleportationType.class), SyncRiftStabilizer::teleportationType,
 			ByteBufCodecs.BOOL, SyncRiftStabilizer::allowed,
 			SyncRiftStabilizer::new);
 	//@formatter:on

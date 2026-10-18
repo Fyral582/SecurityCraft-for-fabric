@@ -66,7 +66,7 @@ import net.minecraft.world.item.crafting.display.SlotDisplay;
 import net.minecraft.world.item.crafting.display.SlotDisplay.Empty;
 import net.minecraft.world.item.crafting.display.SlotDisplayContext;
 import net.minecraft.world.level.block.Block;
-import net.neoforged.neoforge.client.gui.widget.ScrollPanel;
+import net.geforcemods.securitycraft.platform.gui.ScrollPanel;
 
 public class SCManualScreen extends Screen implements StillValid {
 	private static final Identifier PAGE = SecurityCraft.resLoc("textures/gui/info_book_texture.png");

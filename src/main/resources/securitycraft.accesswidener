@@ -89,3 +89,9 @@ accessible method net/minecraft/client/renderer/blockentity/PistonHeadRenderer c
 accessible field net/minecraft/client/renderer/LevelRenderer levelRenderState Lnet/minecraft/client/renderer/state/LevelRenderState;
 accessible method net/minecraft/world/level/material/LavaFluid isFastLava (Lnet/minecraft/world/level/LevelReader;)Z
 accessible field net/minecraft/world/entity/vehicle/minecart/MinecartBehavior minecart Lnet/minecraft/world/entity/vehicle/minecart/AbstractMinecart;
+accessible field net/minecraft/world/entity/ai/village/poi/PoiTypes TYPE_BY_STATE Ljava/util/Map;
+accessible field net/minecraft/world/entity/ai/village/poi/PoiType matchingStates Ljava/util/Set;
+mutable field net/minecraft/world/entity/ai/village/poi/PoiType matchingStates Ljava/util/Set;
+accessible field net/minecraft/world/level/lighting/LightEngine chunkSource Lnet/minecraft/world/level/chunk/LightChunkGetter;
+accessible field net/minecraft/world/level/portal/PortalShape FRAME Lnet/minecraft/world/level/block/state/BlockBehaviour$StatePredicate;
+mutable field net/minecraft/world/level/portal/PortalShape FRAME Lnet/minecraft/world/level/block/state/BlockBehaviour$StatePredicate;

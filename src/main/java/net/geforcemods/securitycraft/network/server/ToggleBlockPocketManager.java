@@ -18,7 +18,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.network.codec.NeoForgeStreamCodecs;
+import net.geforcemods.securitycraft.platform.network.ExtraStreamCodecs;
 import net.geforcemods.securitycraft.platform.network.IPayloadContext;
 
 public record ToggleBlockPocketManager(BlockPos pos, int size, Action action) implements CustomPacketPayload {
@@ -27,7 +27,7 @@ public record ToggleBlockPocketManager(BlockPos pos, int size, Action action) im
 	public static final StreamCodec<RegistryFriendlyByteBuf, ToggleBlockPocketManager> STREAM_CODEC = StreamCodec.composite(
 			BlockPos.STREAM_CODEC, ToggleBlockPocketManager::pos,
 			ByteBufCodecs.VAR_INT, ToggleBlockPocketManager::size,
-			NeoForgeStreamCodecs.enumCodec(Action.class), ToggleBlockPocketManager::action,
+			ExtraStreamCodecs.enumCodec(Action.class), ToggleBlockPocketManager::action,
 			ToggleBlockPocketManager::new);
 	//@formatter:on
 

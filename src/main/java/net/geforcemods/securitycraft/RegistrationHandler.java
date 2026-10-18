@@ -71,6 +71,7 @@ import net.geforcemods.securitycraft.util.RegisterItemBlock;
 import net.geforcemods.securitycraft.util.Reinforced;
 import net.geforcemods.securitycraft.util.SCItemGroup;
 import net.geforcemods.securitycraft.util.Utils;
+import net.geforcemods.securitycraft.platform.network.IPayloadContext;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
@@ -91,29 +92,35 @@ import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.block.Block;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import net.neoforged.neoforge.common.crafting.CompoundIngredient;
-import net.neoforged.neoforge.common.crafting.DataComponentIngredient;
-import net.neoforged.neoforge.common.world.poi.ExtendPoiTypesEvent;
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
-import net.neoforged.neoforge.event.brewing.RegisterBrewingRecipesEvent;
-import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
-import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import net.geforcemods.securitycraft.platform.registry.DeferredBlock;
-import net.neoforged.neoforge.registries.RegisterEvent;
-import net.neoforged.neoforge.transfer.fluid.BucketResourceHandler;
+import net.geforcemods.securitycraft.platform.SCBrewingRecipes;
+import net.geforcemods.securitycraft.platform.menu.MenuDataPayload;
+import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroupEntries;
+import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
+import net.fabricmc.fabric.api.transfer.v1.fluid.base.FullItemFluidStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.world.entity.ai.village.poi.PoiType;
+import net.minecraft.world.level.block.state.BlockState;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.function.BiConsumer;
 
-@EventBusSubscriber(modid = SecurityCraft.MODID)
 public class RegistrationHandler {
 	private RegistrationHandler() {}
 
-	@SubscribeEvent
-	public static void onRegister(RegisterEvent event) {
-		event.register(Registries.ITEM, helper -> {
+	public static void registerBlockItems() {
+		{
 			//register item blocks from annotated fields
 			for (Field field : SCContent.class.getFields()) {
 				try {
@@ -123,7 +130,7 @@ public class RegistrationHandler {
 						Block block = deferredBlock.get();
 						Item blockItem = new BlockItem(block, SCContent.setId(deferredBlock.getKey().identifier().getPath(), new Item.Properties().fireResistant(), true));
 
-						helper.register(Utils.getRegistryName(block), blockItem);
+						Registry.register(BuiltInRegistries.ITEM, Utils.getRegistryName(block), blockItem);
 
 						if (group != SCItemGroup.MANUAL)
 							SCCreativeModeTabs.STACKS_FOR_ITEM_GROUPS.get(group).add(new ItemStack(blockItem));
@@ -134,7 +141,7 @@ public class RegistrationHandler {
 						Block block = deferredBlock.get();
 						Item blockItem = new BlockItem(block, SCContent.setId(deferredBlock.getKey().identifier().getPath(), new Item.Properties(), true));
 
-						helper.register(Utils.getRegistryName(block), blockItem);
+						Registry.register(BuiltInRegistries.ITEM, Utils.getRegistryName(block), blockItem);
 
 						if (group != SCItemGroup.MANUAL)
 							SCCreativeModeTabs.STACKS_FOR_ITEM_GROUPS.get(group).add(new ItemStack(blockItem));
@@ -144,33 +151,54 @@ public class RegistrationHandler {
 					e.printStackTrace();
 				}
 			}
-		});
-
-		event.register(Registries.SOUND_EVENT, helper -> {
-			for (int i = 0; i < SCSounds.values().length; i++) {
-				SCSounds sound = SCSounds.values()[i];
-
-				helper.register(sound.location, sound.event);
-			}
-		});
+		}
 	}
 
-	@SubscribeEvent
-	public static void onEntityAttributeCreation(EntityAttributeCreationEvent event) {
-		event.put(SCContent.SENTRY_ENTITY.get(), Mob.createMobAttributes().build());
+	public static void registerSounds() {
+		for (int i = 0; i < SCSounds.values().length; i++) {
+			SCSounds sound = SCSounds.values()[i];
+
+			Registry.register(BuiltInRegistries.SOUND_EVENT, sound.location, sound.event);
+		}
 	}
 
-	@SubscribeEvent
-	public static void onExtendPoiTypes(ExtendPoiTypesEvent event) {
-		event.addBlockToPoi(PoiTypes.LIGHTNING_ROD, SCContent.REINFORCED_LIGHTNING_ROD.get());
-		event.addBlockToPoi(PoiTypes.LIGHTNING_ROD, SCContent.REINFORCED_EXPOSED_LIGHTNING_ROD.get());
-		event.addBlockToPoi(PoiTypes.LIGHTNING_ROD, SCContent.REINFORCED_WEATHERED_LIGHTNING_ROD.get());
-		event.addBlockToPoi(PoiTypes.LIGHTNING_ROD, SCContent.REINFORCED_OXIDIZED_LIGHTNING_ROD.get());
+	public static void init() {
+		FabricDefaultAttributeRegistry.register(SCContent.SENTRY_ENTITY.get(), Mob.createMobAttributes());
+		onExtendPoiTypes();
+		onRegisterPayloadHandlers();
+		onRegisterCapabilities();
+
+		for (ResourceKey<CreativeModeTab> tabKey : List.of(CreativeModeTabs.REDSTONE_BLOCKS, CreativeModeTabs.COLORED_BLOCKS, SCCreativeModeTabs.DECORATION_TAB.getKey(), CreativeModeTabs.OP_BLOCKS, CreativeModeTabs.TOOLS_AND_UTILITIES)) {
+			ItemGroupEvents.modifyEntriesEvent(tabKey).register(entries -> onCreativeModeTabRegister(tabKey, entries));
+		}
+
+		registerBrewingRecipes();
 	}
 
-	@SubscribeEvent
-	public static void onRegisterPayloadHandlers(RegisterPayloadHandlersEvent event) {
-		PayloadRegistrar registrar = event.registrar(SecurityCraft.MODID).versioned(SecurityCraft.getVersion());
+	private static void onExtendPoiTypes() {
+		addBlockToPoi(PoiTypes.LIGHTNING_ROD, SCContent.REINFORCED_LIGHTNING_ROD.get());
+		addBlockToPoi(PoiTypes.LIGHTNING_ROD, SCContent.REINFORCED_EXPOSED_LIGHTNING_ROD.get());
+		addBlockToPoi(PoiTypes.LIGHTNING_ROD, SCContent.REINFORCED_WEATHERED_LIGHTNING_ROD.get());
+		addBlockToPoi(PoiTypes.LIGHTNING_ROD, SCContent.REINFORCED_OXIDIZED_LIGHTNING_ROD.get());
+	}
+
+	@SuppressWarnings("unchecked")
+	private static void addBlockToPoi(ResourceKey<PoiType> poiKey, Block block) {
+		Holder<PoiType> poi = BuiltInRegistries.POINT_OF_INTEREST_TYPE.getOrThrow(poiKey);
+		Set<BlockState> states = new HashSet<>(poi.value().matchingStates);
+
+		for (BlockState state : block.getStateDefinition().getPossibleStates()) {
+			states.add(state);
+			((java.util.Map<BlockState, Holder<PoiType>>) PoiTypes.TYPE_BY_STATE).put(state, poi);
+		}
+
+		poi.value().matchingStates = Set.copyOf(states);
+	}
+
+	private static void onRegisterPayloadHandlers() {
+		Registrar registrar = new Registrar();
+
+		registrar.playToClient(MenuDataPayload.TYPE, MenuDataPayload.STREAM_CODEC);
 
 		registrar.playToClient(InteractWithFrame.TYPE, InteractWithFrame.STREAM_CODEC);
 		registrar.playToClient(OpenScreen.TYPE, OpenScreen.STREAM_CODEC);
@@ -221,62 +249,43 @@ public class RegistrationHandler {
 		registrar.playToServer(UpdateSliderValue.TYPE, UpdateSliderValue.STREAM_CODEC, UpdateSliderValue::handle);
 	}
 
-	@SubscribeEvent
-	public static void onRegisterCapabilities(RegisterCapabilitiesEvent event) {
-		event.registerBlockEntity(Capabilities.Item.BLOCK, SCContent.KEYPAD_BLAST_FURNACE_BLOCK_ENTITY.get(), AbstractKeypadFurnaceBlockEntity::getCapability);
-		event.registerBlockEntity(Capabilities.Item.BLOCK, SCContent.KEYPAD_FURNACE_BLOCK_ENTITY.get(), AbstractKeypadFurnaceBlockEntity::getCapability);
-		event.registerBlockEntity(Capabilities.Item.BLOCK, SCContent.KEYPAD_SMOKER_BLOCK_ENTITY.get(), AbstractKeypadFurnaceBlockEntity::getCapability);
-		event.registerBlockEntity(Capabilities.Item.BLOCK, SCContent.BLOCK_POCKET_MANAGER_BLOCK_ENTITY.get(), BlockPocketManagerBlockEntity::getCapability);
-		event.registerBlockEntity(Capabilities.Item.BLOCK, SCContent.CLAYMORE_BLOCK_ENTITY.get(), ClaymoreBlockEntity::getCapability);
-		event.registerBlockEntity(Capabilities.Item.BLOCK, SCContent.INVENTORY_SCANNER_BLOCK_ENTITY.get(), InventoryScannerBlockEntity::getCapability);
-		event.registerBlockEntity(Capabilities.Item.BLOCK, SCContent.KEYPAD_BARREL_BLOCK_ENTITY.get(), KeypadBarrelBlockEntity::getCapability);
-		event.registerBlockEntity(Capabilities.Item.BLOCK, SCContent.KEYPAD_CHEST_BLOCK_ENTITY.get(), (chest, dir) -> KeypadChestBlockEntity.getCapability((KeypadChestBlockEntity) chest, dir));
-		event.registerBlockEntity(Capabilities.Item.BLOCK, SCContent.LASER_BLOCK_BLOCK_ENTITY.get(), LaserBlockBlockEntity::getCapability);
-		event.registerBlockEntity(Capabilities.Item.BLOCK, SCContent.REINFORCED_HOPPER_BLOCK_ENTITY.get(), ReinforcedHopperBlockEntity::getCapability);
-		event.registerBlockEntity(Capabilities.Item.BLOCK, SCContent.TROPHY_SYSTEM_BLOCK_ENTITY.get(), TrophySystemBlockEntity::getCapability);
-		event.registerBlockEntity(Capabilities.Item.BLOCK, SCContent.REINFORCED_CHISELED_BOOKSHELF_BLOCK_ENTITY.get(), ReinforcedChiseledBookshelfBlockEntity::getCapability);
-		event.registerBlockEntity(Capabilities.Item.BLOCK, SCContent.REINFORCED_DISPENSER_BLOCK_ENTITY.get(), ReinforcedDispenserBlockEntity::getCapability);
-		event.registerBlockEntity(Capabilities.Item.BLOCK, SCContent.REINFORCED_SHELF_BLOCK_ENTITY.get(), ReinforcedShelfBlockEntity::getCapability);
-		event.registerBlockEntity(Capabilities.Item.BLOCK, SCContent.REINFORCED_DROPPER_BLOCK_ENTITY.get(), ReinforcedDropperBlockEntity::getCapability);
-		event.registerBlockEntity(Capabilities.Item.BLOCK, SCContent.SECURITY_CAMERA_BLOCK_ENTITY.get(), SecurityCameraBlockEntity::getCapability);
-		event.registerBlockEntity(Capabilities.Item.BLOCK, SCContent.SECURE_TRADING_STATION_BLOCK_ENTITY.get(), SecureTradingStationBlockEntity::getCapability);
-		registerSecuritySeaBoatCapabilities(event, SCContent.OAK_SECURITY_SEA_BOAT_ENTITY.get());
-		registerSecuritySeaBoatCapabilities(event, SCContent.SPRUCE_SECURITY_SEA_BOAT_ENTITY.get());
-		registerSecuritySeaBoatCapabilities(event, SCContent.BIRCH_SECURITY_SEA_BOAT_ENTITY.get());
-		registerSecuritySeaBoatCapabilities(event, SCContent.JUNGLE_SECURITY_SEA_BOAT_ENTITY.get());
-		registerSecuritySeaBoatCapabilities(event, SCContent.ACACIA_SECURITY_SEA_BOAT_ENTITY.get());
-		registerSecuritySeaBoatCapabilities(event, SCContent.DARK_OAK_SECURITY_SEA_BOAT_ENTITY.get());
-		registerSecuritySeaBoatCapabilities(event, SCContent.MANGROVE_SECURITY_SEA_BOAT_ENTITY.get());
-		registerSecuritySeaBoatCapabilities(event, SCContent.CHERRY_SECURITY_SEA_BOAT_ENTITY.get());
-		registerSecuritySeaBoatCapabilities(event, SCContent.PALE_OAK_SECURITY_SEA_BOAT_ENTITY.get());
-		registerSecuritySeaBoatCapabilities(event, SCContent.BAMBOO_SECURITY_SEA_RAFT_ENTITY.get());
-		event.registerItem(Capabilities.Fluid.ITEM, (stack, access) -> new BucketResourceHandler(access), SCContent.FAKE_WATER_BUCKET);
-		event.registerItem(Capabilities.Fluid.ITEM, (stack, access) -> new BucketResourceHandler(access), SCContent.FAKE_LAVA_BUCKET);
+	private static void onRegisterCapabilities() {
+		ItemStorage.SIDED.registerForBlockEntity(AbstractKeypadFurnaceBlockEntity::getCapability, SCContent.KEYPAD_BLAST_FURNACE_BLOCK_ENTITY.get());
+		ItemStorage.SIDED.registerForBlockEntity(AbstractKeypadFurnaceBlockEntity::getCapability, SCContent.KEYPAD_FURNACE_BLOCK_ENTITY.get());
+		ItemStorage.SIDED.registerForBlockEntity(AbstractKeypadFurnaceBlockEntity::getCapability, SCContent.KEYPAD_SMOKER_BLOCK_ENTITY.get());
+		ItemStorage.SIDED.registerForBlockEntity(BlockPocketManagerBlockEntity::getCapability, SCContent.BLOCK_POCKET_MANAGER_BLOCK_ENTITY.get());
+		ItemStorage.SIDED.registerForBlockEntity(ClaymoreBlockEntity::getCapability, SCContent.CLAYMORE_BLOCK_ENTITY.get());
+		ItemStorage.SIDED.registerForBlockEntity(InventoryScannerBlockEntity::getCapability, SCContent.INVENTORY_SCANNER_BLOCK_ENTITY.get());
+		ItemStorage.SIDED.registerForBlockEntity(KeypadBarrelBlockEntity::getCapability, SCContent.KEYPAD_BARREL_BLOCK_ENTITY.get());
+		ItemStorage.SIDED.registerForBlockEntity((chest, dir) -> KeypadChestBlockEntity.getCapability((KeypadChestBlockEntity) chest, dir), SCContent.KEYPAD_CHEST_BLOCK_ENTITY.get());
+		ItemStorage.SIDED.registerForBlockEntity(LaserBlockBlockEntity::getCapability, SCContent.LASER_BLOCK_BLOCK_ENTITY.get());
+		ItemStorage.SIDED.registerForBlockEntity(ReinforcedHopperBlockEntity::getCapability, SCContent.REINFORCED_HOPPER_BLOCK_ENTITY.get());
+		ItemStorage.SIDED.registerForBlockEntity(TrophySystemBlockEntity::getCapability, SCContent.TROPHY_SYSTEM_BLOCK_ENTITY.get());
+		ItemStorage.SIDED.registerForBlockEntity(ReinforcedChiseledBookshelfBlockEntity::getCapability, SCContent.REINFORCED_CHISELED_BOOKSHELF_BLOCK_ENTITY.get());
+		ItemStorage.SIDED.registerForBlockEntity(ReinforcedDispenserBlockEntity::getCapability, SCContent.REINFORCED_DISPENSER_BLOCK_ENTITY.get());
+		ItemStorage.SIDED.registerForBlockEntity(ReinforcedShelfBlockEntity::getCapability, SCContent.REINFORCED_SHELF_BLOCK_ENTITY.get());
+		ItemStorage.SIDED.registerForBlockEntity(ReinforcedDropperBlockEntity::getCapability, SCContent.REINFORCED_DROPPER_BLOCK_ENTITY.get());
+		ItemStorage.SIDED.registerForBlockEntity(SecurityCameraBlockEntity::getCapability, SCContent.SECURITY_CAMERA_BLOCK_ENTITY.get());
+		ItemStorage.SIDED.registerForBlockEntity(SecureTradingStationBlockEntity::getCapability, SCContent.SECURE_TRADING_STATION_BLOCK_ENTITY.get());
+		FluidStorage.ITEM.registerForItems((stack, context) -> new FullItemFluidStorage(context, Items.BUCKET, FluidVariant.of(SCContent.FAKE_WATER.get()), FluidConstants.BUCKET), SCContent.FAKE_WATER_BUCKET.get());
+		FluidStorage.ITEM.registerForItems((stack, context) -> new FullItemFluidStorage(context, Items.BUCKET, FluidVariant.of(SCContent.FAKE_LAVA.get()), FluidConstants.BUCKET), SCContent.FAKE_LAVA_BUCKET.get());
 	}
 
-	private static void registerSecuritySeaBoatCapabilities(RegisterCapabilitiesEvent event, EntityType<? extends AbstractSecuritySeaBoat> boatType) {
-		event.registerEntity(Capabilities.Item.ENTITY, boatType, (boat, ctx) -> AbstractSecuritySeaBoat.getCapability(boat, null));
-		event.registerEntity(Capabilities.Item.ENTITY_AUTOMATION, boatType, AbstractSecuritySeaBoat::getCapability);
-	}
-
-	@SubscribeEvent
-	public static void onCreativeModeTabRegister(BuildCreativeModeTabContentsEvent event) {
-		ResourceKey<CreativeModeTab> tabKey = event.getTabKey();
-
+	private static void onCreativeModeTabRegister(ResourceKey<CreativeModeTab> tabKey, FabricItemGroupEntries event) {
 		//@formatter:off
 		if (tabKey.equals(CreativeModeTabs.REDSTONE_BLOCKS)) {
-			event.insertAfter(new ItemStack(Items.LEVER), new ItemStack(SCContent.REINFORCED_LEVER.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(Items.STONE_BUTTON), new ItemStack(SCContent.REINFORCED_OAK_BUTTON.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(SCContent.REINFORCED_OAK_BUTTON.get()), new ItemStack(SCContent.REINFORCED_STONE_BUTTON.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(SCContent.REINFORCED_STONE_BUTTON.get()), new ItemStack(SCContent.PANIC_BUTTON.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(Items.STONE_PRESSURE_PLATE), new ItemStack(SCContent.REINFORCED_OAK_PRESSURE_PLATE.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(SCContent.REINFORCED_OAK_PRESSURE_PLATE.get()), new ItemStack(SCContent.REINFORCED_STONE_PRESSURE_PLATE.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(Items.STICKY_PISTON), new ItemStack(SCContent.REINFORCED_PISTON.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(SCContent.REINFORCED_PISTON.get()), new ItemStack(SCContent.REINFORCED_STICKY_PISTON.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(Items.DROPPER), new ItemStack(SCContent.REINFORCED_DISPENSER.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(SCContent.REINFORCED_DISPENSER.get()), new ItemStack(SCContent.REINFORCED_DROPPER.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(Items.HOPPER), new ItemStack(SCContent.REINFORCED_HOPPER.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(Items.LECTERN), new ItemStack(SCContent.REINFORCED_LECTERN.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(Items.LEVER), new ItemStack(SCContent.REINFORCED_LEVER.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(Items.STONE_BUTTON), new ItemStack(SCContent.REINFORCED_OAK_BUTTON.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(SCContent.REINFORCED_OAK_BUTTON.get()), new ItemStack(SCContent.REINFORCED_STONE_BUTTON.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(SCContent.REINFORCED_STONE_BUTTON.get()), new ItemStack(SCContent.PANIC_BUTTON.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(Items.STONE_PRESSURE_PLATE), new ItemStack(SCContent.REINFORCED_OAK_PRESSURE_PLATE.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(SCContent.REINFORCED_OAK_PRESSURE_PLATE.get()), new ItemStack(SCContent.REINFORCED_STONE_PRESSURE_PLATE.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(Items.STICKY_PISTON), new ItemStack(SCContent.REINFORCED_PISTON.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(SCContent.REINFORCED_PISTON.get()), new ItemStack(SCContent.REINFORCED_STICKY_PISTON.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(Items.DROPPER), new ItemStack(SCContent.REINFORCED_DISPENSER.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(SCContent.REINFORCED_DISPENSER.get()), new ItemStack(SCContent.REINFORCED_DROPPER.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(Items.HOPPER), new ItemStack(SCContent.REINFORCED_HOPPER.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(Items.LECTERN), new ItemStack(SCContent.REINFORCED_LECTERN.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
 		}
 		else if (tabKey.equals(CreativeModeTabs.COLORED_BLOCKS)) {
 			//@formatter:off
@@ -401,69 +410,82 @@ public class RegistrationHandler {
 		}
 		else if (tabKey.equals(SCCreativeModeTabs.DECORATION_TAB.getKey())) {
 			try {
-				event.insertAfter(new ItemStack(SCContent.REINFORCED_LADDER.get()), new ItemStack(SCContent.REINFORCED_SCAFFOLDING_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-				event.insertAfter(new ItemStack(SCContent.REINFORCED_LECTERN.get()), new ItemStack(SCContent.SECRET_OAK_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+				insertAfter(event, new ItemStack(SCContent.REINFORCED_LADDER.get()), new ItemStack(SCContent.REINFORCED_SCAFFOLDING_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+				insertAfter(event, new ItemStack(SCContent.REINFORCED_LECTERN.get()), new ItemStack(SCContent.SECRET_OAK_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
 			}
 			catch (IllegalArgumentException e) {
 				event.accept(new ItemStack(SCContent.REINFORCED_SCAFFOLDING_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
 				event.accept(new ItemStack(SCContent.SECRET_OAK_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
 			}
 
-			event.insertAfter(new ItemStack(SCContent.SECRET_OAK_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_OAK_HANGING_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(SCContent.SECRET_OAK_HANGING_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_SPRUCE_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(SCContent.SECRET_SPRUCE_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_SPRUCE_HANGING_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(SCContent.SECRET_SPRUCE_HANGING_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_BIRCH_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(SCContent.SECRET_BIRCH_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_BIRCH_HANGING_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(SCContent.SECRET_BIRCH_HANGING_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_JUNGLE_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(SCContent.SECRET_JUNGLE_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_JUNGLE_HANGING_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(SCContent.SECRET_JUNGLE_HANGING_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_ACACIA_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(SCContent.SECRET_ACACIA_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_ACACIA_HANGING_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(SCContent.SECRET_ACACIA_HANGING_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_DARK_OAK_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(SCContent.SECRET_DARK_OAK_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_DARK_OAK_HANGING_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(SCContent.SECRET_DARK_OAK_HANGING_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_MANGROVE_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(SCContent.SECRET_MANGROVE_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_MANGROVE_HANGING_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(SCContent.SECRET_MANGROVE_HANGING_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_CHERRY_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(SCContent.SECRET_CHERRY_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_CHERRY_HANGING_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(SCContent.SECRET_CHERRY_HANGING_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_PALE_OAK_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(SCContent.SECRET_PALE_OAK_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_PALE_OAK_HANGING_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(SCContent.SECRET_PALE_OAK_HANGING_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_BAMBOO_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(SCContent.SECRET_BAMBOO_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_BAMBOO_HANGING_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(SCContent.SECRET_BAMBOO_HANGING_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_CRIMSON_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(SCContent.SECRET_CRIMSON_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_CRIMSON_HANGING_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(SCContent.SECRET_CRIMSON_HANGING_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_WARPED_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(SCContent.SECRET_WARPED_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_WARPED_HANGING_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(SCContent.SECRET_OAK_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_OAK_HANGING_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(SCContent.SECRET_OAK_HANGING_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_SPRUCE_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(SCContent.SECRET_SPRUCE_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_SPRUCE_HANGING_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(SCContent.SECRET_SPRUCE_HANGING_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_BIRCH_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(SCContent.SECRET_BIRCH_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_BIRCH_HANGING_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(SCContent.SECRET_BIRCH_HANGING_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_JUNGLE_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(SCContent.SECRET_JUNGLE_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_JUNGLE_HANGING_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(SCContent.SECRET_JUNGLE_HANGING_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_ACACIA_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(SCContent.SECRET_ACACIA_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_ACACIA_HANGING_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(SCContent.SECRET_ACACIA_HANGING_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_DARK_OAK_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(SCContent.SECRET_DARK_OAK_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_DARK_OAK_HANGING_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(SCContent.SECRET_DARK_OAK_HANGING_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_MANGROVE_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(SCContent.SECRET_MANGROVE_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_MANGROVE_HANGING_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(SCContent.SECRET_MANGROVE_HANGING_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_CHERRY_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(SCContent.SECRET_CHERRY_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_CHERRY_HANGING_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(SCContent.SECRET_CHERRY_HANGING_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_PALE_OAK_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(SCContent.SECRET_PALE_OAK_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_PALE_OAK_HANGING_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(SCContent.SECRET_PALE_OAK_HANGING_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_BAMBOO_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(SCContent.SECRET_BAMBOO_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_BAMBOO_HANGING_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(SCContent.SECRET_BAMBOO_HANGING_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_CRIMSON_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(SCContent.SECRET_CRIMSON_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_CRIMSON_HANGING_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(SCContent.SECRET_CRIMSON_HANGING_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_WARPED_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(SCContent.SECRET_WARPED_SIGN_ITEM.get()), new ItemStack(SCContent.SECRET_WARPED_HANGING_SIGN_ITEM.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
 		}
 		else if (tabKey.equals(CreativeModeTabs.OP_BLOCKS)) {
-			if (event.getParameters().hasPermissions()) {
+			if (event.shouldShowOpRestrictedItems()) {
 				event.accept(new ItemStack(SCContent.ADMIN_TOOL.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
 				event.accept(new ItemStack(SCContent.CODEBREAKER.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
 			}
 		}
 		else if (tabKey.equals(CreativeModeTabs.TOOLS_AND_UTILITIES)) {
-			event.insertAfter(new ItemStack(Items.OAK_CHEST_BOAT), new ItemStack(SCContent.OAK_SECURITY_SEA_BOAT.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(Items.SPRUCE_CHEST_BOAT), new ItemStack(SCContent.SPRUCE_SECURITY_SEA_BOAT.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(Items.BIRCH_CHEST_BOAT), new ItemStack(SCContent.BIRCH_SECURITY_SEA_BOAT.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(Items.JUNGLE_CHEST_BOAT), new ItemStack(SCContent.JUNGLE_SECURITY_SEA_BOAT.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(Items.ACACIA_CHEST_BOAT), new ItemStack(SCContent.ACACIA_SECURITY_SEA_BOAT.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(Items.DARK_OAK_CHEST_BOAT), new ItemStack(SCContent.DARK_OAK_SECURITY_SEA_BOAT.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(Items.MANGROVE_CHEST_BOAT), new ItemStack(SCContent.MANGROVE_SECURITY_SEA_BOAT.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(Items.CHERRY_CHEST_BOAT), new ItemStack(SCContent.CHERRY_SECURITY_SEA_BOAT.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(Items.PALE_OAK_CHEST_BOAT), new ItemStack(SCContent.PALE_OAK_SECURITY_SEA_BOAT.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
-			event.insertAfter(new ItemStack(Items.BAMBOO_CHEST_RAFT), new ItemStack(SCContent.BAMBOO_SECURITY_SEA_RAFT.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(Items.OAK_CHEST_BOAT), new ItemStack(SCContent.OAK_SECURITY_SEA_BOAT.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(Items.SPRUCE_CHEST_BOAT), new ItemStack(SCContent.SPRUCE_SECURITY_SEA_BOAT.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(Items.BIRCH_CHEST_BOAT), new ItemStack(SCContent.BIRCH_SECURITY_SEA_BOAT.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(Items.JUNGLE_CHEST_BOAT), new ItemStack(SCContent.JUNGLE_SECURITY_SEA_BOAT.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(Items.ACACIA_CHEST_BOAT), new ItemStack(SCContent.ACACIA_SECURITY_SEA_BOAT.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(Items.DARK_OAK_CHEST_BOAT), new ItemStack(SCContent.DARK_OAK_SECURITY_SEA_BOAT.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(Items.MANGROVE_CHEST_BOAT), new ItemStack(SCContent.MANGROVE_SECURITY_SEA_BOAT.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(Items.CHERRY_CHEST_BOAT), new ItemStack(SCContent.CHERRY_SECURITY_SEA_BOAT.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(Items.PALE_OAK_CHEST_BOAT), new ItemStack(SCContent.PALE_OAK_SECURITY_SEA_BOAT.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
+			insertAfter(event, new ItemStack(Items.BAMBOO_CHEST_RAFT), new ItemStack(SCContent.BAMBOO_SECURITY_SEA_RAFT.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
 		}
 	}
 
-	public static void registerBrewingRecipes(RegisterBrewingRecipesEvent event) {
-		PotionBrewing.Builder builder = event.getBuilder();
-
-		builder.addRecipe(Ingredient.of(Items.WATER_BUCKET), getPotionIngredient(Potions.HARMING, Potions.STRONG_HARMING), new ItemStack(SCContent.FAKE_WATER_BUCKET.get()));
-		builder.addRecipe(Ingredient.of(Items.LAVA_BUCKET), getPotionIngredient(Potions.HEALING, Potions.STRONG_HEALING), new ItemStack(SCContent.FAKE_LAVA_BUCKET.get()));
+	private static void insertAfter(FabricItemGroupEntries entries, ItemStack after, ItemStack stack, TabVisibility visibility) {
+		entries.addAfter(after, List.of(stack), visibility);
 	}
 
-	private static Ingredient getPotionIngredient(Holder<Potion> normalPotion, Holder<Potion> strongPotion) {
-		Ingredient normalPotions = DataComponentIngredient.of(false, DataComponents.POTION_CONTENTS, new PotionContents(normalPotion), Items.POTION, Items.SPLASH_POTION, Items.LINGERING_POTION);
-		Ingredient strongPotions = DataComponentIngredient.of(false, DataComponents.POTION_CONTENTS, new PotionContents(strongPotion), Items.POTION, Items.SPLASH_POTION, Items.LINGERING_POTION);
+	public static void registerBrewingRecipes() {
+		SCBrewingRecipes.addRecipe(stack -> stack.is(Items.WATER_BUCKET), getPotionIngredient(Potions.HARMING, Potions.STRONG_HARMING), () -> new ItemStack(SCContent.FAKE_WATER_BUCKET.get()));
+		SCBrewingRecipes.addRecipe(stack -> stack.is(Items.LAVA_BUCKET), getPotionIngredient(Potions.HEALING, Potions.STRONG_HEALING), () -> new ItemStack(SCContent.FAKE_LAVA_BUCKET.get()));
+	}
 
-		return CompoundIngredient.of(normalPotions, strongPotions);
+	private static java.util.function.Predicate<ItemStack> getPotionIngredient(Holder<Potion> normalPotion, Holder<Potion> strongPotion) {
+		return stack -> (stack.is(Items.POTION) || stack.is(Items.SPLASH_POTION) || stack.is(Items.LINGERING_POTION)) && stack.getOrDefault(DataComponents.POTION_CONTENTS, PotionContents.EMPTY).potion().map(p -> p.is(normalPotion) || p.is(strongPotion)).orElse(false);
+	}
+
+	/**
+	 * Mimics NeoForge's PayloadRegistrar on top of Fabric's networking API
+	 */
+	private static class Registrar {
+		<T extends CustomPacketPayload> void playToClient(CustomPacketPayload.Type<T> type, StreamCodec<? super RegistryFriendlyByteBuf, T> codec) {
+			PayloadTypeRegistry.playS2C().register(type, codec);
+		}
+
+		<T extends CustomPacketPayload> void playToServer(CustomPacketPayload.Type<T> type, StreamCodec<? super RegistryFriendlyByteBuf, T> codec, BiConsumer<T, IPayloadContext> handler) {
+			PayloadTypeRegistry.playC2S().register(type, codec);
+			ServerPlayNetworking.registerGlobalReceiver(type, (payload, context) -> handler.accept(payload, context::player));
+		}
 	}
 }

@@ -27,7 +27,8 @@
 		]
 	},
 	"mixins": [
-		"securitycraft.mixins.json"
+		"securitycraft.mixins.json",
+		"securitycraft.platform.mixins.json"
 	],
 	"accessWidener": "securitycraft.accesswidener",
 	"custom": {

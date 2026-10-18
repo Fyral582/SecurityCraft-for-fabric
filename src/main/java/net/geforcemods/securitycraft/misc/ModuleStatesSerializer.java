@@ -7,13 +7,13 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.syncher.EntityDataSerializer;
-import net.neoforged.neoforge.network.codec.NeoForgeStreamCodecs;
+import net.geforcemods.securitycraft.platform.network.ExtraStreamCodecs;
 
 public class ModuleStatesSerializer implements EntityDataSerializer<Map<ModuleType, Boolean>> {
 	//@formatter:off
 	public static final StreamCodec<RegistryFriendlyByteBuf, Map<ModuleType, Boolean>> STREAM_CODEC = ByteBufCodecs.map(
 			size -> new EnumMap<>(ModuleType.class),
-			NeoForgeStreamCodecs.enumCodec(ModuleType.class),
+			ExtraStreamCodecs.enumCodec(ModuleType.class),
 			ByteBufCodecs.BOOL);
 	//@formatter:on
 

@@ -10,6 +10,15 @@ import java.util.Map.Entry;
 
 import org.apache.commons.lang3.tuple.MutablePair;
 
+import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
+import net.fabricmc.fabric.api.event.player.AttackBlockCallback;
+import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
+import net.fabricmc.fabric.api.event.player.UseItemCallback;
+import net.fabricmc.fabric.api.registry.FuelRegistryEvents;
 import net.geforcemods.securitycraft.api.ICodebreakable;
 import net.geforcemods.securitycraft.api.IEMPAffected;
 import net.geforcemods.securitycraft.api.ILinkedAction;
@@ -32,7 +41,6 @@ import net.geforcemods.securitycraft.blocks.RiftStabilizerBlock;
 import net.geforcemods.securitycraft.blocks.SecurityCameraBlock;
 import net.geforcemods.securitycraft.blocks.reinforced.ReinforcedCarpetBlock;
 import net.geforcemods.securitycraft.components.Notes.NoteWrapper;
-import net.geforcemods.securitycraft.entity.AbstractSecuritySeaBoat;
 import net.geforcemods.securitycraft.entity.camera.CameraNightVisionEffectInstance;
 import net.geforcemods.securitycraft.entity.camera.SecurityCamera;
 import net.geforcemods.securitycraft.entity.sentry.Sentry;
@@ -46,6 +54,9 @@ import net.geforcemods.securitycraft.misc.OwnershipEvent;
 import net.geforcemods.securitycraft.misc.SCSounds;
 import net.geforcemods.securitycraft.misc.SaltData;
 import net.geforcemods.securitycraft.network.client.SendManualPages;
+import net.geforcemods.securitycraft.platform.event.EntityTeleportEvent;
+import net.geforcemods.securitycraft.platform.event.PlayerInteractEvent;
+import net.geforcemods.securitycraft.platform.network.PacketDistributor;
 import net.geforcemods.securitycraft.util.BlockUtils;
 import net.geforcemods.securitycraft.util.LevelUtils;
 import net.geforcemods.securitycraft.util.PasscodeUtils;
@@ -53,11 +64,14 @@ import net.geforcemods.securitycraft.util.PlayerUtils;
 import net.geforcemods.securitycraft.util.Utils;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
@@ -82,10 +96,10 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.LecternBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.FuelValues;
 import net.minecraft.world.level.block.entity.SkullBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
@@ -93,34 +107,11 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.bus.api.EventPriority;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.AnvilUpdateEvent;
-import net.neoforged.neoforge.event.OnDatapackSyncEvent;
-import net.neoforged.neoforge.event.entity.EntityInvulnerabilityCheckEvent;
-import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
-import net.neoforged.neoforge.event.entity.EntityMountEvent;
-import net.neoforged.neoforge.event.entity.EntityTeleportEvent;
-import net.neoforged.neoforge.event.entity.living.LivingChangeTargetEvent;
-import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
-import net.neoforged.neoforge.event.entity.living.LivingDestroyBlockEvent;
-import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
-import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
-import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.LeftClickBlock;
-import net.neoforged.neoforge.event.entity.player.UseItemOnBlockEvent;
-import net.neoforged.neoforge.event.entity.player.UseItemOnBlockEvent.UsePhase;
-import net.neoforged.neoforge.event.furnace.FurnaceFuelBurnTimeEvent;
-import net.neoforged.neoforge.event.level.BlockEvent;
-import net.neoforged.neoforge.event.level.LevelEvent;
-import net.neoforged.neoforge.event.level.NoteBlockEvent;
-import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
-import net.neoforged.neoforge.event.server.ServerStoppedEvent;
-import net.neoforged.neoforge.event.tick.ServerTickEvent;
-import net.geforcemods.securitycraft.platform.network.PacketDistributor;
 
-@EventBusSubscriber(modid = SecurityCraft.MODID)
+/**
+ * Common event handling. On Fabric, the handlers are wired up to Fabric API callbacks in {@link #register()} or called from
+ * SecurityCraft's own mixins.
+ */
 public class SCEventHandler {
 	private static final Integer NOTE_DELAY = 9;
 	public static final Map<Player, MutablePair<Integer, List<NoteWrapper>>> PLAYING_TUNES = new HashMap<>();
@@ -128,11 +119,26 @@ public class SCEventHandler {
 
 	private SCEventHandler() {}
 
-	@SubscribeEvent
-	public static void onServerTickPre(ServerTickEvent.Pre event) {
+	public static void register() {
+		ServerWorldEvents.LOAD.register((server, level) -> onLevelLoad(level));
+		ServerTickEvents.START_SERVER_TICK.register(SCEventHandler::onServerTickPre);
+		ServerLifecycleEvents.SYNC_DATA_PACK_CONTENTS.register((player, joined) -> onDatapackSync(player));
+		ServerEntityEvents.ENTITY_UNLOAD.register(SCEventHandler::onEntityLeaveLevel);
+		ServerLifecycleEvents.SERVER_STARTING.register(SCEventHandler::onServerAboutToStart);
+		ServerWorldEvents.UNLOAD.register((server, level) -> onLevelUnload(level));
+		ServerLifecycleEvents.SERVER_STOPPED.register(SCEventHandler::onServerStop);
+		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> !onLivingAttacked(entity, source));
+		ServerLivingEntityEvents.AFTER_DAMAGE.register((entity, source, baseDamageTaken, damageTaken, blocked) -> onDamageTaken(entity, source));
+		AttackBlockCallback.EVENT.register(SCEventHandler::onLeftClickBlock);
+		PlayerBlockBreakEvents.BEFORE.register((level, player, pos, state, be) -> !onBlockEventBreak(level, player, pos, state));
+		UseItemCallback.EVENT.register(SCEventHandler::onRightClickItem);
+		FuelRegistryEvents.EXCLUSIONS.register((builder, context) -> onFurnaceFuelBurnTime(builder));
+	}
+
+	public static void onServerTickPre(MinecraftServer server) {
 		SecurityCameraBlockEntity.resetForceLoadingCounter();
 
-		if (!event.getServer().tickRateManager().isFrozen() || event.getServer().tickRateManager().isSteppingForward()) {
+		if (!server.tickRateManager().isFrozen() || server.tickRateManager().isSteppingForward()) {
 			PLAYING_TUNES.forEach((player, pair) -> {
 				int ticksRemaining = pair.getLeft();
 
@@ -178,28 +184,22 @@ public class SCEventHandler {
 				List<ChunkAccess> chunksToRecompile = TINT_UPDATE_QUEUE.get(levelResourceKey);
 
 				if (!chunksToRecompile.isEmpty()) {
-					event.getServer().getLevel(levelResourceKey).getChunkSource().chunkMap.resendBiomesForChunks(chunksToRecompile); //Tells the client to mark all modified sections as dirty, to properly update block tints. /fillbiome uses this too
+					server.getLevel(levelResourceKey).getChunkSource().chunkMap.resendBiomesForChunks(chunksToRecompile); //Tells the client to mark all modified sections as dirty, to properly update block tints. /fillbiome uses this too
 					chunksToRecompile.clear();
 				}
 			}
 		}
 	}
 
-	@SubscribeEvent
-	public static void onDatapackSync(OnDatapackSyncEvent event) {
-		ServerPlayer player = event.getPlayer();
-
+	public static void onDatapackSync(ServerPlayer player) {
 		if (player == null)
 			PacketDistributor.sendToAllPlayers(new SendManualPages(SCManualItem.PAGES));
 		else
 			PacketDistributor.sendToPlayer(player, new SendManualPages(SCManualItem.PAGES));
 	}
 
-	@SubscribeEvent
-	public static void onEntityLeaveLevel(EntityLeaveLevelEvent event) {
-		if (event.getEntity() instanceof ServerPlayer player) {
-			Level level = event.getLevel();
-
+	public static void onEntityLeaveLevel(Entity entity, ServerLevel level) {
+		if (entity instanceof ServerPlayer player) {
 			if (player.getCamera() instanceof SecurityCamera cam) {
 				if (player.getEffect(MobEffects.NIGHT_VISION) instanceof CameraNightVisionEffectInstance)
 					player.removeEffect(MobEffects.NIGHT_VISION);
@@ -217,70 +217,63 @@ public class SCEventHandler {
 		}
 	}
 
-	@SubscribeEvent
-	public static void onServerAboutToStart(ServerAboutToStartEvent event) {
-		PasscodeUtils.startHashingThread(event.getServer());
+	public static void onServerAboutToStart(MinecraftServer server) {
+		PasscodeUtils.startHashingThread(server);
 	}
 
-	@SubscribeEvent(priority = EventPriority.HIGHEST)
-	public static void onLevelLoad(LevelEvent.Load event) {
-		if (event.getLevel() instanceof ServerLevel level && level.dimension() == Level.OVERWORLD)
+	public static void onLevelLoad(ServerLevel level) {
+		if (level.dimension() == Level.OVERWORLD)
 			SaltData.refreshLevel(level);
 	}
 
-	@SubscribeEvent
-	public static void onLevelUnload(LevelEvent.Unload event) {
-		LevelAccessor level = event.getLevel();
-
-		if (level instanceof ServerLevel serverLevel && serverLevel.dimension() == Level.OVERWORLD) {
+	public static void onLevelUnload(ServerLevel level) {
+		if (level.dimension() == Level.OVERWORLD) {
 			SaltData.invalidate();
 			BlockEntityTracker.FRAME_VIEWED_SECURITY_CAMERAS.clear();
 		}
 	}
 
-	@SubscribeEvent
-	public static void onServerStop(ServerStoppedEvent event) {
+	public static void onServerStop(MinecraftServer server) {
 		PasscodeUtils.stopHashingThread();
 	}
 
-	@SubscribeEvent
-	public static void onEntityInvulnerabilityCheck(EntityInvulnerabilityCheckEvent event) {
-		if (event.getEntity() instanceof AbstractSecuritySeaBoat && event.getSource().is(SCTags.DamageTypes.SECURITY_SEA_BOAT_VULNERABLE_TO))
-			event.setInvulnerable(false);
-	}
-
-	@SubscribeEvent
-	public static void onLivingAttacked(LivingIncomingDamageEvent event) {
-		if (event.getEntity() instanceof ServerPlayer player) {
+	/**
+	 * @return true if the incoming damage should be canceled
+	 */
+	public static boolean onLivingAttacked(LivingEntity entity, DamageSource damageSource) {
+		if (entity instanceof ServerPlayer player) {
 			ServerLevel level = player.level();
-			DamageSource damageSource = event.getSource();
 
 			if (!player.isCreative() && damageSource.equals(level.damageSources().inWall()) && !player.isInvulnerableTo(level, damageSource) && BlockUtils.isInsideUnownedReinforcedBlocks(level, player, player.getEyePosition(), player.getBbWidth())) {
 				int reinforcedSuffocationDamage = ConfigHandler.SERVER.reinforcedSuffocationDamage.get();
 
 				if (reinforcedSuffocationDamage != -1) {
 					player.hurt(CustomDamageSources.inReinforcedWall(level.registryAccess()), reinforcedSuffocationDamage);
-					event.setCanceled(true);
+					return true;
 				}
 			}
 		}
+
+		return false;
 	}
 
-	@SubscribeEvent
-	public static void onDamageTaken(LivingDamageEvent.Post event) {
-		LivingEntity entity = event.getEntity();
+	public static void onDamageTaken(LivingEntity entity, DamageSource source) {
 		Level level = entity.level();
 
-		if (event.getSource().is(CustomDamageSources.ELECTRICITY))
+		if (source.is(CustomDamageSources.ELECTRICITY))
 			level.playSound(null, entity.blockPosition(), SCSounds.ELECTRIFIED.event, SoundSource.BLOCKS, 0.25F, 1.0F);
 
 		if (!level.isClientSide() && entity instanceof ServerPlayer player && PlayerUtils.isPlayerMountedOnCamera(entity))
 			((SecurityCamera) player.getCamera()).stopViewing(player);
 	}
 
-	@SubscribeEvent
-	public static void onDismount(EntityMountEvent event) {
-		if (ConfigHandler.SERVER.preventReinforcedFloorGlitching.get() && event.isDismounting() && event.getEntityBeingMounted() instanceof Boat boat && event.getEntityMounting() instanceof Player player && !player.getAbilities().invulnerable) {
+	/**
+	 * Called when an entity is about to dismount another entity
+	 *
+	 * @return true if the dismounting should be canceled
+	 */
+	public static boolean onDismount(Entity entityMounting, Entity entityBeingMounted) {
+		if (ConfigHandler.SERVER.preventReinforcedFloorGlitching.get() && entityBeingMounted instanceof Boat boat && entityMounting instanceof Player player && !player.getAbilities().invulnerable) {
 			Vec3 incorrectDismountLocation = new Vec3(boat.getX(), boat.getBoundingBox().maxY, boat.getZ());
 			Vec3 dismountLocation = boat.getDismountLocationForPassenger(player);
 			Vec3 newCenterPos = dismountLocation.add(0.0F, player.getBbHeight() / 2, 0.0F);
@@ -293,38 +286,48 @@ public class SCEventHandler {
 				if (!dismountLocation.equals(incorrectDismountLocation))
 					player.setPos(dismountLocation);
 				else
-					event.setCanceled(true);
+					return true;
 			}
 		}
+
+		return false;
 	}
 
-	@SubscribeEvent
-	public static void onUseItemOnBlock(UseItemOnBlockEvent event) {
-		if (event.getUsePhase() == UsePhase.ITEM_AFTER_BLOCK) {
-			ItemStack stack = event.getItemStack();
+	/**
+	 * Called right before an item is used on a block, after the block itself did not consume the interaction
+	 *
+	 * @return The result to return instead of using the item, or null if the item should be used normally
+	 */
+	public static InteractionResult onUseItemOnBlock(Player player, Level level, BlockPos pos, ItemStack stack) {
+		if (stack.is(Items.WRITABLE_BOOK) || stack.is(Items.WRITTEN_BOOK)) {
+			BlockState state = level.getBlockState(pos);
 
-			if (stack.is(Items.WRITABLE_BOOK) || stack.is(Items.WRITTEN_BOOK)) {
-				Level level = event.getLevel();
-				BlockPos pos = event.getPos();
-				BlockState state = level.getBlockState(pos);
+			if (state.is(SCContent.REINFORCED_LECTERN.get())) {
+				ReinforcedLecternBlockEntity be = (ReinforcedLecternBlockEntity) level.getBlockEntity(pos);
 
-				if (state.is(SCContent.REINFORCED_LECTERN.get())) {
-					ReinforcedLecternBlockEntity be = (ReinforcedLecternBlockEntity) level.getBlockEntity(pos);
-					Player player = event.getPlayer();
-
-					if (be.isOwnedBy(player) && LecternBlock.tryPlaceBook(player, level, pos, state, stack)) {
-						player.awardStat(Stats.ITEM_USED.get(stack.getItem()));
-						event.setCancellationResult(InteractionResult.SUCCESS);
-					}
-
-					event.setCanceled(true);
+				if (be.isOwnedBy(player) && LecternBlock.tryPlaceBook(player, level, pos, state, stack)) {
+					player.awardStat(Stats.ITEM_USED.get(stack.getItem()));
+					return InteractionResult.SUCCESS;
 				}
+
+				return InteractionResult.PASS;
 			}
 		}
+
+		return null;
+	}
+
+	/**
+	 * Fires both right click block handlers in the order they were called on NeoForge
+	 */
+	public static void onRightClickBlockEvent(PlayerInteractEvent.RightClickBlock event) {
+		highestPriorityOnRightClickBlock(event);
+
+		if (!event.isCanceled())
+			onRightClickBlock(event);
 	}
 
 	//disallow rightclicking doors, fixes wrenches from other mods being able to switch their state
-	@SubscribeEvent(priority = EventPriority.HIGHEST)
 	public static void highestPriorityOnRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
 		ItemStack stack = event.getItemStack();
 
@@ -338,7 +341,6 @@ public class SCEventHandler {
 		}
 	}
 
-	@SubscribeEvent
 	public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
 		Player player = event.getEntity();
 
@@ -429,46 +431,38 @@ public class SCEventHandler {
 			event.setCanceled(sentries.get(0).mobInteract(player, event.getHand()) == InteractionResult.SUCCESS); //cancel if an action was taken
 	}
 
-	@SubscribeEvent
-	public static void onLeftClickBlock(LeftClickBlock event) {
+	public static InteractionResult onLeftClickBlock(Player player, Level level, InteractionHand hand, BlockPos pos, Direction direction) {
 		if (ConfigHandler.SERVER.inWorldUnReinforcing.get()) {
-			if (PlayerUtils.isPlayerMountedOnCamera(event.getEntity())) {
-				event.setCanceled(true);
-				return;
-			}
+			if (PlayerUtils.isPlayerMountedOnCamera(player))
+				return InteractionResult.FAIL;
 
-			ItemStack stack = event.getEntity().getMainHandItem();
+			ItemStack stack = player.getMainHandItem();
 			Item held = stack.getItem();
-			Level level = event.getLevel();
-			BlockPos pos = event.getPos();
 
 			if (held == SCContent.UNIVERSAL_BLOCK_REINFORCER_LVL_1.get() || held == SCContent.UNIVERSAL_BLOCK_REINFORCER_LVL_2.get() || held == SCContent.UNIVERSAL_BLOCK_REINFORCER_LVL_3.get()) {
 				UniversalBlockReinforcerItem.maybeRemoveMending(level.registryAccess(), stack);
 
-				if (UniversalBlockReinforcerItem.convertBlock(level.getBlockState(pos), level, stack, pos, event.getEntity()))
-					event.setCanceled(true); //When the client knows that a block will be converted on the server, it should not destroy that block (e.g. via instamining)
+				if (UniversalBlockReinforcerItem.convertBlock(level.getBlockState(pos), level, stack, pos, player))
+					return InteractionResult.FAIL; //When the client knows that a block will be converted on the server, it should not destroy that block (e.g. via instamining)
 			}
 		}
+
+		return InteractionResult.PASS;
 	}
 
-	@SubscribeEvent
-	public static void onBlockEventBreak(BlockEvent.BreakEvent event) {
-		if (!(event.getLevel() instanceof Level level))
-			return;
-
+	/**
+	 * @return true if breaking the block should be canceled
+	 */
+	public static boolean onBlockEventBreak(Level level, Player player, BlockPos pos, BlockState state) {
 		//don't let players in creative mode break the disguise block. it's not possible to break it in other gamemodes
-		if (event.getPlayer().isCreative()) {
-			List<Sentry> sentries = level.getEntitiesOfClass(Sentry.class, new AABB(event.getPos()));
+		if (player.isCreative()) {
+			List<Sentry> sentries = level.getEntitiesOfClass(Sentry.class, new AABB(pos));
 
-			if (!sentries.isEmpty()) {
-				event.setCanceled(true);
-				return;
-			}
+			if (!sentries.isEmpty())
+				return true;
 		}
 
 		if (!level.isClientSide()) {
-			BlockPos pos = event.getPos();
-
 			if (level.getBlockEntity(pos) instanceof IModuleInventory be && be.shouldDropModules()) {
 				for (int i = 0; i < be.getMaxNumberOfModules(); i++) {
 					if (!be.getInventory().get(i).isEmpty()) {
@@ -491,33 +485,27 @@ public class SCEventHandler {
 				}
 			}
 
-			Player player = event.getPlayer();
-			BlockState state = event.getState();
-
 			BlockEntityTracker.BLOCK_CHANGE_DETECTOR.getBlockEntitiesInRange(level, pos).forEach(detector -> detector.log(player, DetectionMode.BREAK, pos, state));
 		}
+
+		return false;
 	}
 
-	@SubscribeEvent
-	public static void onBlockEventPlace(BlockEvent.EntityPlaceEvent event) {
-		if (!(event.getLevel() instanceof Level level) || level.isClientSide())
+	public static void onBlockEventPlace(Level level, Entity entity, BlockPos pos, BlockState state) {
+		if (level.isClientSide())
 			return;
 
-		if (event.getEntity() instanceof Player player) {
-			BlockPos pos = event.getPos();
-			BlockState state = event.getState();
-
+		if (entity instanceof Player player)
 			BlockEntityTracker.BLOCK_CHANGE_DETECTOR.getBlockEntitiesInRange(level, pos).forEach(detector -> detector.log(player, DetectionMode.PLACE, pos, state));
-		}
 	}
 
-	@SubscribeEvent
-	public static void onPlayerHarvestCheck(PlayerEvent.HarvestCheck event) {
-		if (ConfigHandler.SERVER.alwaysDrop.get() && event.getLevel().getBlockEntity(event.getPos()) instanceof IOwnable)
-			event.setCanHarvest(true);
+	public static boolean onPlayerHarvestCheck(Level level, BlockPos pos, boolean canHarvest) {
+		if (ConfigHandler.SERVER.alwaysDrop.get() && level.getBlockEntity(pos) instanceof IOwnable)
+			return true;
+
+		return canHarvest;
 	}
 
-	@SubscribeEvent
 	public static void onOwnership(OwnershipEvent event) {
 		if (event.getLevel().getBlockEntity(event.getPos()) instanceof IOwnable ownable) {
 			String name = event.getPlayer().getName().getString();
@@ -527,42 +515,44 @@ public class SCEventHandler {
 		}
 	}
 
-	@SubscribeEvent
-	public static void onLivingSetAttackTarget(LivingChangeTargetEvent event) {
-		if (event.getNewAboutToBeSetTarget() instanceof Sentry)
-			event.setCanceled(true);
+	/**
+	 * @return true if setting the new target should be canceled
+	 */
+	public static boolean onLivingSetAttackTarget(Entity newTarget) {
+		return newTarget instanceof Sentry;
 	}
 
-	@SubscribeEvent
-	public static void onLivingDestroyEvent(LivingDestroyBlockEvent event) {
-		event.setCanceled(event.getEntity() instanceof WitherBoss && event.getState().getBlock() instanceof IReinforcedBlock);
+	/**
+	 * @return true if the entity should not be able to destroy the block
+	 */
+	public static boolean onLivingDestroyEvent(Entity entity, BlockState state) {
+		return entity instanceof WitherBoss && state.getBlock() instanceof IReinforcedBlock;
 	}
 
-	@SubscribeEvent
-	public static void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
-		if (PlayerUtils.isPlayerMountedOnCamera(event.getEntity()) && event.getItemStack().getItem() != SCContent.CAMERA_MONITOR.get())
-			event.setCanceled(true);
+	public static InteractionResult onRightClickItem(Player player, Level level, InteractionHand hand) {
+		if (PlayerUtils.isPlayerMountedOnCamera(player) && player.getItemInHand(hand).getItem() != SCContent.CAMERA_MONITOR.get())
+			return InteractionResult.FAIL;
+
+		return InteractionResult.PASS;
 	}
 
-	@SubscribeEvent
-	public static void onFurnaceFuelBurnTime(FurnaceFuelBurnTimeEvent event) {
-		if (event.getItemStack().getItem() instanceof BlockItem blockItem && (blockItem.getBlock() instanceof ReinforcedCarpetBlock || blockItem.getBlock() == SCContent.ELECTRIFIED_IRON_FENCE_GATE.get()))
-			event.setBurnTime(0);
-	}
-
-	@SubscribeEvent
-	public static void onAnvilCraftPre(AnvilUpdateEvent event) {
-		ItemStack stack = event.getLeft();
-
-		if (stack.getItem() instanceof UniversalBlockReinforcerItem) {
-			ItemStack book = event.getRight();
-
-			if (book.getOrDefault(DataComponents.STORED_ENCHANTMENTS, ItemEnchantments.EMPTY).keySet().stream().anyMatch(e -> e.is(Enchantments.MENDING)))
-				event.setCanceled(true);
+	public static void onFurnaceFuelBurnTime(FuelValues.Builder builder) {
+		for (Item item : BuiltInRegistries.ITEM) {
+			if (item instanceof BlockItem blockItem && (blockItem.getBlock() instanceof ReinforcedCarpetBlock || blockItem.getBlock() == SCContent.ELECTRIFIED_IRON_FENCE_GATE.get()))
+				builder.remove(item);
 		}
 	}
 
-	@SubscribeEvent
+	/**
+	 * @return true if the anvil should not produce a result
+	 */
+	public static boolean onAnvilCraftPre(ItemStack stack, ItemStack book) {
+		if (stack.getItem() instanceof UniversalBlockReinforcerItem)
+			return book.getOrDefault(DataComponents.STORED_ENCHANTMENTS, ItemEnchantments.EMPTY).keySet().stream().anyMatch(e -> e.is(Enchantments.MENDING));
+
+		return false;
+	}
+
 	public static void onEntityTeleport(EntityTeleportEvent event) {
 		Entity entity = event.getEntity();
 		Level level = entity.level();
@@ -615,9 +605,16 @@ public class SCEventHandler {
 		}
 	}
 
-	@SubscribeEvent
-	public static void onNoteBlockPlayed(NoteBlockEvent.Play event) {
-		handlePlayedNote((Level) event.getLevel(), event.getPos(), event.getVanillaNoteId(), event.getInstrument(), "");
+	/**
+	 * Fires the teleport handler and returns whether the teleport should be canceled
+	 */
+	public static boolean isTeleportCanceled(EntityTeleportEvent event) {
+		onEntityTeleport(event);
+		return event.isCanceled();
+	}
+
+	public static void onNoteBlockPlayed(Level level, BlockPos pos, int vanillaNoteId, NoteBlockInstrument instrument) {
+		handlePlayedNote(level, pos, vanillaNoteId, instrument, "");
 	}
 
 	private static void handlePlayedNote(Level level, BlockPos pos, int vanillaNoteId, NoteBlockInstrument instrument, String customSoundId) {

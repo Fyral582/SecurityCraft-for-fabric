@@ -37,12 +37,12 @@ import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
-import net.neoforged.neoforge.event.entity.EntityTeleportEvent;
-import net.neoforged.neoforge.event.entity.EntityTeleportEvent.EnderEntity;
-import net.neoforged.neoforge.event.entity.EntityTeleportEvent.EnderPearl;
-import net.neoforged.neoforge.event.entity.EntityTeleportEvent.ItemConsumption;
-import net.neoforged.neoforge.event.entity.EntityTeleportEvent.SpreadPlayersCommand;
-import net.neoforged.neoforge.event.entity.EntityTeleportEvent.TeleportCommand;
+import net.geforcemods.securitycraft.platform.event.EntityTeleportEvent;
+import net.geforcemods.securitycraft.platform.event.EntityTeleportEvent.EnderEntity;
+import net.geforcemods.securitycraft.platform.event.EntityTeleportEvent.EnderPearl;
+import net.geforcemods.securitycraft.platform.event.EntityTeleportEvent.ItemConsumption;
+import net.geforcemods.securitycraft.platform.event.EntityTeleportEvent.SpreadPlayersCommand;
+import net.geforcemods.securitycraft.platform.event.EntityTeleportEvent.TeleportCommand;
 
 public class RiftStabilizerBlockEntity extends DisguisableBlockEntity implements ITickingBlockEntity, ILockable, IToggleableEntries<TeleportationType> {
 	private final IntOption signalLength = new IntOption("signalLength", 60, 0, 400, 5); //20 seconds max

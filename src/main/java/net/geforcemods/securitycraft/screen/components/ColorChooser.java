@@ -31,7 +31,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.CommonColors;
 import net.minecraft.util.Mth;
-import net.neoforged.neoforge.client.gui.widget.ExtendedSlider;
+import net.geforcemods.securitycraft.platform.gui.ExtendedSlider;
 
 public class ColorChooser extends Screen implements GuiEventListener, NarratableEntry {
 	private static final Identifier TEXTURE = SecurityCraft.resLoc("textures/gui/container/color_chooser.png");

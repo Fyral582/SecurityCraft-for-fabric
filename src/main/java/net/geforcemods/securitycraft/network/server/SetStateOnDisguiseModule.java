@@ -12,7 +12,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.network.codec.NeoForgeStreamCodecs;
+import net.geforcemods.securitycraft.platform.network.ExtraStreamCodecs;
 import net.geforcemods.securitycraft.platform.network.IPayloadContext;
 
 public record SetStateOnDisguiseModule(BlockState state, StandingOrWallType standingOrWall) implements CustomPacketPayload {
@@ -20,7 +20,7 @@ public record SetStateOnDisguiseModule(BlockState state, StandingOrWallType stan
 	//@formatter:off
 	public static final StreamCodec<RegistryFriendlyByteBuf, SetStateOnDisguiseModule> STREAM_CODEC = StreamCodec.composite(
 			SCStreamCodecs.BLOCK_STATE, SetStateOnDisguiseModule::state,
-			NeoForgeStreamCodecs.enumCodec(StandingOrWallType.class), SetStateOnDisguiseModule::standingOrWall,
+			ExtraStreamCodecs.enumCodec(StandingOrWallType.class), SetStateOnDisguiseModule::standingOrWall,
 			SetStateOnDisguiseModule::new);
 	//@formatter:on
 

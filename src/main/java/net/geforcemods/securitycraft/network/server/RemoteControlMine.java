@@ -12,7 +12,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.network.codec.NeoForgeStreamCodecs;
+import net.geforcemods.securitycraft.platform.network.ExtraStreamCodecs;
 import net.geforcemods.securitycraft.platform.network.IPayloadContext;
 
 public record RemoteControlMine(BlockPos pos, Action action) implements CustomPacketPayload {
@@ -21,7 +21,7 @@ public record RemoteControlMine(BlockPos pos, Action action) implements CustomPa
 	//@formatter:off
 	public static final StreamCodec<RegistryFriendlyByteBuf, RemoteControlMine> STREAM_CODEC = StreamCodec.composite(
 			BlockPos.STREAM_CODEC, RemoteControlMine::pos,
-			NeoForgeStreamCodecs.enumCodec(Action.class), RemoteControlMine::action,
+			ExtraStreamCodecs.enumCodec(Action.class), RemoteControlMine::action,
 			RemoteControlMine::new);
 	//@formatter:on
 	@Override

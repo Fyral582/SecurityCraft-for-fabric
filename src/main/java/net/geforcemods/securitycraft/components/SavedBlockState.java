@@ -10,7 +10,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.network.codec.NeoForgeStreamCodecs;
+import net.geforcemods.securitycraft.platform.network.ExtraStreamCodecs;
 
 public record SavedBlockState(BlockState state, StandingOrWallType standingOrWallType) {
 	public static final SavedBlockState EMPTY = new SavedBlockState(Blocks.AIR.defaultBlockState(), StandingOrWallType.NONE);
@@ -22,7 +22,7 @@ public record SavedBlockState(BlockState state, StandingOrWallType standingOrWal
 			.apply(instance, SavedBlockState::new));
 	public static final StreamCodec<FriendlyByteBuf, SavedBlockState> STREAM_CODEC = StreamCodec.composite(
 			SCStreamCodecs.BLOCK_STATE, SavedBlockState::state,
-			NeoForgeStreamCodecs.enumCodec(StandingOrWallType.class), SavedBlockState::standingOrWallType,
+			ExtraStreamCodecs.enumCodec(StandingOrWallType.class), SavedBlockState::standingOrWallType,
 			SavedBlockState::new);
 	//@formatter:on
 }

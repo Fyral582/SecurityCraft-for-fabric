@@ -11,7 +11,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.network.codec.NeoForgeStreamCodecs;
+import net.geforcemods.securitycraft.platform.network.ExtraStreamCodecs;
 import net.geforcemods.securitycraft.platform.network.IPayloadContext;
 
 public record SyncBlockChangeDetector(BlockPos pos, DetectionMode mode, boolean showHighlights, int color) implements CustomPacketPayload {
@@ -20,7 +20,7 @@ public record SyncBlockChangeDetector(BlockPos pos, DetectionMode mode, boolean 
 	//@formatter:off
 	public static final StreamCodec<RegistryFriendlyByteBuf, SyncBlockChangeDetector> STREAM_CODEC = StreamCodec.composite(
 			BlockPos.STREAM_CODEC, SyncBlockChangeDetector::pos,
-			NeoForgeStreamCodecs.enumCodec(DetectionMode.class), SyncBlockChangeDetector::mode,
+			ExtraStreamCodecs.enumCodec(DetectionMode.class), SyncBlockChangeDetector::mode,
 			ByteBufCodecs.BOOL, SyncBlockChangeDetector::showHighlights,
 			ByteBufCodecs.VAR_INT, SyncBlockChangeDetector::color,
 			SyncBlockChangeDetector::new);
