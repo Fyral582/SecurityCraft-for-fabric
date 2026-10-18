@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.blocks.reinforced;
 
+import net.geforcemods.securitycraft.SCEventHandler;
 import java.util.function.BiConsumer;
 
 import net.geforcemods.securitycraft.api.IModuleInventory;
@@ -26,7 +27,6 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockSetType;
 import net.minecraft.world.phys.BlockHitResult;
-import net.neoforged.neoforge.common.NeoForge;
 
 public class ReinforcedButtonBlock extends ButtonBlock implements IReinforcedBlock, EntityBlock {
 	private final Block vanillaBlock;
@@ -79,7 +79,7 @@ public class ReinforcedButtonBlock extends ButtonBlock implements IReinforcedBlo
 	@Override
 	public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
 		if (placer instanceof Player player)
-			NeoForge.EVENT_BUS.post(new OwnershipEvent(level, pos, player));
+			SCEventHandler.onOwnership(new OwnershipEvent(level, pos, player));
 	}
 
 	@Override

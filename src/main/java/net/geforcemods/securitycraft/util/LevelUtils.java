@@ -13,7 +13,7 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.server.ServerLifecycleHooks;
+import net.geforcemods.securitycraft.platform.SCPlatform;
 
 public class LevelUtils {
 	private LevelUtils() {}
@@ -25,7 +25,7 @@ public class LevelUtils {
 		if (level.isClientSide())
 			Minecraft.getInstance().execute(runnable);
 		else
-			ServerLifecycleHooks.getCurrentServer().execute(runnable);
+			SCPlatform.getCurrentServer().execute(runnable);
 	}
 
 	public static LightningBolt createLightning(Level level, Vec3 pos, boolean effectOnly) {

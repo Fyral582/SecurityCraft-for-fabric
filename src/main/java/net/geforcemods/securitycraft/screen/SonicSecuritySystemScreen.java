@@ -29,7 +29,7 @@ import net.minecraft.util.CommonColors;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
-import net.neoforged.neoforge.client.network.ClientPacketDistributor;
+import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
 public class SonicSecuritySystemScreen extends Screen implements ConnectionAccessor, StillValid {
 	private static final Identifier TEXTURE = SecurityCraft.resLoc("textures/gui/container/sonic_security_system.png");

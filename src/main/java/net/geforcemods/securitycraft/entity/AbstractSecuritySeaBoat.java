@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.entity;
 
+import net.geforcemods.securitycraft.platform.SCPlatform;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.UUID;
@@ -62,10 +63,9 @@ import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.fluids.FluidType;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.geforcemods.securitycraft.platform.network.PacketDistributor;
 import net.neoforged.neoforge.transfer.ResourceHandler;
 import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.neoforged.neoforge.transfer.item.VanillaContainerWrapper;
@@ -141,7 +141,7 @@ public abstract class AbstractSecuritySeaBoat extends AbstractChestBoat implemen
 					String newOwner = stack.getHoverName().getString();
 
 					//disable this in a development environment
-					if (FMLEnvironment.isProduction())
+					if (SCPlatform.isProduction())
 						dropAllModules();
 
 					setOwner(PlayerUtils.isPlayerOnline(newOwner) ? PlayerUtils.getPlayerFromName(newOwner).getUUID().toString() : "ownerUUID", newOwner);

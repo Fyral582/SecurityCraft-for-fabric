@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.blocks.reinforced;
 
+import net.geforcemods.securitycraft.SCEventHandler;
 import net.geforcemods.securitycraft.api.IOwnable;
 import net.geforcemods.securitycraft.api.IReinforcedBlock;
 import net.geforcemods.securitycraft.blockentities.ReinforcedObserverBlockEntity;
@@ -31,7 +32,6 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.redstone.ExperimentalRedstoneUtils;
 import net.minecraft.world.level.redstone.Orientation;
-import net.neoforged.neoforge.common.NeoForge;
 
 public class ReinforcedObserverBlock extends DisguisableBlock implements IReinforcedBlock {
 	public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
@@ -141,7 +141,7 @@ public class ReinforcedObserverBlock extends DisguisableBlock implements IReinfo
 	@Override
 	public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
 		if (placer instanceof Player player)
-			NeoForge.EVENT_BUS.post(new OwnershipEvent(level, pos, player));
+			SCEventHandler.onOwnership(new OwnershipEvent(level, pos, player));
 	}
 
 	@Override

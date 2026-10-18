@@ -19,7 +19,7 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
-import net.neoforged.neoforge.client.network.ClientPacketDistributor;
+import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
 public class SecureTradingStationScreen extends AbstractContainerScreen<SecureTradingStationMenu> {
 	private static final Identifier GUI_TEXTURE = SecurityCraft.resLoc("textures/gui/container/secure_trading_station.png");

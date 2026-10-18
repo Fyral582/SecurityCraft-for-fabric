@@ -8,7 +8,7 @@ import net.geforcemods.securitycraft.misc.SCManualPage;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.geforcemods.securitycraft.platform.network.IPayloadContext;
 
 public record SendManualPages(List<SCManualPage> pages) implements CustomPacketPayload {
 	public static final Type<SendManualPages> TYPE = new Type<>(SecurityCraft.resLoc("send_manual_pages"));

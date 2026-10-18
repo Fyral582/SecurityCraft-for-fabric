@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.blocks;
 
+import net.geforcemods.securitycraft.SCEventHandler;
 import java.util.stream.Stream;
 
 import net.geforcemods.securitycraft.SecurityCraft;
@@ -43,7 +44,6 @@ import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.neoforged.neoforge.common.NeoForge;
 
 public abstract class AbstractKeypadFurnaceBlock extends DisguisableBlock {
 	public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
@@ -70,7 +70,7 @@ public abstract class AbstractKeypadFurnaceBlock extends DisguisableBlock {
 	@Override
 	public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
 		if (placer instanceof Player player)
-			NeoForge.EVENT_BUS.post(new OwnershipEvent(level, pos, player));
+			SCEventHandler.onOwnership(new OwnershipEvent(level, pos, player));
 	}
 
 	@Override

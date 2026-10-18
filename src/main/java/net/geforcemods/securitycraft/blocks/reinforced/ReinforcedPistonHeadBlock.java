@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.blocks.reinforced;
 
+import net.geforcemods.securitycraft.SCEventHandler;
 import net.geforcemods.securitycraft.SCContent;
 import net.geforcemods.securitycraft.api.IReinforcedBlock;
 import net.geforcemods.securitycraft.api.OwnableBlockEntity;
@@ -22,7 +23,6 @@ import net.minecraft.world.level.block.piston.PistonHeadBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.PistonType;
-import net.neoforged.neoforge.common.NeoForge;
 
 public class ReinforcedPistonHeadBlock extends PistonHeadBlock implements EntityBlock, IReinforcedBlock {
 	private final float destroyTimeForOwner;
@@ -40,7 +40,7 @@ public class ReinforcedPistonHeadBlock extends PistonHeadBlock implements Entity
 	@Override
 	public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
 		if (placer instanceof Player player)
-			NeoForge.EVENT_BUS.post(new OwnershipEvent(level, pos, player));
+			SCEventHandler.onOwnership(new OwnershipEvent(level, pos, player));
 
 		super.setPlacedBy(level, pos, state, placer, stack);
 	}

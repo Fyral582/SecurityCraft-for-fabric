@@ -28,7 +28,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ResolvableProfile;
 import net.neoforged.fml.LogicalSide;
 import net.neoforged.fml.util.thread.EffectiveSide;
-import net.neoforged.neoforge.server.ServerLifecycleHooks;
+import net.geforcemods.securitycraft.platform.SCPlatform;
 
 public class PlayerUtils {
 	private PlayerUtils() {}
@@ -42,7 +42,7 @@ public class PlayerUtils {
 		if (EffectiveSide.get() == LogicalSide.CLIENT)
 			players = (List<T>) Minecraft.getInstance().level.players();
 		else
-			players = (List<T>) ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers();
+			players = (List<T>) SCPlatform.getCurrentServer().getPlayerList().getPlayers();
 
 		if (players != null) {
 			for (T player : players) {
@@ -67,7 +67,7 @@ public class PlayerUtils {
 			return false;
 		}
 		else
-			return (ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayerByName(name) != null);
+			return (SCPlatform.getCurrentServer().getPlayerList().getPlayerByName(name) != null);
 	}
 
 	public static void sendMessageToPlayer(String playerName, MutableComponent prefix, MutableComponent text, ChatFormatting color) {

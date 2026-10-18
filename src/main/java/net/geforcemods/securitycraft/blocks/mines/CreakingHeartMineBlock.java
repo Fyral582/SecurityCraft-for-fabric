@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.blocks.mines;
 
+import net.geforcemods.securitycraft.SCEventHandler;
 import net.geforcemods.securitycraft.ConfigHandler;
 import net.geforcemods.securitycraft.SCContent;
 import net.geforcemods.securitycraft.api.IBlockMine;
@@ -42,7 +43,6 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.EntityCollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.neoforged.neoforge.common.NeoForge;
 
 public class CreakingHeartMineBlock extends CreakingHeartBlock implements IBlockMine, IExplosive, IOverlayDisplay {
 	private final Block blockDisguisedAs;
@@ -55,7 +55,7 @@ public class CreakingHeartMineBlock extends CreakingHeartBlock implements IBlock
 	@Override
 	public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
 		if (placer instanceof Player player)
-			NeoForge.EVENT_BUS.post(new OwnershipEvent(level, pos, player));
+			SCEventHandler.onOwnership(new OwnershipEvent(level, pos, player));
 	}
 
 	@Override

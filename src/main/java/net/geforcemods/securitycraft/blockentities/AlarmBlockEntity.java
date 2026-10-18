@@ -25,7 +25,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.geforcemods.securitycraft.platform.network.PacketDistributor;
 
 public class AlarmBlockEntity extends CustomizableBlockEntity implements ITickingBlockEntity {
 	public static final int MAXIMUM_ALARM_SOUND_LENGTH = 3600; //one hour

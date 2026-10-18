@@ -30,7 +30,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.ContainerEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.neoforged.neoforge.client.network.ClientPacketDistributor;
+import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
 public class CheckPasscodeScreen extends Screen implements StillValid {
 	private static final Identifier TEXTURE = SecurityCraft.resLoc("textures/gui/container/check_passcode.png");

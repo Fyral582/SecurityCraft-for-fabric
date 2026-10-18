@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.blocks;
 
+import net.geforcemods.securitycraft.SCEventHandler;
 import net.geforcemods.securitycraft.SCContent;
 import net.geforcemods.securitycraft.api.IDisguisable;
 import net.geforcemods.securitycraft.blockentities.RiftStabilizerBlockEntity;
@@ -42,8 +43,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.geforcemods.securitycraft.platform.network.PacketDistributor;
 
 public class RiftStabilizerBlock extends DisguisableBlock {
 	public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
@@ -96,7 +96,7 @@ public class RiftStabilizerBlock extends DisguisableBlock {
 		level.setBlockAndUpdate(posAbove, DoublePlantBlock.copyWaterloggedFrom(level, posAbove, defaultBlockState().setValue(HALF, DoubleBlockHalf.UPPER)));
 
 		if (placer instanceof Player player)
-			NeoForge.EVENT_BUS.post(new OwnershipEvent(level, posAbove, player));
+			SCEventHandler.onOwnership(new OwnershipEvent(level, posAbove, player));
 
 		super.setPlacedBy(level, pos, state, placer, stack);
 

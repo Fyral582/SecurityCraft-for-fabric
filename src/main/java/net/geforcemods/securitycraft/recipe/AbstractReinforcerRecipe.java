@@ -16,7 +16,7 @@ import net.minecraft.world.item.crafting.CustomRecipe;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.common.CommonHooks;
-import net.neoforged.neoforge.server.ServerLifecycleHooks;
+import net.geforcemods.securitycraft.platform.SCPlatform;
 
 public abstract class AbstractReinforcerRecipe extends CustomRecipe {
 	protected AbstractReinforcerRecipe(CraftingBookCategory category) {
@@ -79,7 +79,7 @@ public abstract class AbstractReinforcerRecipe extends CustomRecipe {
 
 			if (stack.getItem() instanceof UniversalBlockReinforcerItem) {
 				Player player = CommonHooks.getCraftingPlayer();
-				Level level = player != null ? player.level() : ServerLifecycleHooks.getCurrentServer().overworld();
+				Level level = player != null ? player.level() : SCPlatform.getCurrentServer().overworld();
 
 				if (level != null && !level.isClientSide())
 					stack.hurtAndBreak(1, (ServerLevel) level, player, item -> {});

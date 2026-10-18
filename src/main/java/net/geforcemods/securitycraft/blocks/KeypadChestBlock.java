@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.blocks;
 
+import net.geforcemods.securitycraft.SCEventHandler;
 import java.util.Optional;
 
 import net.geforcemods.securitycraft.SCContent;
@@ -63,7 +64,6 @@ import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.common.world.AuxiliaryLightManager;
 
@@ -165,7 +165,7 @@ public class KeypadChestBlock extends ChestBlock implements IOverlayDisplay, IDi
 		super.setPlacedBy(level, pos, state, entity, stack);
 
 		if (entity instanceof Player player) {
-			NeoForge.EVENT_BUS.post(new OwnershipEvent(level, pos, player));
+			SCEventHandler.onOwnership(new OwnershipEvent(level, pos, player));
 
 			if (state.getValue(TYPE) != ChestType.SINGLE) {
 				KeypadChestBlockEntity thisBe = (KeypadChestBlockEntity) level.getBlockEntity(pos);

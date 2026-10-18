@@ -118,7 +118,7 @@ import net.neoforged.neoforge.event.level.NoteBlockEvent;
 import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.geforcemods.securitycraft.platform.network.PacketDistributor;
 
 @EventBusSubscriber(modid = SecurityCraft.MODID)
 public class SCEventHandler {

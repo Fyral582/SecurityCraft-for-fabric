@@ -32,7 +32,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.neoforged.neoforge.client.network.ClientPacketDistributor;
+import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
 public class MineRemoteAccessToolScreen extends Screen implements StillValid {
 	private static final Identifier TEXTURE = SecurityCraft.resLoc("textures/gui/container/mrat.png");

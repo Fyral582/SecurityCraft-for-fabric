@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.blocks.reinforced;
 
+import net.geforcemods.securitycraft.SCEventHandler;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -44,7 +45,6 @@ import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.level.redstone.ExperimentalRedstoneUtils;
 import net.minecraft.world.level.redstone.Orientation;
-import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.EventHooks;
 
 public class ReinforcedPistonBaseBlock extends PistonBaseBlock implements IReinforcedBlock, EntityBlock {
@@ -63,7 +63,7 @@ public class ReinforcedPistonBaseBlock extends PistonBaseBlock implements IReinf
 	@Override
 	public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
 		if (placer instanceof Player player)
-			NeoForge.EVENT_BUS.post(new OwnershipEvent(level, pos, player));
+			SCEventHandler.onOwnership(new OwnershipEvent(level, pos, player));
 
 		super.setPlacedBy(level, pos, state, placer, stack);
 	}

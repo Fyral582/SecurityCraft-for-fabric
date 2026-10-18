@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.datagen;
 
+import net.geforcemods.securitycraft.platform.SCPlatform;
 import java.util.List;
 import java.util.Set;
 
@@ -37,7 +38,7 @@ public class DataGenRegistrar {
 		event.createBlockAndItemTags(BlockTagGenerator::new, ItemTagGenerator::new);
 		event.createProvider(RecipeGenerator.Runner::new);
 
-		//		if (ModList.get().isLoaded("projecte"))
+		//		if (SCPlatform.isModLoaded("projecte"))
 		//			generator.addProvider(event.includeServer(), new ProjectECompatConversionProvider(generator));
 	}
 }

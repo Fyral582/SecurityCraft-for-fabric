@@ -11,7 +11,7 @@
 		"camera.LocalPlayerMixin",
 		"camera.MinecraftMixin",
 		"camera.ViewAreaMixin",
-		"datagen.BlockStateGeneratorCollectorMixin",
+		
 		"f3.BetterF3TargetModuleMixin",
 		"f3.DebugEntryLookingAtBlockMixin",
 		"f3.DebugEntryLookingAtFluidMixin",

@@ -38,7 +38,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.scores.PlayerTeam;
 import net.neoforged.neoforge.client.gui.widget.ScrollPanel;
-import net.neoforged.neoforge.client.network.ClientPacketDistributor;
+import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
 public class EditModuleScreen extends Screen implements StillValid {
 	private static ListModuleData savedData;

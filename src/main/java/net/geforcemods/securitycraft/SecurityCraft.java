@@ -64,9 +64,9 @@ import net.neoforged.neoforge.common.world.chunk.TicketController;
 import net.neoforged.neoforge.event.AddServerReloadListenersEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
-import net.neoforged.neoforge.registries.DeferredBlock;
-import net.neoforged.neoforge.registries.DeferredHolder;
-import net.neoforged.neoforge.server.ServerLifecycleHooks;
+import net.geforcemods.securitycraft.platform.registry.DeferredBlock;
+import net.geforcemods.securitycraft.platform.registry.DeferredHolder;
+import net.geforcemods.securitycraft.platform.SCPlatform;
 
 @Mod(SecurityCraft.MODID)
 @EventBusSubscriber(modid = SecurityCraft.MODID)
@@ -125,10 +125,10 @@ public class SecurityCraft {
 		InterModComms.sendTo(SecurityCraft.MODID, SecurityCraftAPI.IMC_DOOR_ACTIVATOR_MSG, ReinforcedRedstoneBlock.DoorActivator::new);
 		InterModComms.sendTo(SecurityCraft.MODID, SecurityCraftAPI.IMC_DOOR_ACTIVATOR_MSG, SecureRedstoneInterfaceBlock.DoorActivator::new);
 
-		if (ModList.get().isLoaded("theoneprobe"))
+		if (SCPlatform.isModLoaded("theoneprobe"))
 			InterModComms.sendTo("theoneprobe", "getTheOneProbe", TOPDataProvider::new);
 
-		if (ModList.get().isLoaded("distanthorizons"))
+		if (SCPlatform.isModLoaded("distanthorizons"))
 			DistantHorizonsCompat.registerEvent();
 	}
 
@@ -151,7 +151,7 @@ public class SecurityCraft {
 	}
 
 	public static void collectSCContentData(boolean addPages) {
-		collectSCContentData(ServerLifecycleHooks.getCurrentServer(), addPages);
+		collectSCContentData(SCPlatform.getCurrentServer(), addPages);
 	}
 
 	public static void collectSCContentData(MinecraftServer server, boolean addPages) {

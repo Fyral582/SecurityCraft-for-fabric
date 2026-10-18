@@ -340,18 +340,17 @@ import net.minecraft.world.level.storage.loot.predicates.LootItemConditionType;
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
-import net.neoforged.neoforge.registries.DeferredBlock;
-import net.neoforged.neoforge.registries.DeferredHolder;
-import net.neoforged.neoforge.registries.DeferredItem;
-import net.neoforged.neoforge.registries.DeferredRegister;
-import net.neoforged.neoforge.registries.NeoForgeRegistries.Keys;
+import net.geforcemods.securitycraft.platform.registry.DeferredBlock;
+import net.geforcemods.securitycraft.platform.registry.DeferredHolder;
+import net.geforcemods.securitycraft.platform.registry.DeferredItem;
+import net.geforcemods.securitycraft.platform.registry.DeferredRegister;
 
 public class SCContent {
 	public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(SecurityCraft.MODID);
 	public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY_TYPES = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, SecurityCraft.MODID);
 	public static final DeferredRegister<ArgumentTypeInfo<?, ?>> COMMAND_ARGUMENT_TYPES = DeferredRegister.create(Registries.COMMAND_ARGUMENT_TYPE, SecurityCraft.MODID);
 	public static final DeferredRegister.DataComponents DATA_COMPONENTS = DeferredRegister.createDataComponents(Registries.DATA_COMPONENT_TYPE, SecurityCraft.MODID);
-	public static final DeferredRegister<EntityDataSerializer<?>> DATA_SERIALIZERS = DeferredRegister.create(Keys.ENTITY_DATA_SERIALIZERS, SecurityCraft.MODID);
+	public static final DeferredRegister<EntityDataSerializer<?>> DATA_SERIALIZERS = DeferredRegister.create(DeferredRegister.ENTITY_DATA_SERIALIZERS, SecurityCraft.MODID);
 	public static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister.create(Registries.ENTITY_TYPE, SecurityCraft.MODID);
 	public static final DeferredRegister<Fluid> FLUIDS = DeferredRegister.create(Registries.FLUID, SecurityCraft.MODID);
 	public static final DeferredRegister<GameRule<?>> GAME_RULES = DeferredRegister.create(Registries.GAME_RULE, SecurityCraft.MODID);

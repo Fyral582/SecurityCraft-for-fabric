@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.blocks;
 
+import net.geforcemods.securitycraft.platform.SCPlatform;
 import java.util.List;
 
 import net.geforcemods.securitycraft.SCContent;
@@ -42,7 +43,6 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.EntityCollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.neoforged.fml.ModList;
 
 public class InventoryScannerFieldBlock extends OwnableBlock implements SimpleWaterloggedBlock {
 	public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
@@ -107,7 +107,7 @@ public class InventoryScannerFieldBlock extends OwnableBlock implements SimpleWa
 
 				foundItem = checkInventory(ItemAccess.forContainer(player.getInventory()), be, allowInteraction);
 
-				if (ModList.get().isLoaded("curios") && CuriosCompat.hasCuriosInventory(player)) {
+				if (SCPlatform.isModLoaded("curios") && CuriosCompat.hasCuriosInventory(player)) {
 					for (ItemAccess itemAccess : CuriosCompat.getCuriosItemAccess(player)) {
 						foundItem |= checkInventory(itemAccess, be, allowInteraction);
 					}

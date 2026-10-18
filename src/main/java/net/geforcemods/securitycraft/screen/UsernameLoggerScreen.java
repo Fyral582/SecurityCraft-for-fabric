@@ -28,7 +28,7 @@ import net.minecraft.util.CommonColors;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.client.gui.widget.ScrollPanel;
-import net.neoforged.neoforge.client.network.ClientPacketDistributor;
+import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
 public class UsernameLoggerScreen extends Screen implements StillValid {
 	private static final Identifier TEXTURE = SecurityCraft.resLoc("textures/gui/container/blank.png");

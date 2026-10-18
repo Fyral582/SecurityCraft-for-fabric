@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.blocks;
 
+import net.geforcemods.securitycraft.SCEventHandler;
 import net.geforcemods.securitycraft.SCContent;
 import net.geforcemods.securitycraft.blockentities.RetinalScannerBlockEntity;
 import net.geforcemods.securitycraft.misc.OwnershipEvent;
@@ -29,7 +30,6 @@ import net.minecraft.world.level.block.state.StateDefinition.Builder;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
-import net.neoforged.neoforge.common.NeoForge;
 
 public class RetinalScannerBlock extends DisguisableBlock {
 	public static final EnumProperty<Direction> FACING = BlockStateProperties.FACING;
@@ -47,7 +47,7 @@ public class RetinalScannerBlock extends DisguisableBlock {
 			if (level.getBlockEntity(pos) instanceof RetinalScannerBlockEntity be)
 				be.setOwnerProfile(ResolvableProfile.createResolved(player.getGameProfile()));
 
-			NeoForge.EVENT_BUS.post(new OwnershipEvent(level, pos, player));
+			SCEventHandler.onOwnership(new OwnershipEvent(level, pos, player));
 		}
 	}
 

@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.screen;
 
+import net.geforcemods.securitycraft.platform.SCPlatform;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -65,7 +66,6 @@ import net.minecraft.world.item.crafting.display.SlotDisplay;
 import net.minecraft.world.item.crafting.display.SlotDisplay.Empty;
 import net.minecraft.world.item.crafting.display.SlotDisplayContext;
 import net.minecraft.world.level.block.Block;
-import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.client.gui.widget.ScrollPanel;
 
 public class SCManualScreen extends Screen implements StillValid {
@@ -577,7 +577,7 @@ public class SCManualScreen extends Screen implements StillValid {
 	}
 
 	class PatronList extends ScrollPanel {
-		private static final String PATRON_LIST_LINK = FMLEnvironment.isProduction() ? "https://gist.githubusercontent.com/bl4ckscor3/bdda6596012b1206816db034350b5717/raw" : "https://gist.githubusercontent.com/bl4ckscor3/3196e6740774e386871a74a9606eaa61/raw";
+		private static final String PATRON_LIST_LINK = SCPlatform.isProduction() ? "https://gist.githubusercontent.com/bl4ckscor3/bdda6596012b1206816db034350b5717/raw" : "https://gist.githubusercontent.com/bl4ckscor3/3196e6740774e386871a74a9606eaa61/raw";
 		private static final int SLOT_HEIGHT = 12;
 		private final ExecutorService executor = Executors.newSingleThreadExecutor();
 		private Future<List<String>> patronRequestFuture;

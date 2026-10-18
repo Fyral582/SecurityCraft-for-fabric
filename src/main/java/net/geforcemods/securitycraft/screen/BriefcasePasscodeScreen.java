@@ -20,7 +20,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.CommonColors;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.client.network.ClientPacketDistributor;
+import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
 public class BriefcasePasscodeScreen extends Screen implements StillValid {
 	public static final String UP_ARROW = "\u2191";

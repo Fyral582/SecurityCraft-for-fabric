@@ -62,7 +62,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.SideChainPart;
-import net.neoforged.neoforge.registries.DeferredHolder;
+import net.geforcemods.securitycraft.platform.registry.DeferredHolder;
 
 public class BlockModelAndStateGenerator {
 	private static final ItemTintSource CRYSTAL_QUARTZ_TINT = ItemModelUtils.constantTint(SCContent.CRYSTAL_QUARTZ_TINT);

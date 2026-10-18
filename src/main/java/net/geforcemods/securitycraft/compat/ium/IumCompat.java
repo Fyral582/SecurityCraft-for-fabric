@@ -1,7 +1,7 @@
 package net.geforcemods.securitycraft.compat.ium;
 
+import net.geforcemods.securitycraft.platform.SCPlatform;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.neoforged.fml.ModList;
 
 public class IumCompat {
 	private static final IumMod NONE = new IumMod() {
@@ -27,9 +27,9 @@ public class IumCompat {
 	}
 
 	private static IumMod getInstalledIumMod() {
-		if (ModList.get().isLoaded("embeddium"))
+		if (SCPlatform.isModLoaded("embeddium"))
 			return new Embeddium();
-		else if (ModList.get().isLoaded("sodium"))
+		else if (SCPlatform.isModLoaded("sodium"))
 			return new Sodium();
 		else
 			return NONE;

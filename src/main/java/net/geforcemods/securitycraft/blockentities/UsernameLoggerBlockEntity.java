@@ -28,7 +28,7 @@ import net.minecraft.world.level.storage.ValueInput.TypedInputList;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.level.storage.ValueOutput.TypedOutputList;
 import net.minecraft.world.phys.AABB;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.geforcemods.securitycraft.platform.network.PacketDistributor;
 
 public class UsernameLoggerBlockEntity extends DisguisableBlockEntity implements ITickingBlockEntity, ILockable {
 	public static final int LOGGER_LIST_SIZE = 128;

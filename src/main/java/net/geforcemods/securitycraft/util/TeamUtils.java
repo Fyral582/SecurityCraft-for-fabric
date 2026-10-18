@@ -11,8 +11,7 @@ import net.geforcemods.securitycraft.compat.ftbteams.FTBTeamsCompat;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.scores.PlayerTeam;
-import net.neoforged.fml.ModList;
-import net.neoforged.neoforge.server.ServerLifecycleHooks;
+import net.geforcemods.securitycraft.platform.SCPlatform;
 
 public class TeamUtils {
 	private static List<TeamHandler> teamPrecedence;
@@ -43,7 +42,7 @@ public class TeamUtils {
 	 * @return The team the given player is on. null if the player is not part of a team
 	 */
 	public static PlayerTeam getVanillaTeamFromPlayer(String playerName) {
-		MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+		MinecraftServer server = SCPlatform.getCurrentServer();
 
 		if (server != null)
 			return server.getScoreboard().getPlayersTeam(playerName);
@@ -87,7 +86,7 @@ public class TeamUtils {
 
 	public enum TeamType {
 		FTB_TEAMS(() -> {
-			if (ModList.get().isLoaded("ftbteams"))
+			if (SCPlatform.isModLoaded("ftbteams"))
 				return new FTBTeamsCompat();
 			else
 				return null;

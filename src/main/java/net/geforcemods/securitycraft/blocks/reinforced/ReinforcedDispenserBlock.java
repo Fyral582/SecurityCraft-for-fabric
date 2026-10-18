@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.blocks.reinforced;
 
+import net.geforcemods.securitycraft.SCEventHandler;
 import net.geforcemods.securitycraft.api.IDisguisable;
 import net.geforcemods.securitycraft.api.IReinforcedBlock;
 import net.geforcemods.securitycraft.blockentities.ReinforcedDispenserBlockEntity;
@@ -42,7 +43,6 @@ import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.world.AuxiliaryLightManager;
 
 public class ReinforcedDispenserBlock extends DispenserBlock implements IReinforcedBlock, SimpleWaterloggedBlock, IOverlayDisplay, IDisguisable {
@@ -63,7 +63,7 @@ public class ReinforcedDispenserBlock extends DispenserBlock implements IReinfor
 	@Override
 	public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
 		if (placer instanceof Player player)
-			NeoForge.EVENT_BUS.post(new OwnershipEvent(level, pos, player));
+			SCEventHandler.onOwnership(new OwnershipEvent(level, pos, player));
 
 		super.setPlacedBy(level, pos, state, placer, stack);
 	}

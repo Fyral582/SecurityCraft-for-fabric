@@ -24,7 +24,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.CommonColors;
 import net.minecraft.world.entity.player.Inventory;
-import net.neoforged.neoforge.client.network.ClientPacketDistributor;
+import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
 public class BlockReinforcerScreen extends AbstractContainerScreen<BlockReinforcerMenu> implements IHasExtraAreas {
 	private static final Identifier TEXTURE = SecurityCraft.resLoc("textures/gui/container/universal_block_reinforcer.png");

@@ -48,7 +48,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.geforcemods.securitycraft.platform.network.PacketDistributor;
 
 public class SecurityCameraBlock extends DisguisableBlock implements SimpleWaterloggedBlock {
 	public static final EnumProperty<Direction> FACING = EnumProperty.create("facing", Direction.class, facing -> facing != Direction.UP);

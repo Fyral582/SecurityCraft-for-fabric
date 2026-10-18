@@ -24,7 +24,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.geforcemods.securitycraft.platform.network.PacketDistributor;
 
 public class BriefcaseItem extends Item {
 	public static final TooltipDisplay DEFAULT_TOOLTIP_DISPLAY = new TooltipDisplay(false, new ReferenceLinkedOpenHashSet<>()).withHidden(DataComponents.CONTAINER, true);

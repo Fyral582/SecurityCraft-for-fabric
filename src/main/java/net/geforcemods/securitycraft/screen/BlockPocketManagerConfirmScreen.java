@@ -15,7 +15,7 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.CommonColors;
-import net.neoforged.neoforge.client.network.ClientPacketDistributor;
+import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
 public class BlockPocketManagerConfirmScreen extends Screen {
 	private static final Identifier GUI_TEXTURE = SecurityCraft.resLoc("textures/gui/container/block_pocket_manager_confirm.png");

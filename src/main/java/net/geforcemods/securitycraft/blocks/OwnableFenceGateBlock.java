@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.blocks;
 
+import net.geforcemods.securitycraft.SCEventHandler;
 import java.util.function.BiConsumer;
 
 import net.geforcemods.securitycraft.api.OwnableBlockEntity;
@@ -25,7 +26,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.WoodType;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.redstone.Orientation;
-import net.neoforged.neoforge.common.NeoForge;
 
 public class OwnableFenceGateBlock extends FenceGateBlock implements EntityBlock {
 	private final float destroyTimeForOwner;
@@ -54,7 +54,7 @@ public class OwnableFenceGateBlock extends FenceGateBlock implements EntityBlock
 	@Override
 	public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
 		if (placer instanceof Player player)
-			NeoForge.EVENT_BUS.post(new OwnershipEvent(level, pos, player));
+			SCEventHandler.onOwnership(new OwnershipEvent(level, pos, player));
 	}
 
 	@Override

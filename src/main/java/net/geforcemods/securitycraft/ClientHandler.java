@@ -185,7 +185,7 @@ import net.neoforged.neoforge.client.model.standalone.SimpleUnbakedStandaloneMod
 import net.neoforged.neoforge.client.model.standalone.StandaloneModelKey;
 import net.neoforged.neoforge.client.model.standalone.StandaloneModelLoader.BakedModels;
 import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent;
-import net.neoforged.neoforge.registries.DeferredBlock;
+import net.geforcemods.securitycraft.platform.registry.DeferredBlock;
 
 @EventBusSubscriber(modid = SecurityCraft.MODID, value = Dist.CLIENT)
 public class ClientHandler {

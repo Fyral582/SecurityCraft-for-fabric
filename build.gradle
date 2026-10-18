@@ -1,0 +1,110 @@
+plugins {
+	id 'fabric-loom' version '1.14.10'
+	id 'idea'
+}
+
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+
+version = project.mod_version
+group = 'net.geforcemods.securitycraft'
+
+base {
+	archivesName = 'securitycraft'
+}
+
+java {
+	toolchain.languageVersion = JavaLanguageVersion.of(21)
+	withSourcesJar()
+}
+
+loom {
+	accessWidenerPath = file('src/main/resources/securitycraft.accesswidener')
+
+	runs {
+		client {
+			client()
+			runDir 'run/client'
+		}
+		server {
+			server()
+			runDir 'run/server'
+		}
+	}
+}
+
+repositories {
+	maven {
+		name = 'ParchmentMC'
+		url = 'https://maven.parchmentmc.org'
+	}
+	maven {
+		name = 'Fuzs Mod Resources'
+		url = 'https://raw.githubusercontent.com/Fuzss/modresources/main/maven/'
+	}
+	exclusiveContent {
+		forRepository {
+			maven {
+				url = 'https://api.modrinth.com/maven'
+			}
+		}
+		filter {
+			includeGroup 'maven.modrinth'
+		}
+	}
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.mc_version}"
+	mappings loom.layered() {
+		officialMojangMappings()
+		parchment("org.parchmentmc.data:parchment-${project.mc_version}:${project.parchment_version}@zip")
+	}
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+	// Provides NeoForge's ModConfigSpec API on Fabric
+	modApi "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${project.fcap_version}"
+	include "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${project.fcap_version}"
+}
+
+sourceSets.main.resources {
+	srcDir 'src/generated/resources' //include generated files
+}
+
+processResources {
+	exclude '.cache'
+	duplicatesStrategy = 'include'
+	inputs.property 'version', project.version
+
+	filesMatching('fabric.mod.json') {
+		expand 'version': project.version
+	}
+
+	//minify json resources
+	doLast {
+		fileTree(dir: outputs.files.asPath, include: '**/*.json').each {
+			File file -> file.text = JsonOutput.toJson(new JsonSlurper().parse(file))
+		}
+	}
+}
+
+tasks.named('jar', Jar).configure {
+	exclude('net/geforcemods/securitycraft/datagen/**')
+	from('LICENSE')
+}
+
+remapJar {
+	archiveFileName = "[${project.mc_version}] SecurityCraft v${version} (Fabric).jar"
+}
+
+tasks.withType(JavaCompile).configureEach {
+	options.compilerArgs << '-Xmaxerrs' << '10000'
+	options.encoding = 'UTF-8'
+	options.release = 21
+}
+
+sourceSets.main.java {
+	// Data generation is NeoForge specific, the generated resources are shipped in src/generated/resources
+	exclude 'net/geforcemods/securitycraft/datagen/**'
+	exclude 'net/geforcemods/securitycraft/mixin/datagen/**'
+}

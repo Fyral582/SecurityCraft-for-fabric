@@ -103,7 +103,7 @@ import net.neoforged.neoforge.event.brewing.RegisterBrewingRecipesEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
-import net.neoforged.neoforge.registries.DeferredBlock;
+import net.geforcemods.securitycraft.platform.registry.DeferredBlock;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import net.neoforged.neoforge.transfer.fluid.BucketResourceHandler;
 

@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.items;
 
+import net.geforcemods.securitycraft.platform.SCPlatform;
 import net.geforcemods.securitycraft.ConfigHandler;
 import net.geforcemods.securitycraft.SCContent;
 import net.geforcemods.securitycraft.api.IBlockMine;
@@ -27,7 +28,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.fml.loading.FMLEnvironment;
 
 public class UniversalOwnerChangerItem extends Item {
 	public UniversalOwnerChangerItem(Item.Properties properties) {
@@ -94,7 +94,7 @@ public class UniversalOwnerChangerItem extends Item {
 			ClientUtils.recompileChunk(pos);
 
 		//disable this in a development environment
-		if (FMLEnvironment.isProduction() && be instanceof IModuleInventory inv) {
+		if (SCPlatform.isProduction() && be instanceof IModuleInventory inv) {
 			for (ModuleType moduleType : inv.getInsertedModules()) {
 				ItemStack moduleStack = inv.getModule(moduleType);
 

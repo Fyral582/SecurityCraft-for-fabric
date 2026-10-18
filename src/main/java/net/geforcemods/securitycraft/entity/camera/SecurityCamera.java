@@ -27,7 +27,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.geforcemods.securitycraft.platform.network.PacketDistributor;
 
 public class SecurityCamera extends Entity {
 	public static final EntityDataAccessor<Float> ZOOM_AMOUNT = SynchedEntityData.<Float>defineId(SecurityCamera.class, EntityDataSerializers.FLOAT);

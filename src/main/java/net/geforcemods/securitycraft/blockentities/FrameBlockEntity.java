@@ -32,7 +32,7 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueInput.TypedInputList;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.level.storage.ValueOutput.TypedOutputList;
-import net.neoforged.neoforge.client.network.ClientPacketDistributor;
+import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
 public class FrameBlockEntity extends CustomizableBlockEntity implements ITickingBlockEntity {
 	private final DisabledOption disabled = new DisabledOption(false);
