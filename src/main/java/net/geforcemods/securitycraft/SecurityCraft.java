@@ -33,6 +33,7 @@ import net.geforcemods.securitycraft.blocks.reinforced.ReinforcedHopperBlock;
 import net.geforcemods.securitycraft.blocks.reinforced.ReinforcedPressurePlateBlock;
 import net.geforcemods.securitycraft.blocks.reinforced.ReinforcedRedstoneBlock;
 import net.geforcemods.securitycraft.commands.SCCommand;
+import net.geforcemods.securitycraft.compat.distanthorizons.DistantHorizonsCompat;
 import net.geforcemods.securitycraft.items.SCManualItem;
 import net.geforcemods.securitycraft.misc.CommonDoorActivator;
 import net.geforcemods.securitycraft.misc.ConfigAttackTargetCheck;
@@ -72,21 +73,22 @@ public class SecurityCraft implements ModInitializer {
 		ConfigRegistry.INSTANCE.register(MODID, ModConfig.Type.SERVER, ConfigHandler.SERVER_SPEC);
 		ConfigHandler.registerEvents();
 		CAMERA_TICKET_CONTROLLER.register();
+		//same order as vanilla's/NeoForge's registries, so that entries can reference entries of registries that come before them
 		RegistrationHandler.registerSounds();
+		SCContent.DATA_COMPONENTS.register();
+		SCContent.DATA_SERIALIZERS.register();
+		SCContent.GAME_RULES.register();
+		SCContent.PARTICLE_TYPES.register();
+		SCContent.RECIPE_SERIALIZERS.register();
+		SCContent.LOOT_ITEM_CONDITION_TYPES.register();
+		SCContent.COMMAND_ARGUMENT_TYPES.register();
 		SCContent.FLUIDS.register();
 		SCContent.BLOCKS.register();
+		SCContent.ENTITY_TYPES.register();
 		SCContent.ITEMS.register();
 		RegistrationHandler.registerBlockItems();
 		SCContent.BLOCK_ENTITY_TYPES.register();
-		SCContent.COMMAND_ARGUMENT_TYPES.register();
-		SCContent.DATA_COMPONENTS.register();
-		SCContent.DATA_SERIALIZERS.register();
-		SCContent.ENTITY_TYPES.register();
-		SCContent.GAME_RULES.register();
-		SCContent.LOOT_ITEM_CONDITION_TYPES.register();
 		SCContent.MENU_TYPES.register();
-		SCContent.PARTICLE_TYPES.register();
-		SCContent.RECIPE_SERIALIZERS.register();
 		SCCreativeModeTabs.CREATIVE_MODE_TABS.register();
 		RegistrationHandler.init();
 		SCEventHandler.register();
@@ -95,6 +97,10 @@ public class SecurityCraft implements ModInitializer {
 		ServerLifecycleEvents.SERVER_STARTED.register(server -> collectSCContentData(server, true));
 		registerApiContent();
 		SecurityCraftAPI.finishRegistration();
+
+		if (SCPlatform.isModLoaded("distanthorizons"))
+			DistantHorizonsCompat.registerEvent();
+
 		IReinforcedCauldronInteraction.bootStrap();
 	}
 

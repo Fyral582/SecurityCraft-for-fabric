@@ -15,7 +15,6 @@ base {
 
 java {
 	toolchain.languageVersion = JavaLanguageVersion.of(21)
-	withSourcesJar()
 }
 
 loom {
@@ -86,8 +85,10 @@ processResources {
 	duplicatesStrategy = 'include'
 	inputs.property 'version', project.version
 
+	def modVersion = project.version.toString()
+
 	filesMatching('fabric.mod.json') {
-		expand 'version': project.version
+		filter { line -> line.replace('${version}', modVersion) }
 	}
 
 	//minify json resources

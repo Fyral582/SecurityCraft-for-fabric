@@ -138,3 +138,4 @@ accessible field net/minecraft/client/gui/screens/inventory/AbstractContainerScr
 accessible field net/minecraft/client/gui/screens/inventory/AbstractContainerScreen topPos I
 accessible field net/minecraft/world/level/block/entity/FuelValues$Builder values Lit/unimi/dsi/fastutil/objects/Object2IntSortedMap;
 accessible field net/minecraft/world/item/component/ItemContainerContents items Lnet/minecraft/core/NonNullList;
+accessible field net/minecraft/world/level/block/entity/BlockEntityType validBlocks Ljava/util/Set;

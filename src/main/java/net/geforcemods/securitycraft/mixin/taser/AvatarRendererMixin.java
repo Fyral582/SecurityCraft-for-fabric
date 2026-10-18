@@ -7,6 +7,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import net.geforcemods.securitycraft.items.TaserItem;
+import net.geforcemods.securitycraft.platform.TaserRenderData;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.renderer.entity.player.AvatarRenderer;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
@@ -30,6 +31,6 @@ public class AvatarRendererMixin {
 	private void securitycraft$rememberTaser(Avatar avatar, AvatarRenderState state, float partialTick, CallbackInfo ci) {
 		boolean holdsTaser = avatar.getMainHandItem().getItem() instanceof TaserItem || avatar.getOffhandItem().getItem() instanceof TaserItem;
 
-		state.setData(HumanoidModelMixin.HOLDS_TASER, holdsTaser ? Boolean.TRUE : null);
+		state.setData(TaserRenderData.HOLDS_TASER, holdsTaser ? Boolean.TRUE : null);
 	}
 }

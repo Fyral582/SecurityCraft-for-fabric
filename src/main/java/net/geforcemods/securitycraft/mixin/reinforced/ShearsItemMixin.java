@@ -10,7 +10,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
 import net.geforcemods.securitycraft.SCContent;
-import net.minecraft.core.HolderSet;
+import net.geforcemods.securitycraft.platform.registry.LazyHolderSet;
 import net.minecraft.world.item.ShearsItem;
 import net.minecraft.world.item.component.Tool;
 
@@ -24,7 +24,7 @@ public class ShearsItemMixin {
 	private static List securitycraft$addReinforcedCobwebToShearsProperties(Object minesAndDropsCobweb, Object overrideLeavesSpeed, Object overrideWoolSpeed, Object overrideVineAndGlowLichenSpeed, Operation<List> original) {
 		List list = new ArrayList();
 
-		list.add(Tool.Rule.minesAndDrops(HolderSet.direct(SCContent.REINFORCED_COBWEB.getDelegate()), 15.0F));
+		list.add(Tool.Rule.minesAndDrops(new LazyHolderSet<>(() -> List.of(SCContent.REINFORCED_COBWEB.get().builtInRegistryHolder())), 15.0F));
 		list.addAll(original.call(minesAndDropsCobweb, overrideLeavesSpeed, overrideWoolSpeed, overrideVineAndGlowLichenSpeed));
 		return list;
 	}

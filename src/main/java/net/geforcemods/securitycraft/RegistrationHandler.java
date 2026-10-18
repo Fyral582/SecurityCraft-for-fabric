@@ -115,6 +115,15 @@ import net.minecraft.world.level.block.state.BlockState;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.HashMap;
+import java.util.Map;
+import net.fabricmc.fabric.api.lookup.v1.block.BlockApiLookup.BlockEntityApiProvider;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 
 public class RegistrationHandler {
 	private RegistrationHandler() {}
@@ -249,24 +258,46 @@ public class RegistrationHandler {
 		registrar.playToServer(UpdateSliderValue.TYPE, UpdateSliderValue.STREAM_CODEC, UpdateSliderValue::handle);
 	}
 
+	private static final Map<BlockEntityType<?>, BlockEntityApiProvider<Storage<ItemVariant>, Direction>> ITEM_STORAGE_PROVIDERS = new HashMap<>();
+
+	/**
+	 * Registers an item storage for the given block entity type. Block entity types that also support the reinforced moving
+	 * piston (so they can be moved by pistons) would cause duplicate registrations for it, so a single provider that
+	 * delegates based on the block entity type is registered for that block instead.
+	 */
+	@SuppressWarnings("unchecked")
+	private static <T extends BlockEntity> void registerItemStorage(BiFunction<T, Direction, Storage<ItemVariant>> provider, BlockEntityType<T> type) {
+		ITEM_STORAGE_PROVIDERS.put(type, (be, dir) -> provider.apply((T) be, dir));
+
+		for (Block block : type.validBlocks) {
+			if (block != SCContent.REINFORCED_MOVING_PISTON.get())
+				ItemStorage.SIDED.registerForBlocks((level, pos, state, be, dir) -> be != null && be.getType() == type ? provider.apply((T) be, dir) : null, block);
+		}
+	}
+
 	private static void onRegisterCapabilities() {
-		ItemStorage.SIDED.registerForBlockEntity(AbstractKeypadFurnaceBlockEntity::getCapability, SCContent.KEYPAD_BLAST_FURNACE_BLOCK_ENTITY.get());
-		ItemStorage.SIDED.registerForBlockEntity(AbstractKeypadFurnaceBlockEntity::getCapability, SCContent.KEYPAD_FURNACE_BLOCK_ENTITY.get());
-		ItemStorage.SIDED.registerForBlockEntity(AbstractKeypadFurnaceBlockEntity::getCapability, SCContent.KEYPAD_SMOKER_BLOCK_ENTITY.get());
-		ItemStorage.SIDED.registerForBlockEntity(BlockPocketManagerBlockEntity::getCapability, SCContent.BLOCK_POCKET_MANAGER_BLOCK_ENTITY.get());
-		ItemStorage.SIDED.registerForBlockEntity(ClaymoreBlockEntity::getCapability, SCContent.CLAYMORE_BLOCK_ENTITY.get());
-		ItemStorage.SIDED.registerForBlockEntity(InventoryScannerBlockEntity::getCapability, SCContent.INVENTORY_SCANNER_BLOCK_ENTITY.get());
-		ItemStorage.SIDED.registerForBlockEntity(KeypadBarrelBlockEntity::getCapability, SCContent.KEYPAD_BARREL_BLOCK_ENTITY.get());
-		ItemStorage.SIDED.registerForBlockEntity((chest, dir) -> KeypadChestBlockEntity.getCapability((KeypadChestBlockEntity) chest, dir), SCContent.KEYPAD_CHEST_BLOCK_ENTITY.get());
-		ItemStorage.SIDED.registerForBlockEntity(LaserBlockBlockEntity::getCapability, SCContent.LASER_BLOCK_BLOCK_ENTITY.get());
-		ItemStorage.SIDED.registerForBlockEntity(ReinforcedHopperBlockEntity::getCapability, SCContent.REINFORCED_HOPPER_BLOCK_ENTITY.get());
-		ItemStorage.SIDED.registerForBlockEntity(TrophySystemBlockEntity::getCapability, SCContent.TROPHY_SYSTEM_BLOCK_ENTITY.get());
-		ItemStorage.SIDED.registerForBlockEntity(ReinforcedChiseledBookshelfBlockEntity::getCapability, SCContent.REINFORCED_CHISELED_BOOKSHELF_BLOCK_ENTITY.get());
-		ItemStorage.SIDED.registerForBlockEntity(ReinforcedDispenserBlockEntity::getCapability, SCContent.REINFORCED_DISPENSER_BLOCK_ENTITY.get());
-		ItemStorage.SIDED.registerForBlockEntity(ReinforcedShelfBlockEntity::getCapability, SCContent.REINFORCED_SHELF_BLOCK_ENTITY.get());
-		ItemStorage.SIDED.registerForBlockEntity(ReinforcedDropperBlockEntity::getCapability, SCContent.REINFORCED_DROPPER_BLOCK_ENTITY.get());
-		ItemStorage.SIDED.registerForBlockEntity(SecurityCameraBlockEntity::getCapability, SCContent.SECURITY_CAMERA_BLOCK_ENTITY.get());
-		ItemStorage.SIDED.registerForBlockEntity(SecureTradingStationBlockEntity::getCapability, SCContent.SECURE_TRADING_STATION_BLOCK_ENTITY.get());
+		registerItemStorage(AbstractKeypadFurnaceBlockEntity::getCapability, SCContent.KEYPAD_BLAST_FURNACE_BLOCK_ENTITY.get());
+		registerItemStorage(AbstractKeypadFurnaceBlockEntity::getCapability, SCContent.KEYPAD_FURNACE_BLOCK_ENTITY.get());
+		registerItemStorage(AbstractKeypadFurnaceBlockEntity::getCapability, SCContent.KEYPAD_SMOKER_BLOCK_ENTITY.get());
+		registerItemStorage(BlockPocketManagerBlockEntity::getCapability, SCContent.BLOCK_POCKET_MANAGER_BLOCK_ENTITY.get());
+		registerItemStorage(ClaymoreBlockEntity::getCapability, SCContent.CLAYMORE_BLOCK_ENTITY.get());
+		registerItemStorage(InventoryScannerBlockEntity::getCapability, SCContent.INVENTORY_SCANNER_BLOCK_ENTITY.get());
+		registerItemStorage(KeypadBarrelBlockEntity::getCapability, SCContent.KEYPAD_BARREL_BLOCK_ENTITY.get());
+		registerItemStorage((chest, dir) -> KeypadChestBlockEntity.getCapability((KeypadChestBlockEntity) chest, dir), SCContent.KEYPAD_CHEST_BLOCK_ENTITY.get());
+		registerItemStorage(LaserBlockBlockEntity::getCapability, SCContent.LASER_BLOCK_BLOCK_ENTITY.get());
+		registerItemStorage(ReinforcedHopperBlockEntity::getCapability, SCContent.REINFORCED_HOPPER_BLOCK_ENTITY.get());
+		registerItemStorage(TrophySystemBlockEntity::getCapability, SCContent.TROPHY_SYSTEM_BLOCK_ENTITY.get());
+		registerItemStorage(ReinforcedChiseledBookshelfBlockEntity::getCapability, SCContent.REINFORCED_CHISELED_BOOKSHELF_BLOCK_ENTITY.get());
+		registerItemStorage(ReinforcedDispenserBlockEntity::getCapability, SCContent.REINFORCED_DISPENSER_BLOCK_ENTITY.get());
+		registerItemStorage(ReinforcedShelfBlockEntity::getCapability, SCContent.REINFORCED_SHELF_BLOCK_ENTITY.get());
+		registerItemStorage(ReinforcedDropperBlockEntity::getCapability, SCContent.REINFORCED_DROPPER_BLOCK_ENTITY.get());
+		registerItemStorage(SecurityCameraBlockEntity::getCapability, SCContent.SECURITY_CAMERA_BLOCK_ENTITY.get());
+		registerItemStorage(SecureTradingStationBlockEntity::getCapability, SCContent.SECURE_TRADING_STATION_BLOCK_ENTITY.get());
+		ItemStorage.SIDED.registerForBlocks((level, pos, state, be, dir) -> {
+			BlockEntityApiProvider<Storage<ItemVariant>, Direction> provider = be == null ? null : ITEM_STORAGE_PROVIDERS.get(be.getType());
+
+			return provider == null ? null : provider.find(be, dir);
+		}, SCContent.REINFORCED_MOVING_PISTON.get());
 		FluidStorage.ITEM.registerForItems((stack, context) -> new FullItemFluidStorage(context, Items.BUCKET, FluidVariant.of(SCContent.FAKE_WATER.get()), FluidConstants.BUCKET), SCContent.FAKE_WATER_BUCKET.get());
 		FluidStorage.ITEM.registerForItems((stack, context) -> new FullItemFluidStorage(context, Items.BUCKET, FluidVariant.of(SCContent.FAKE_LAVA.get()), FluidConstants.BUCKET), SCContent.FAKE_LAVA_BUCKET.get());
 	}
