@@ -1,27 +1,18 @@
 package net.geforcemods.securitycraft.inventory;
 
-import net.neoforged.neoforge.transfer.DelegatingResourceHandler;
-import net.neoforged.neoforge.transfer.ResourceHandler;
-import net.neoforged.neoforge.transfer.resource.Resource;
-import net.neoforged.neoforge.transfer.transaction.TransactionContext;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.fabricmc.fabric.api.transfer.v1.storage.base.FilteringStorage;
 
-public class ExtractOnlyResourceHandler<T extends Resource> extends DelegatingResourceHandler<T> {
-	public ExtractOnlyResourceHandler(ResourceHandler<T> delegate) {
+/**
+ * A storage wrapper that only allows extracting from the wrapped storage
+ */
+public class ExtractOnlyResourceHandler<T> extends FilteringStorage<T> {
+	public ExtractOnlyResourceHandler(Storage<T> delegate) {
 		super(delegate);
 	}
 
 	@Override
-	public int insert(T resource, int amount, TransactionContext transaction) {
-		return 0;
-	}
-
-	@Override
-	public int insert(int index, T resource, int amount, TransactionContext transaction) {
-		return 0;
-	}
-
-	@Override
-	public boolean isValid(int index, T resource) {
+	protected boolean canInsert(T resource) {
 		return false;
 	}
 }

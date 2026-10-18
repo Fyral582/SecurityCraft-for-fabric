@@ -44,7 +44,7 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.phys.BlockHitResult;
-import net.neoforged.neoforge.common.Tags;
+import net.fabricmc.fabric.api.tag.convention.v2.ConventionalBlockTags;
 
 public class KeypadBarrelBlock extends DisguisableBlock {
 	public static final EnumProperty<Direction> HORIZONTAL_FACING = BlockStateProperties.HORIZONTAL_FACING;
@@ -160,7 +160,7 @@ public class KeypadBarrelBlock extends DisguisableBlock {
 	public static class Convertible implements IPasscodeConvertible {
 		@Override
 		public boolean isUnprotectedBlock(BlockState state) {
-			return state.is(Tags.Blocks.BARRELS_WOODEN);
+			return state.is(ConventionalBlockTags.WOODEN_BARRELS);
 		}
 
 		@Override

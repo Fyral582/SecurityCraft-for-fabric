@@ -7,6 +7,8 @@ import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.sugar.Local;
 
 import net.geforcemods.securitycraft.api.IOwnable;
+import net.geforcemods.securitycraft.entity.AbstractSecuritySeaBoat;
+import net.geforcemods.securitycraft.inventory.ProtectedEntityContainer;
 import net.minecraft.world.Container;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.HopperBlockEntity;
@@ -29,7 +31,9 @@ public class HopperBlockEntityMixin {
 
 	@ModifyReturnValue(method = "getEntityContainer", at = @At("RETURN"))
 	private static Container securitycraft$skipEntityContainer(Container original) {
-		if (original instanceof IOwnable)
+		if (original instanceof AbstractSecuritySeaBoat boat)
+			return new ProtectedEntityContainer<>(boat);
+		else if (original instanceof IOwnable)
 			return null;
 		else
 			return original;

@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft;
 
+import net.fabricmc.fabric.api.client.rendering.v1.BlockRenderLayerMap;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -162,32 +163,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SnowyDirtBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.common.asm.enumextension.EnumProxy;
-import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
-import net.neoforged.neoforge.client.IArmPoseTransformer;
-import net.neoforged.neoforge.client.event.EntityRenderersEvent;
-import net.neoforged.neoforge.client.event.ModelEvent;
-import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
-import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
-import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
-import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
-import net.neoforged.neoforge.client.event.RegisterPictureInPictureRenderersEvent;
-import net.neoforged.neoforge.client.event.RegisterRangeSelectItemModelPropertyEvent;
-import net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent;
-import net.neoforged.neoforge.client.event.RegisterSelectItemModelPropertyEvent;
-import net.neoforged.neoforge.client.event.RegisterSpecialModelRendererEvent;
-import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
-import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
-import net.neoforged.neoforge.client.model.standalone.SimpleUnbakedStandaloneModel;
-import net.neoforged.neoforge.client.model.standalone.StandaloneModelKey;
-import net.neoforged.neoforge.client.model.standalone.StandaloneModelLoader.BakedModels;
-import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent;
 import net.geforcemods.securitycraft.platform.registry.DeferredBlock;
 
-@EventBusSubscriber(modid = SecurityCraft.MODID, value = Dist.CLIENT)
 public class ClientHandler {
 	public static final ModelLayerLocation BULLET_LOCATION = new ModelLayerLocation(SecurityCraft.resLoc("bullet"), "main");
 	public static final ModelLayerLocation IMS_BOMB_LOCATION = new ModelLayerLocation(SecurityCraft.resLoc("ims_bomb"), "main");
@@ -240,10 +217,10 @@ public class ClientHandler {
 	private static final Identifier SRI_BASE_MODEL_LOCATION = SecurityCraft.resLoc("block/secure_redstone_interface");
 	private static final Identifier SRI_SENDER_ON_MODEL_LOCATION = SRI_BASE_MODEL_LOCATION.withSuffix("_sender_on");
 	private static final Identifier SRI_RECEIVER_ON_MODEL_LOCATION = SRI_BASE_MODEL_LOCATION.withSuffix("_receiver_on");
-	private static final Map<SRIKey, StandaloneModelKey<BlockStateModel>> SRI_MODEL_KEYS = Util.make(new HashMap<>(), map -> {
+	private static final Map<SRIKey, ExtraModelKey<BlockStateModel>> SRI_MODEL_KEYS = Util.make(new HashMap<>(), map -> {
 		Arrays.stream(Direction.values()).forEach(direction -> {
-			map.put(new SRIKey(true, direction), new StandaloneModelKey<>(() -> SRI_SENDER_ON_MODEL_LOCATION + "$" + direction.getName()));
-			map.put(new SRIKey(false, direction), new StandaloneModelKey<>(() -> SRI_RECEIVER_ON_MODEL_LOCATION + "$" + direction.getName()));
+			map.put(new SRIKey(true, direction), ExtraModelKey.create(() -> SRI_SENDER_ON_MODEL_LOCATION + "$" + direction.getName()));
+			map.put(new SRIKey(false, direction), ExtraModelKey.create(() -> SRI_RECEIVER_ON_MODEL_LOCATION + "$" + direction.getName()));
 		});
 	});
 	//@formatter:off
@@ -254,278 +231,246 @@ public class ClientHandler {
 					.setOutputTarget(OutputTarget.OUTLINE_TARGET)
 					.createRenderSetup());
 	//@formatter:on
-	public static final EnumProxy<ArmPose> TASER_ARM_POSE_PARAMS = new EnumProxy<>(ArmPose.class, true, true, (IArmPoseTransformer) (model, entity, arm) -> {
-		ModelPart leftArm = model.leftArm;
-		ModelPart rightArm = model.rightArm;
-
-		leftArm.yRot = 0.5F;
-		rightArm.yRot = -0.5F;
-		leftArm.xRot = rightArm.xRot = -1.5F;
-	});
 
 	private ClientHandler() {}
 
-	@SubscribeEvent
-	public static void onModelRegisterAdditional(ModelEvent.RegisterStandalone event) {
-		SRI_MODEL_KEYS.forEach((sriKey, modelKey) -> {
-			event.register(modelKey, SimpleUnbakedStandaloneModel.blockStateModel(sriKey.location(), sriKey.modelRotation()));
+	public static void init() {
+		ModelLoadingPlugin.register(ClientHandler::onInitializeModelLoading);
+		onRegisterRangeSelectItemModelProperty();
+		onRegisterSelectItemModelProperty();
+		onRegisterSpecialModelRenderer();
+		onRegisterItemTintSources();
+		onFMLClientSetup();
+		registerMenuScreens();
+		LayerToggleHandler.init();
+		registerGuiLayers();
+		registerPipRenderers();
+		registerEntityRenderers();
+		registerLayerDefinitions();
+		registerParticleProviders();
+		onRegisterClientPayloadsHandlers();
+		onRegisterBlockColorHandlers();
+	}
+
+	private static void onInitializeModelLoading(ModelLoadingPlugin.Context context) {
+		onModelRegisterAdditional(context);
+		context.modifyBlockModelAfterBake().register((model, ctx) -> {
+			BlockState state = ctx.state();
+			Block block = state.getBlock();
+
+			if (block == SCContent.SECURE_REDSTONE_INTERFACE.get()) {
+				boolean sender = state.getValue(SecureRedstoneInterfaceBlock.SENDER);
+				Direction direction = state.getValue(SecureRedstoneInterfaceBlock.FACING);
+				ExtraModelKey<BlockStateModel> key = SRI_MODEL_KEYS.get(new SRIKey(sender, direction));
+
+				return new SecureRedstoneInterfaceBlockStateModel(() -> Minecraft.getInstance().getModelManager().getModel(key), model);
+			}
+
+			for (Block disguisableBlock : disguisableBlocks.get()) {
+				if (block == disguisableBlock)
+					return new DisguisableBlockStateModel(model);
+			}
+
+			return model;
 		});
 	}
 
-	@SubscribeEvent
-	public static void onModelBakingCompleted(ModelEvent.ModifyBakingResult event) {
-		Map<BlockState, BlockStateModel> modelRegistry = event.getBakingResult().blockStateModels();
-		BakedModels standaloneModels = event.getBakingResult().standaloneModels();
-		Block sri = SCContent.SECURE_REDSTONE_INTERFACE.get();
-
-		for (Block block : disguisableBlocks.get()) {
-			for (BlockState state : block.getStateDefinition().getPossibleStates()) {
-				registerDisguisedModel(modelRegistry, state, DisguisableBlockStateModel::new);
-			}
-		}
-
-		for (BlockState state : sri.getStateDefinition().getPossibleStates()) {
-			boolean sender = state.getValue(SecureRedstoneInterfaceBlock.SENDER);
-			Direction direction = state.getValue(SecureRedstoneInterfaceBlock.FACING);
-
-			registerDisguisedModel(modelRegistry, state, oldModel -> new SecureRedstoneInterfaceBlockStateModel(standaloneModels.get(SRI_MODEL_KEYS.get(new SRIKey(sender, direction))), oldModel));
-		}
+	private static void onModelRegisterAdditional(ModelLoadingPlugin.Context context) {
+		SRI_MODEL_KEYS.forEach((sriKey, modelKey) -> {
+			context.addModel(modelKey, SimpleUnbakedExtraModel.blockStateModel(sriKey.location(), sriKey.modelRotation()));
+		});
 	}
 
-	private static void registerDisguisedModel(Map<BlockState, BlockStateModel> modelRegistry, BlockState state, UnaryOperator<BlockStateModel> modelFunction) {
-		modelRegistry.put(state, modelFunction.apply(modelRegistry.get(state)));
+	private static void onRegisterRangeSelectItemModelProperty() {
+		RangeSelectItemModelProperties.ID_MAPPER.put(SecurityCraft.resLoc("keycard_count"), KeycardCount.MAP_CODEC);
 	}
 
-	@SubscribeEvent
-	public static void onRegisterRangeSelectItemModelProperty(RegisterRangeSelectItemModelPropertyEvent event) {
-		event.register(SecurityCraft.resLoc("keycard_count"), KeycardCount.MAP_CODEC);
+	private static void onRegisterSelectItemModelProperty() {
+		SelectItemModelProperties.ID_MAPPER.put(SecurityCraft.resLoc("block_linked"), BlockLinked.TYPE);
+		SelectItemModelProperties.ID_MAPPER.put(SecurityCraft.resLoc("codebreaker_state"), CodebreakerState.TYPE);
+		SelectItemModelProperties.ID_MAPPER.put(SecurityCraft.resLoc("sentry_linked"), SentryLinked.TYPE);
 	}
 
-	@SubscribeEvent
-	public static void onRegisterSelectItemModelProperty(RegisterSelectItemModelPropertyEvent event) {
-		event.register(SecurityCraft.resLoc("block_linked"), BlockLinked.TYPE);
-		event.register(SecurityCraft.resLoc("codebreaker_state"), CodebreakerState.TYPE);
-		event.register(SecurityCraft.resLoc("sentry_linked"), SentryLinked.TYPE);
+	private static void onRegisterSpecialModelRenderer() {
+		SpecialModelRenderers.ID_MAPPER.put(SecurityCraft.resLoc("display_case"), DisplayCaseSpecialRenderer.Unbaked.MAP_CODEC);
+		SpecialModelRenderers.ID_MAPPER.put(SecurityCraft.resLoc("security_camera"), SecurityCameraSpecialRenderer.Unbaked.MAP_CODEC);
 	}
 
-	@SubscribeEvent
-	public static void onRegisterSpecialModelRenderer(RegisterSpecialModelRendererEvent event) {
-		event.register(SecurityCraft.resLoc("display_case"), DisplayCaseSpecialRenderer.Unbaked.MAP_CODEC);
-		event.register(SecurityCraft.resLoc("security_camera"), SecurityCameraSpecialRenderer.Unbaked.MAP_CODEC);
+	private static void onRegisterItemTintSources() {
+		ItemTintSources.ID_MAPPER.put(SecurityCraft.resLoc("reinforced"), ReinforcedTint.MAP_CODEC);
 	}
 
-	@SubscribeEvent
-	public static void onRegisterItemTintSources(RegisterColorHandlersEvent.ItemTintSources event) {
-		event.register(SecurityCraft.resLoc("reinforced"), ReinforcedTint.MAP_CODEC);
-	}
-
-	@SubscribeEvent
-	public static void onFMLClientSetup(FMLClientSetupEvent event) {
+	private static void onFMLClientSetup() {
 		ChunkSectionLayer cutout = ChunkSectionLayer.CUTOUT;
 		ChunkSectionLayer translucent = ChunkSectionLayer.TRANSLUCENT;
 
-		ItemBlockRenderTypes.setRenderLayer(SCContent.FAKE_WATER.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.FLOWING_FAKE_WATER.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_COPPER_BARS.get(), cutout);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_EXPOSED_COPPER_BARS.get(), cutout);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_WEATHERED_COPPER_BARS.get(), cutout);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_OXIDIZED_COPPER_BARS.get(), cutout);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_GLASS.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_GLASS_PANE.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_IRON_BARS.get(), cutout);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_LIGHTNING_ROD.get(), cutout);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_EXPOSED_LIGHTNING_ROD.get(), cutout);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_WEATHERED_LIGHTNING_ROD.get(), cutout);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_OXIDIZED_LIGHTNING_ROD.get(), cutout);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_WHITE_STAINED_GLASS.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_ORANGE_STAINED_GLASS.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_MAGENTA_STAINED_GLASS.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_LIGHT_BLUE_STAINED_GLASS.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_YELLOW_STAINED_GLASS.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_LIME_STAINED_GLASS.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_PINK_STAINED_GLASS.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_GRAY_STAINED_GLASS.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_LIGHT_GRAY_STAINED_GLASS.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_CYAN_STAINED_GLASS.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_PURPLE_STAINED_GLASS.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_BLUE_STAINED_GLASS.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_BROWN_STAINED_GLASS.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_GREEN_STAINED_GLASS.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_RED_STAINED_GLASS.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_BLACK_STAINED_GLASS.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_WHITE_STAINED_GLASS_PANE.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_ORANGE_STAINED_GLASS_PANE.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_MAGENTA_STAINED_GLASS_PANE.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_LIGHT_BLUE_STAINED_GLASS_PANE.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_YELLOW_STAINED_GLASS_PANE.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_LIME_STAINED_GLASS_PANE.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_PINK_STAINED_GLASS_PANE.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_GRAY_STAINED_GLASS_PANE.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_LIGHT_GRAY_STAINED_GLASS_PANE.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_CYAN_STAINED_GLASS_PANE.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_PURPLE_STAINED_GLASS_PANE.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_BLUE_STAINED_GLASS_PANE.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_BROWN_STAINED_GLASS_PANE.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_GREEN_STAINED_GLASS_PANE.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_RED_STAINED_GLASS_PANE.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_BLACK_STAINED_GLASS_PANE.get(), translucent);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.REINFORCED_PALE_MOSS_CARPET.get(), cutout);
-		ItemBlockRenderTypes.setRenderLayer(SCContent.TRACK_MINE.get(), cutout);
+		BlockRenderLayerMap.putFluid(SCContent.FAKE_WATER.get(), translucent);
+		BlockRenderLayerMap.putFluid(SCContent.FLOWING_FAKE_WATER.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_COPPER_BARS.get(), cutout);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_EXPOSED_COPPER_BARS.get(), cutout);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_WEATHERED_COPPER_BARS.get(), cutout);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_OXIDIZED_COPPER_BARS.get(), cutout);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_GLASS.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_IRON_BARS.get(), cutout);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_LIGHTNING_ROD.get(), cutout);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_EXPOSED_LIGHTNING_ROD.get(), cutout);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_WEATHERED_LIGHTNING_ROD.get(), cutout);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_OXIDIZED_LIGHTNING_ROD.get(), cutout);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_WHITE_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_ORANGE_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_MAGENTA_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_LIGHT_BLUE_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_YELLOW_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_LIME_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_PINK_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_GRAY_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_LIGHT_GRAY_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_CYAN_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_PURPLE_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_BLUE_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_BROWN_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_GREEN_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_RED_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_BLACK_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_WHITE_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_ORANGE_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_MAGENTA_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_LIGHT_BLUE_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_YELLOW_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_LIME_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_PINK_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_GRAY_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_LIGHT_GRAY_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_CYAN_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_PURPLE_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_BLUE_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_BROWN_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_GREEN_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_RED_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_BLACK_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_PALE_MOSS_CARPET.get(), cutout);
+		BlockRenderLayerMap.putBlock(SCContent.TRACK_MINE.get(), cutout);
 	}
 
-	@SubscribeEvent
-	public static void registerMenuScreens(RegisterMenuScreensEvent event) {
-		event.register(SCContent.BLOCK_REINFORCER_MENU.get(), BlockReinforcerScreen::new);
-		event.register(SCContent.BRIEFCASE_INVENTORY_MENU.get(), ItemInventoryScreen.Briefcase::new);
-		event.register(SCContent.CUSTOMIZE_BLOCK_MENU.get(), CustomizeBlockScreen::new);
-		event.register(SCContent.CUSTOMIZE_ENTITY_MENU.get(), CustomizeBlockScreen::new);
-		event.register(SCContent.DISGUISE_MODULE_MENU.get(), DisguiseModuleScreen::new);
-		event.register(SCContent.INVENTORY_SCANNER_MENU.get(), InventoryScannerScreen::new);
-		event.register(SCContent.KEYPAD_FURNACE_MENU.get(), KeypadFurnaceScreen::new);
-		event.register(SCContent.KEYPAD_SMOKER_MENU.get(), KeypadSmokerScreen::new);
-		event.register(SCContent.KEYPAD_BLAST_FURNACE_MENU.get(), KeypadBlastFurnaceScreen::new);
-		event.register(SCContent.KEYCARD_READER_MENU.get(), KeycardReaderScreen::new);
-		event.register(SCContent.BLOCK_POCKET_MANAGER_MENU.get(), BlockPocketManagerScreen::new);
-		event.register(SCContent.PROJECTOR_MENU.get(), ProjectorScreen::new);
-		event.register(SCContent.BLOCK_CHANGE_DETECTOR_MENU.get(), BlockChangeDetectorScreen::new);
-		event.register(SCContent.KEYCARD_HOLDER_MENU.get(), ItemInventoryScreen.KeycardHolder::new);
-		event.register(SCContent.TROPHY_SYSTEM_MENU.get(), TrophySystemScreen::new);
-		event.register(SCContent.SINGLE_LENS_MENU.get(), SingleLensScreen::new);
-		event.register(SCContent.LASER_BLOCK_MENU.get(), LaserBlockScreen::new);
-		event.register(SCContent.REINFORCED_LECTERN_MENU.get(), ReinforcedLecternScreen::new);
-		event.register(SCContent.SECURE_TRADING_STATION_MENU.get(), SecureTradingStationScreen::new);
+	private static void registerMenuScreens() {
+		MenuScreens.register(SCContent.BLOCK_REINFORCER_MENU.get(), BlockReinforcerScreen::new);
+		MenuScreens.register(SCContent.BRIEFCASE_INVENTORY_MENU.get(), ItemInventoryScreen.Briefcase::new);
+		MenuScreens.register(SCContent.CUSTOMIZE_BLOCK_MENU.get(), CustomizeBlockScreen::new);
+		MenuScreens.register(SCContent.CUSTOMIZE_ENTITY_MENU.get(), CustomizeBlockScreen::new);
+		MenuScreens.register(SCContent.DISGUISE_MODULE_MENU.get(), DisguiseModuleScreen::new);
+		MenuScreens.register(SCContent.INVENTORY_SCANNER_MENU.get(), InventoryScannerScreen::new);
+		MenuScreens.register(SCContent.KEYPAD_FURNACE_MENU.get(), KeypadFurnaceScreen::new);
+		MenuScreens.register(SCContent.KEYPAD_SMOKER_MENU.get(), KeypadSmokerScreen::new);
+		MenuScreens.register(SCContent.KEYPAD_BLAST_FURNACE_MENU.get(), KeypadBlastFurnaceScreen::new);
+		MenuScreens.register(SCContent.KEYCARD_READER_MENU.get(), KeycardReaderScreen::new);
+		MenuScreens.register(SCContent.BLOCK_POCKET_MANAGER_MENU.get(), BlockPocketManagerScreen::new);
+		MenuScreens.register(SCContent.PROJECTOR_MENU.get(), ProjectorScreen::new);
+		MenuScreens.register(SCContent.BLOCK_CHANGE_DETECTOR_MENU.get(), BlockChangeDetectorScreen::new);
+		MenuScreens.register(SCContent.KEYCARD_HOLDER_MENU.get(), ItemInventoryScreen.KeycardHolder::new);
+		MenuScreens.register(SCContent.TROPHY_SYSTEM_MENU.get(), TrophySystemScreen::new);
+		MenuScreens.register(SCContent.SINGLE_LENS_MENU.get(), SingleLensScreen::new);
+		MenuScreens.register(SCContent.LASER_BLOCK_MENU.get(), LaserBlockScreen::new);
+		MenuScreens.register(SCContent.REINFORCED_LECTERN_MENU.get(), ReinforcedLecternScreen::new);
+		MenuScreens.register(SCContent.SECURE_TRADING_STATION_MENU.get(), SecureTradingStationScreen::new);
 	}
 
-	@SubscribeEvent
-	public static void registerGuiLayers(RegisterGuiLayersEvent event) {
-		event.registerAboveAll(CAMERA_LAYER, SCClientEventHandler::cameraOverlay);
+	private static void registerGuiLayers() {
+		HudElementRegistry.addLast(CAMERA_LAYER, LayerToggleHandler.wrap(CAMERA_LAYER, SCClientEventHandler::cameraOverlay));
 		LayerToggleHandler.disable(CAMERA_LAYER);
 	}
 
-	@SubscribeEvent
-	public static void registerPipRenderers(RegisterPictureInPictureRenderersEvent event) {
-		event.register(GuiBlockModelRenderState.class, GuiBlockModelRenderer::new);
+	private static void registerPipRenderers() {
+		SpecialGuiElementRegistry.register(ctx -> new GuiBlockModelRenderer(ctx.vertexConsumers()));
 	}
 
-	@SubscribeEvent
-	public static void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
-		event.registerEntityRenderer(SCContent.BOUNCING_BETTY_ENTITY.get(), BouncingBettyRenderer::new);
-		event.registerEntityRenderer(SCContent.IMS_BOMB_ENTITY.get(), IMSBombRenderer::new);
-		event.registerEntityRenderer(SCContent.SECURITY_CAMERA_ENTITY.get(), NoopRenderer::new);
-		event.registerEntityRenderer(SCContent.SENTRY_ENTITY.get(), SentryRenderer::new);
-		event.registerEntityRenderer(SCContent.BULLET_ENTITY.get(), BulletRenderer::new);
-		event.registerEntityRenderer(SCContent.OAK_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.OAK_CHEST_BOAT));
-		event.registerEntityRenderer(SCContent.SPRUCE_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.SPRUCE_CHEST_BOAT));
-		event.registerEntityRenderer(SCContent.BIRCH_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.BIRCH_CHEST_BOAT));
-		event.registerEntityRenderer(SCContent.JUNGLE_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.JUNGLE_CHEST_BOAT));
-		event.registerEntityRenderer(SCContent.ACACIA_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.ACACIA_CHEST_BOAT));
-		event.registerEntityRenderer(SCContent.DARK_OAK_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.DARK_OAK_CHEST_BOAT));
-		event.registerEntityRenderer(SCContent.MANGROVE_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.MANGROVE_CHEST_BOAT));
-		event.registerEntityRenderer(SCContent.CHERRY_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.CHERRY_CHEST_BOAT));
-		event.registerEntityRenderer(SCContent.PALE_OAK_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.PALE_OAK_CHEST_BOAT));
-		event.registerEntityRenderer(SCContent.BAMBOO_SECURITY_SEA_RAFT_ENTITY.get(), ctx -> new SecuritySeaRaftRenderer(ctx, ModelLayers.BAMBOO_CHEST_RAFT));
+	private static void registerEntityRenderers() {
+		EntityRenderers.register(SCContent.BOUNCING_BETTY_ENTITY.get(), BouncingBettyRenderer::new);
+		EntityRenderers.register(SCContent.IMS_BOMB_ENTITY.get(), IMSBombRenderer::new);
+		EntityRenderers.register(SCContent.SECURITY_CAMERA_ENTITY.get(), NoopRenderer::new);
+		EntityRenderers.register(SCContent.SENTRY_ENTITY.get(), SentryRenderer::new);
+		EntityRenderers.register(SCContent.BULLET_ENTITY.get(), BulletRenderer::new);
+		EntityRenderers.register(SCContent.OAK_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.OAK_CHEST_BOAT));
+		EntityRenderers.register(SCContent.SPRUCE_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.SPRUCE_CHEST_BOAT));
+		EntityRenderers.register(SCContent.BIRCH_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.BIRCH_CHEST_BOAT));
+		EntityRenderers.register(SCContent.JUNGLE_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.JUNGLE_CHEST_BOAT));
+		EntityRenderers.register(SCContent.ACACIA_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.ACACIA_CHEST_BOAT));
+		EntityRenderers.register(SCContent.DARK_OAK_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.DARK_OAK_CHEST_BOAT));
+		EntityRenderers.register(SCContent.MANGROVE_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.MANGROVE_CHEST_BOAT));
+		EntityRenderers.register(SCContent.CHERRY_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.CHERRY_CHEST_BOAT));
+		EntityRenderers.register(SCContent.PALE_OAK_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.PALE_OAK_CHEST_BOAT));
+		EntityRenderers.register(SCContent.BAMBOO_SECURITY_SEA_RAFT_ENTITY.get(), ctx -> new SecuritySeaRaftRenderer(ctx, ModelLayers.BAMBOO_CHEST_RAFT));
 		//normal renderers
-		event.registerBlockEntityRenderer(SCContent.BLOCK_POCKET_MANAGER_BLOCK_ENTITY.get(), BlockPocketManagerRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.CLAYMORE_BLOCK_ENTITY.get(), ClaymoreRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.KEYPAD_CHEST_BLOCK_ENTITY.get(), KeypadChestRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.DISPLAY_CASE_BLOCK_ENTITY.get(), ctx -> new DisplayCaseRenderer(ctx, false));
-		event.registerBlockEntityRenderer(SCContent.GLOW_DISPLAY_CASE_BLOCK_ENTITY.get(), ctx -> new DisplayCaseRenderer(ctx, true));
-		event.registerBlockEntityRenderer(SCContent.FRAME_BLOCK_ENTITY.get(), FrameBlockEntityRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.REINFORCED_LECTERN_BLOCK_ENTITY.get(), LecternRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.PROJECTOR_BLOCK_ENTITY.get(), ProjectorRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.REINFORCED_PISTON_BLOCK_ENTITY.get(), ReinforcedPistonHeadRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.REINFORCED_SHELF_BLOCK_ENTITY.get(), ShelfRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.RETINAL_SCANNER_BLOCK_ENTITY.get(), RetinalScannerRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.SECURE_REDSTONE_INTERFACE_BLOCK_ENTITY.get(), SecureRedstoneInterfaceRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.SECURE_TRADING_STATION_BLOCK_ENTITY.get(), SecureTradingStationRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.SECURITY_CAMERA_BLOCK_ENTITY.get(), SecurityCameraRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.SECRET_HANGING_SIGN_BLOCK_ENTITY.get(), SecretHangingSignRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.SECRET_SIGN_BLOCK_ENTITY.get(), SecretSignRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.SONIC_SECURITY_SYSTEM_BLOCK_ENTITY.get(), SonicSecuritySystemRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.TROPHY_SYSTEM_BLOCK_ENTITY.get(), TrophySystemRenderer::new);
+		BlockEntityRenderers.register(SCContent.BLOCK_POCKET_MANAGER_BLOCK_ENTITY.get(), BlockPocketManagerRenderer::new);
+		BlockEntityRenderers.register(SCContent.CLAYMORE_BLOCK_ENTITY.get(), ClaymoreRenderer::new);
+		BlockEntityRenderers.register(SCContent.KEYPAD_CHEST_BLOCK_ENTITY.get(), KeypadChestRenderer::new);
+		BlockEntityRenderers.register(SCContent.DISPLAY_CASE_BLOCK_ENTITY.get(), ctx -> new DisplayCaseRenderer(ctx, false));
+		BlockEntityRenderers.register(SCContent.GLOW_DISPLAY_CASE_BLOCK_ENTITY.get(), ctx -> new DisplayCaseRenderer(ctx, true));
+		BlockEntityRenderers.register(SCContent.FRAME_BLOCK_ENTITY.get(), FrameBlockEntityRenderer::new);
+		BlockEntityRenderers.register(SCContent.REINFORCED_LECTERN_BLOCK_ENTITY.get(), LecternRenderer::new);
+		BlockEntityRenderers.register(SCContent.PROJECTOR_BLOCK_ENTITY.get(), ProjectorRenderer::new);
+		BlockEntityRenderers.register(SCContent.REINFORCED_PISTON_BLOCK_ENTITY.get(), ReinforcedPistonHeadRenderer::new);
+		BlockEntityRenderers.register(SCContent.REINFORCED_SHELF_BLOCK_ENTITY.get(), ShelfRenderer::new);
+		BlockEntityRenderers.register(SCContent.RETINAL_SCANNER_BLOCK_ENTITY.get(), RetinalScannerRenderer::new);
+		BlockEntityRenderers.register(SCContent.SECURE_REDSTONE_INTERFACE_BLOCK_ENTITY.get(), SecureRedstoneInterfaceRenderer::new);
+		BlockEntityRenderers.register(SCContent.SECURE_TRADING_STATION_BLOCK_ENTITY.get(), SecureTradingStationRenderer::new);
+		BlockEntityRenderers.register(SCContent.SECURITY_CAMERA_BLOCK_ENTITY.get(), SecurityCameraRenderer::new);
+		BlockEntityRenderers.register(SCContent.SECRET_HANGING_SIGN_BLOCK_ENTITY.get(), SecretHangingSignRenderer::new);
+		BlockEntityRenderers.register(SCContent.SECRET_SIGN_BLOCK_ENTITY.get(), SecretSignRenderer::new);
+		BlockEntityRenderers.register(SCContent.SONIC_SECURITY_SYSTEM_BLOCK_ENTITY.get(), SonicSecuritySystemRenderer::new);
+		BlockEntityRenderers.register(SCContent.TROPHY_SYSTEM_BLOCK_ENTITY.get(), TrophySystemRenderer::new);
 		//disguisable block entity renderers
-		event.registerBlockEntityRenderer(SCContent.BLOCK_CHANGE_DETECTOR_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.CAGE_TRAP_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.DISGUISABLE_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.FLOOR_TRAP_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.INVENTORY_SCANNER_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.KEYCARD_READER_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.KEYPAD_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.KEYPAD_BARREL_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.KEYPAD_BLAST_FURNACE_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.KEYPAD_DOOR_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.KEYPAD_TRAPDOOR_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.KEYPAD_FURNACE_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.KEYPAD_SMOKER_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.LASER_BLOCK_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.OBSERVER_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.PROTECTO_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.REINFORCED_DISPENSER_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.REINFORCED_DROPPER_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.REINFORCED_HOPPER_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.RIFT_STABILIZER_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.SCANNER_DOOR_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.SCANNER_TRAPDOOR_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
-		event.registerBlockEntityRenderer(SCContent.USERNAME_LOGGER_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
+		BlockEntityRenderers.register(SCContent.BLOCK_CHANGE_DETECTOR_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
+		BlockEntityRenderers.register(SCContent.CAGE_TRAP_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
+		BlockEntityRenderers.register(SCContent.DISGUISABLE_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
+		BlockEntityRenderers.register(SCContent.FLOOR_TRAP_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
+		BlockEntityRenderers.register(SCContent.INVENTORY_SCANNER_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
+		BlockEntityRenderers.register(SCContent.KEYCARD_READER_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
+		BlockEntityRenderers.register(SCContent.KEYPAD_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
+		BlockEntityRenderers.register(SCContent.KEYPAD_BARREL_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
+		BlockEntityRenderers.register(SCContent.KEYPAD_BLAST_FURNACE_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
+		BlockEntityRenderers.register(SCContent.KEYPAD_DOOR_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
+		BlockEntityRenderers.register(SCContent.KEYPAD_TRAPDOOR_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
+		BlockEntityRenderers.register(SCContent.KEYPAD_FURNACE_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
+		BlockEntityRenderers.register(SCContent.KEYPAD_SMOKER_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
+		BlockEntityRenderers.register(SCContent.LASER_BLOCK_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
+		BlockEntityRenderers.register(SCContent.OBSERVER_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
+		BlockEntityRenderers.register(SCContent.PROTECTO_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
+		BlockEntityRenderers.register(SCContent.REINFORCED_DISPENSER_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
+		BlockEntityRenderers.register(SCContent.REINFORCED_DROPPER_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
+		BlockEntityRenderers.register(SCContent.REINFORCED_HOPPER_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
+		BlockEntityRenderers.register(SCContent.RIFT_STABILIZER_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
+		BlockEntityRenderers.register(SCContent.SCANNER_DOOR_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
+		BlockEntityRenderers.register(SCContent.SCANNER_TRAPDOOR_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
+		BlockEntityRenderers.register(SCContent.USERNAME_LOGGER_BLOCK_ENTITY.get(), DisguisableBlockEntityRenderer::new);
 	}
 
-	@SubscribeEvent
-	public static void registerLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
-		event.registerLayerDefinition(BULLET_LOCATION, BulletModel::createLayer);
-		event.registerLayerDefinition(IMS_BOMB_LOCATION, IMSBombModel::createLayer);
-		event.registerLayerDefinition(DISPLAY_CASE_LOCATION, DisplayCaseModel::createModelLayer);
-		event.registerLayerDefinition(SENTRY_LOCATION, SentryModel::createLayer);
-		event.registerLayerDefinition(SECURITY_CAMERA_LOCATION, SecurityCameraModel::createLayer);
-		event.registerLayerDefinition(SONIC_SECURITY_SYSTEM_LOCATION, SonicSecuritySystemModel::createLayer);
-		event.registerLayerDefinition(SECURE_REDSTONE_INTERFACE_DISH_LAYER_LOCATION, SecureRedstoneInterfaceDishModel::createLayer);
+	private static void registerLayerDefinitions() {
+		EntityModelLayerRegistry.registerModelLayer(BULLET_LOCATION, BulletModel::createLayer);
+		EntityModelLayerRegistry.registerModelLayer(IMS_BOMB_LOCATION, IMSBombModel::createLayer);
+		EntityModelLayerRegistry.registerModelLayer(DISPLAY_CASE_LOCATION, DisplayCaseModel::createModelLayer);
+		EntityModelLayerRegistry.registerModelLayer(SENTRY_LOCATION, SentryModel::createLayer);
+		EntityModelLayerRegistry.registerModelLayer(SECURITY_CAMERA_LOCATION, SecurityCameraModel::createLayer);
+		EntityModelLayerRegistry.registerModelLayer(SONIC_SECURITY_SYSTEM_LOCATION, SonicSecuritySystemModel::createLayer);
+		EntityModelLayerRegistry.registerModelLayer(SECURE_REDSTONE_INTERFACE_DISH_LAYER_LOCATION, SecureRedstoneInterfaceDishModel::createLayer);
 	}
 
-	@SubscribeEvent
-	public static void registerParticleProviders(RegisterParticleProvidersEvent event) {
-		event.registerSpriteSet(SCContent.FLOOR_TRAP_CLOUD.get(), FloorTrapCloudParticle.Provider::new);
-		event.registerSpriteSet(SCContent.INTERFACE_HIGHLIGHT.get(), InterfaceHighlightParticle.Provider::new);
+	private static void registerParticleProviders() {
+		ParticleFactoryRegistry.getInstance().register(SCContent.FLOOR_TRAP_CLOUD.get(), FloorTrapCloudParticle.Provider::new);
+		ParticleFactoryRegistry.getInstance().register(SCContent.INTERFACE_HIGHLIGHT.get(), InterfaceHighlightParticle.Provider::new);
 	}
 
-	@SubscribeEvent
-	public static void onRegisterRenderPipelines(RegisterRenderPipelinesEvent event) {
-		event.registerPipeline(FrameBlockEntityRenderer.FRAME_PIPELINE);
-	}
-
-	@SubscribeEvent
-	public static void onRegisterClientExtensions(RegisterClientExtensionsEvent event) {
-		event.registerItem(new IClientItemExtensions() {
-			private static final ArmPose TASER_ARM_POSE = ClientHandler.TASER_ARM_POSE_PARAMS.getValue();
-
-			//first person
-			@Override
-			public boolean applyForgeHandTransform(PoseStack pose, LocalPlayer player, HumanoidArm arm, ItemStack stack, float partialTick, float equippedProgress, float swingProgress) {
-				if (swingProgress < 0.001F) {
-					pose.translate(0.02F, -0.4F, -0.5F);
-					return true;
-				}
-
-				return false;
-			}
-
-			//third person
-			@Override
-			public ArmPose getArmPose(LivingEntity entity, InteractionHand hand, ItemStack stack) {
-				return TASER_ARM_POSE;
-			}
-		}, SCContent.TASER.get(), SCContent.TASER_POWERED.get());
-	}
-
-	@SubscribeEvent
-	public static void onRegisterClientPayloadsHandlers(RegisterClientPayloadHandlersEvent event) {
-		event.register(InteractWithFrame.TYPE, InteractWithFrame::handle);
-		event.register(OpenScreen.TYPE, OpenScreen::handle);
-		event.register(RefreshDisguisableModel.TYPE, RefreshDisguisableModel::handle);
-		event.register(SendManualPages.TYPE, SendManualPages::handle);
-		event.register(SetCameraView.TYPE, SetCameraView::handle);
-		event.register(SetTrophySystemTarget.TYPE, SetTrophySystemTarget::handle);
-		event.register(ToggleAlarmSound.TYPE, ToggleAlarmSound::handle);
-		event.register(UpdateLaserColors.TYPE, UpdateLaserColors::handle);
-		event.register(UpdateLogger.TYPE, UpdateLogger::handle);
+	private static void onRegisterClientPayloadsHandlers() {
+		ClientPlayNetworking.registerGlobalReceiver(MenuDataPayload.TYPE, (payload, context) -> payload.handle());
+		ClientPlayNetworking.registerGlobalReceiver(InteractWithFrame.TYPE, (payload, context) -> payload.handle(context::player));
+		ClientPlayNetworking.registerGlobalReceiver(OpenScreen.TYPE, (payload, context) -> payload.handle(context::player));
+		ClientPlayNetworking.registerGlobalReceiver(RefreshDisguisableModel.TYPE, (payload, context) -> payload.handle(context::player));
+		ClientPlayNetworking.registerGlobalReceiver(SendManualPages.TYPE, (payload, context) -> payload.handle(context::player));
+		ClientPlayNetworking.registerGlobalReceiver(SetCameraView.TYPE, (payload, context) -> payload.handle(context::player));
+		ClientPlayNetworking.registerGlobalReceiver(SetTrophySystemTarget.TYPE, (payload, context) -> payload.handle(context::player));
+		ClientPlayNetworking.registerGlobalReceiver(ToggleAlarmSound.TYPE, (payload, context) -> payload.handle(context::player));
+		ClientPlayNetworking.registerGlobalReceiver(UpdateLaserColors.TYPE, (payload, context) -> payload.handle(context::player));
+		ClientPlayNetworking.registerGlobalReceiver(UpdateLogger.TYPE, (payload, context) -> payload.handle(context::player));
 	}
 
 	private static void initTint() {
@@ -559,16 +504,15 @@ public class ClientHandler {
 		blocksWithCustomTint.put(SCContent.SMOOTH_CRYSTAL_QUARTZ_STAIRS.get(), SCContent.CRYSTAL_QUARTZ_TINT);
 	}
 
-	@SubscribeEvent
-	public static void onRegisterBlockColorHandlers(RegisterColorHandlersEvent.Block event) {
+	private static void onRegisterBlockColorHandlers() {
 		initTint();
-		blocksWithReinforcedTint.forEach((block, tint) -> event.register((state, level, pos, tintIndex) -> {
+		blocksWithReinforcedTint.forEach((block, tint) -> ColorProviderRegistry.BLOCK.register((state, level, pos, tintIndex) -> {
 			if (tintIndex == 0)
 				return mixWithReinforcedTintIfEnabled(tint, safeGetBlockEntity(level, pos) instanceof IOwnable ownable ? ownable : null);
 			else
 				return 0xFFFFFFFF;
 		}, block));
-		blocksWithCustomTint.forEach((block, tint) -> event.register((state, level, pos, tintIndex) -> {
+		blocksWithCustomTint.forEach((block, tint) -> ColorProviderRegistry.BLOCK.register((state, level, pos, tintIndex) -> {
 			if (tintIndex == 0)
 				return tint;
 			else
@@ -592,9 +536,9 @@ public class ClientHandler {
 				return 0xFFFFFFFF;
 		};
 
-		event.register(disguisableBlockColor, disguisableBlocks.get());
-		event.register(disguisableBlockColor, SCContent.SECURE_REDSTONE_INTERFACE.get());
-		event.register((state, level, pos, tintIndex) -> {
+		ColorProviderRegistry.BLOCK.register(disguisableBlockColor, disguisableBlocks.get());
+		ColorProviderRegistry.BLOCK.register(disguisableBlockColor, SCContent.SECURE_REDSTONE_INTERFACE.get());
+		ColorProviderRegistry.BLOCK.register((state, level, pos, tintIndex) -> {
 			if (tintIndex == 1 && !state.getValue(SnowyDirtBlock.SNOWY)) {
 				int grassTint = level != null && pos != null ? BiomeColors.getAverageGrassColor(level, pos) : GrassColor.get(0.5D, 1.0D);
 
@@ -603,18 +547,18 @@ public class ClientHandler {
 
 			return mixWithReinforcedTintIfEnabled(0xFFFFFFFF, safeGetBlockEntity(level, pos) instanceof IOwnable ownable ? ownable : null);
 		}, SCContent.REINFORCED_GRASS_BLOCK.get());
-		event.register((state, level, pos, tintIndex) -> {
+		ColorProviderRegistry.BLOCK.register((state, level, pos, tintIndex) -> {
 			if (tintIndex == 1)
 				return level != null && pos != null ? BiomeColors.getAverageWaterColor(level, pos) : -1;
 
 			return mixWithReinforcedTintIfEnabled(0xFFFFFFFF, safeGetBlockEntity(level, pos) instanceof IOwnable ownable ? ownable : null);
 		}, SCContent.REINFORCED_WATER_CAULDRON.get());
-		event.register((state, level, pos, tintIndex) -> {
+		ColorProviderRegistry.BLOCK.register((state, level, pos, tintIndex) -> {
 			Direction direction = LaserFieldBlock.getFieldDirection(state);
 
 			return iterateFields(level, pos, direction, ConfigHandler.SERVER.laserBlockRange.get(), SCContent.LASER_BLOCK.get(), LaserBlockBlockEntity.class::isInstance, be -> ((LaserBlockBlockEntity) be).getLensContainer().getItem(direction.getOpposite().ordinal()));
 		}, SCContent.LASER_FIELD.get());
-		event.register((state, level, pos, tintIndex) -> {
+		ColorProviderRegistry.BLOCK.register((state, level, pos, tintIndex) -> {
 			Direction direction = state.getValue(InventoryScannerFieldBlock.FACING);
 
 			return iterateFields(level, pos, direction, ConfigHandler.SERVER.inventoryScannerRange.get(), SCContent.INVENTORY_SCANNER.get(), InventoryScannerBlockEntity.class::isInstance, be -> ((InventoryScannerBlockEntity) be).getLensContainer().getItem(0));
@@ -764,9 +708,7 @@ public class ClientHandler {
 	public static void refreshModelData(BlockEntity be) {
 		BlockPos pos = be.getBlockPos();
 
-		be.requestModelDataUpdate();
-		be.getLevel().getModelData(pos); //Actually calculates and applies the new model data that was requested before
-		ClientUtils.recompileChunk(pos); //Recompiles the render chunk at the changed position
+		ClientUtils.recompileChunk(pos); //Recompiles the render chunk at the changed position, which makes the models fetch the new model data
 	}
 
 	public static boolean isPlayerMountedOnCamera() {

@@ -1,5 +1,8 @@
 package net.geforcemods.securitycraft.blockentities;
 
+import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -42,10 +45,6 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.transfer.EmptyResourceHandler;
-import net.neoforged.neoforge.transfer.ResourceHandler;
-import net.neoforged.neoforge.transfer.item.ItemResource;
-import net.neoforged.neoforge.transfer.item.WorldlyContainerWrapper;
 
 public class SecureTradingStationBlockEntity extends DisguisableBlockEntity implements WorldlyContainer, MenuProvider, ITickingBlockEntity {
 	private static final int[] SLOTS_FOR_UP_AND_SIDES = new int[] {12, 13, 14, 15, 16, 17, 18, 19};
@@ -319,9 +318,9 @@ public class SecureTradingStationBlockEntity extends DisguisableBlockEntity impl
 		return isModuleEnabled(ModuleType.STORAGE);
 	}
 
-	public static ResourceHandler<ItemResource> getCapability(SecureTradingStationBlockEntity be, Direction side) {
+	public static Storage<ItemVariant> getCapability(SecureTradingStationBlockEntity be, Direction side) {
 		if (be.isModuleEnabled(ModuleType.STORAGE)) {
-			WorldlyContainerWrapper wrapper = new WorldlyContainerWrapper(be, side);
+			InventoryStorage wrapper = InventoryStorage.of(be, side);
 
 			if (BlockUtils.isAllowedToExtractFromProtectedObject(side, be))
 				return wrapper;
@@ -329,7 +328,7 @@ public class SecureTradingStationBlockEntity extends DisguisableBlockEntity impl
 				return new InsertOnlyResourceHandler<>(wrapper);
 		}
 		else
-			return EmptyResourceHandler.instance(); //disallow inserting
+			return Storage.empty(); //disallow inserting
 	}
 
 	@Override

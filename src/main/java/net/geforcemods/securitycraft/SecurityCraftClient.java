@@ -1,18 +1,29 @@
 package net.geforcemods.securitycraft;
 
+import fuzs.forgeconfigapiport.fabric.api.v5.ConfigRegistry;
+import fuzs.forgeconfigapiport.fabric.api.v5.client.ConfigScreenFactoryRegistry;
+import net.fabricmc.api.ClientModInitializer;
+import net.geforcemods.securitycraft.entity.camera.CameraController;
+import net.geforcemods.securitycraft.entity.camera.FrameFeedHandler;
 import net.geforcemods.securitycraft.items.properties.HitCheck;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.fml.ModContainer;
-import net.neoforged.fml.common.Mod;
+import net.geforcemods.securitycraft.misc.KeyBindings;
+import net.geforcemods.securitycraft.misc.Tips;
+import net.geforcemods.securitycraft.platform.PlatformClientHooks;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
-import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 
-@Mod(value = SecurityCraft.MODID, dist = Dist.CLIENT)
-public class SecurityCraftClient {
-	public SecurityCraftClient(ModContainer container) {
-		container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
-		container.registerConfig(ModConfig.Type.CLIENT, ConfigHandler.CLIENT_SPEC);
+public class SecurityCraftClient implements ClientModInitializer {
+	@Override
+	public void onInitializeClient() {
+		ConfigRegistry.INSTANCE.register(SecurityCraft.MODID, ModConfig.Type.CLIENT, ConfigHandler.CLIENT_SPEC);
+		ConfigScreenFactoryRegistry.INSTANCE.register(SecurityCraft.MODID, ConfigurationScreen::new);
 		HitCheck.bootstrap();
+		PlatformClientHooks.init();
+		KeyBindings.registerKeyMappings();
+		ClientHandler.init();
+		SCClientEventHandler.register();
+		CameraController.register();
+		FrameFeedHandler.register();
+		Tips.register();
 	}
 }

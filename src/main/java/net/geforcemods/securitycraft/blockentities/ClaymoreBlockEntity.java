@@ -1,5 +1,8 @@
 package net.geforcemods.securitycraft.blockentities;
 
+import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.geforcemods.securitycraft.SCContent;
 import net.geforcemods.securitycraft.api.CustomizableBlockEntity;
 import net.geforcemods.securitycraft.api.Option;
@@ -36,9 +39,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
-import net.neoforged.neoforge.transfer.ResourceHandler;
-import net.neoforged.neoforge.transfer.item.ItemResource;
-import net.neoforged.neoforge.transfer.item.VanillaContainerWrapper;
 
 public class ClaymoreBlockEntity extends CustomizableBlockEntity implements ITickingBlockEntity, MenuProvider, ContainerListener, SingleLensContainer {
 	private IntOption range = new IntOption("range", 5, 1, 10, 1);
@@ -106,8 +106,8 @@ public class ClaymoreBlockEntity extends CustomizableBlockEntity implements ITic
 		super.preRemoveSideEffects(pos, state);
 	}
 
-	public static ResourceHandler<ItemResource> getCapability(ClaymoreBlockEntity be, Direction side) {
-		ResourceHandler<ItemResource> resourceHandler = VanillaContainerWrapper.of(be.lens);
+	public static Storage<ItemVariant> getCapability(ClaymoreBlockEntity be, Direction side) {
+		Storage<ItemVariant> resourceHandler = InventoryStorage.of(be.lens, null);
 
 		return BlockUtils.isAllowedToExtractFromProtectedObject(side, be) ? resourceHandler : new InsertOnlyResourceHandler<>(resourceHandler);
 	}

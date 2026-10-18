@@ -1,8 +1,9 @@
 package net.geforcemods.securitycraft.entity.sentry;
 
-import net.neoforged.neoforge.transfer.ResourceHandler;
-import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+
 
 public interface ISentryBulletContainer {
-	public ResourceHandler<ItemResource> getHandlerForSentry(Sentry sentry);
+	public Storage<ItemVariant> getHandlerForSentry(Sentry sentry);
 }

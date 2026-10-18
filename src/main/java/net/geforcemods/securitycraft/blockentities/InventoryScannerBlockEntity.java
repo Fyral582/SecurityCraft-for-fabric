@@ -1,5 +1,9 @@
 package net.geforcemods.securitycraft.blockentities;
 
+import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.fabricmc.fabric.api.transfer.v1.storage.base.CombinedStorage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -48,11 +52,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-import net.neoforged.neoforge.transfer.EmptyResourceHandler;
-import net.neoforged.neoforge.transfer.ResourceHandler;
-import net.neoforged.neoforge.transfer.item.ItemResource;
-import net.neoforged.neoforge.transfer.item.VanillaContainerWrapper;
-import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 
 public class InventoryScannerBlockEntity extends DisguisableBlockEntity implements MenuProvider, ITickingBlockEntity, ILockable, ContainerListener, ItemAccess {
 	private BooleanOption horizontal = new BooleanOption("horizontal", false);
@@ -166,17 +165,15 @@ public class InventoryScannerBlockEntity extends DisguisableBlockEntity implemen
 			otherScanner.getLensContainer().setItemExclusively(0, lens.getItem(0));
 	}
 
-	public static ResourceHandler<ItemResource> getCapability(InventoryScannerBlockEntity be, Direction side) {
+	public static Storage<ItemVariant> getCapability(InventoryScannerBlockEntity be, Direction side) {
 		if (BlockUtils.isAllowedToExtractFromProtectedObject(side, be)) {
-			return new ExtractOnlyResourceHandler<>(VanillaContainerWrapper.of(Utils.createContainerFromList(be.inventoryContents))) {
-				@Override
-				public int extract(int index, ItemResource resource, int amount, TransactionContext transaction) {
-					return index < 10 ? 0 : super.extract(index, resource, amount, transaction); //don't allow extracting from the prohibited item slots
-				}
-			};
+			InventoryStorage storage = InventoryStorage.of(Utils.createContainerFromList(be.inventoryContents), null);
+
+			//don't allow extracting from the prohibited item slots
+			return new ExtractOnlyResourceHandler<>(new CombinedStorage<>(storage.getSlots().subList(10, storage.getSlots().size())));
 		}
 		else
-			return EmptyResourceHandler.instance(); //disallow inserting
+			return Storage.empty(); //disallow inserting
 	}
 
 	public boolean isProvidingPower() {

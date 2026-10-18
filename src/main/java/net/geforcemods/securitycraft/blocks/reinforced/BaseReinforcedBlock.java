@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.blocks.reinforced;
 
+import net.minecraft.tags.FluidTags;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
@@ -76,7 +77,7 @@ public class BaseReinforcedBlock extends OwnableBlock implements IReinforcedBloc
 				FluidState fluidState = level.getFluidState(soilPos.relative(face));
 
 				hasWater |= blockState.is(Blocks.FROSTED_ICE);
-				hasWater |= fluidState.canHydrate(level, soilPos, blockState, soilPos.relative(face));
+				hasWater |= fluidState.is(FluidTags.WATER);
 
 				if (hasWater)
 					break; //No point continuing.

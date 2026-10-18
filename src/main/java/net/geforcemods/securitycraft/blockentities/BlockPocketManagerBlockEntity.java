@@ -1,5 +1,9 @@
 package net.geforcemods.securitycraft.blockentities;
 
+import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.fabricmc.fabric.api.transfer.v1.storage.base.FilteringStorage;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,11 +55,6 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-import net.neoforged.neoforge.transfer.DelegatingResourceHandler;
-import net.neoforged.neoforge.transfer.ResourceHandler;
-import net.neoforged.neoforge.transfer.item.ItemResource;
-import net.neoforged.neoforge.transfer.item.VanillaContainerWrapper;
-import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 
 public class BlockPocketManagerBlockEntity extends CustomizableBlockEntity implements MenuProvider, ITickingBlockEntity, ILockable {
 	private static final int BLOCK_PLACEMENTS_PER_TICK = 4;
@@ -628,8 +627,8 @@ public class BlockPocketManagerBlockEntity extends CustomizableBlockEntity imple
 		}
 	}
 
-	public static ResourceHandler<ItemResource> getCapability(BlockPocketManagerBlockEntity be, Direction side) {
-		ResourceHandler<ItemResource> resourceHandler = VanillaContainerWrapper.of(Utils.createContainerFromList(be.storage));
+	public static Storage<ItemVariant> getCapability(BlockPocketManagerBlockEntity be, Direction side) {
+		Storage<ItemVariant> resourceHandler = InventoryStorage.of(Utils.createContainerFromList(be.storage), null);
 
 		//prevent extracting while auto building the block pocket
 		if (!be.isModifyingBlocks() && BlockUtils.isAllowedToExtractFromProtectedObject(side, be))
@@ -813,40 +812,24 @@ public class BlockPocketManagerBlockEntity extends CustomizableBlockEntity imple
 		return enabled;
 	}
 
-	public static class ValidityCheckInsertOnlyResourceHandler extends InsertOnlyResourceHandler<ItemResource> {
-		public ValidityCheckInsertOnlyResourceHandler(ResourceHandler<ItemResource> delegate) {
+	public static class ValidityCheckInsertOnlyResourceHandler extends InsertOnlyResourceHandler<ItemVariant> {
+		public ValidityCheckInsertOnlyResourceHandler(Storage<ItemVariant> delegate) {
 			super(delegate);
 		}
 
 		@Override
-		public int insert(ItemResource resource, int amount, TransactionContext transaction) {
-			if (isValid(0, resource))
-				return super.insert(resource, amount, transaction);
-
-			return 0;
-		}
-
-		@Override
-		public boolean isValid(int slot, ItemResource resource) {
+		protected boolean canInsert(ItemVariant resource) {
 			return BlockPocketManagerBlockEntity.isItemValid(resource.toStack());
 		}
 	}
 
-	public static class ValidityCheckResourceHandler extends DelegatingResourceHandler<ItemResource> {
-		public ValidityCheckResourceHandler(ResourceHandler<ItemResource> delegate) {
+	public static class ValidityCheckResourceHandler extends FilteringStorage<ItemVariant> {
+		public ValidityCheckResourceHandler(Storage<ItemVariant> delegate) {
 			super(delegate);
 		}
 
 		@Override
-		public int insert(ItemResource resource, int amount, TransactionContext transaction) {
-			if (isValid(0, resource))
-				return super.insert(resource, amount, transaction);
-
-			return 0;
-		}
-
-		@Override
-		public boolean isValid(int slot, ItemResource resource) {
+		protected boolean canInsert(ItemVariant resource) {
 			return BlockPocketManagerBlockEntity.isItemValid(resource.toStack());
 		}
 	}

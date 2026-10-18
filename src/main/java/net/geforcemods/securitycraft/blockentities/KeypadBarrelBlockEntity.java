@@ -1,5 +1,8 @@
 package net.geforcemods.securitycraft.blockentities;
 
+import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.UUID;
@@ -53,10 +56,7 @@ import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-import net.neoforged.neoforge.model.data.ModelData;
-import net.neoforged.neoforge.transfer.ResourceHandler;
-import net.neoforged.neoforge.transfer.item.ItemResource;
-import net.neoforged.neoforge.transfer.item.VanillaContainerWrapper;
+import net.geforcemods.securitycraft.platform.model.ModelData;
 
 public class KeypadBarrelBlockEntity extends RandomizableContainerBlockEntity implements IPasscodeProtected, IOwnable, IModuleInventory, ICustomizable, ILockable, ISentryBulletContainer {
 	private NonNullList<ItemStack> items = NonNullList.withSize(27, ItemStack.EMPTY);
@@ -203,16 +203,16 @@ public class KeypadBarrelBlockEntity extends RandomizableContainerBlockEntity im
 		return Utils.localize(SCContent.KEYPAD_BARREL.get().getDescriptionId());
 	}
 
-	public static ResourceHandler<ItemResource> getCapability(KeypadBarrelBlockEntity be, Direction side) {
-		ResourceHandler<ItemResource> resourceHandler = VanillaContainerWrapper.of(be);
+	public static Storage<ItemVariant> getCapability(KeypadBarrelBlockEntity be, Direction side) {
+		Storage<ItemVariant> resourceHandler = InventoryStorage.of(be, null);
 
 		return BlockUtils.isAllowedToExtractFromProtectedObject(side, be) ? resourceHandler : new InsertOnlyResourceHandler<>(resourceHandler);
 	}
 
 	@Override
-	public ResourceHandler<ItemResource> getHandlerForSentry(Sentry entity) {
+	public Storage<ItemVariant> getHandlerForSentry(Sentry entity) {
 		if (entity.getOwner().owns(this))
-			return VanillaContainerWrapper.of(this);
+			return InventoryStorage.of(this, null);
 		else
 			return null;
 	}

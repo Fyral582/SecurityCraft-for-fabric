@@ -1,5 +1,9 @@
 package net.geforcemods.securitycraft.blockentities;
 
+import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.geforcemods.securitycraft.SCContent;
 import net.geforcemods.securitycraft.api.CustomizableBlockEntity;
 import net.geforcemods.securitycraft.api.Option;
@@ -27,10 +31,6 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.transfer.ResourceHandler;
-import net.neoforged.neoforge.transfer.item.ItemResource;
-import net.neoforged.neoforge.transfer.transaction.Transaction;
 
 public class IMSBlockEntity extends CustomizableBlockEntity implements ITickingBlockEntity {
 	private IntOption range = new IntOption("range", 15, 1, 30, 1);
@@ -58,16 +58,14 @@ public class IMSBlockEntity extends CustomizableBlockEntity implements ITickingB
 				BlockEntity be = level.getBlockEntity(pos.below());
 
 				if (be != null) {
-					ResourceHandler<ItemResource> handler = level.getCapability(Capabilities.Item.BLOCK, pos, be.getBlockState(), be, Direction.UP);
+					Storage<ItemVariant> handler = ItemStorage.SIDED.find(level, pos, be.getBlockState(), be, Direction.UP);
 
 					if (handler != null) {
-						for (int i = 0; i < handler.size(); i++) {
-							try (Transaction transaction = Transaction.openRoot()) {
-								if (handler.extract(ItemResource.of(SCContent.BOUNCING_BETTY), 0, transaction) == 1) {
-									transaction.commit();
-									bombsRemaining++;
-									return;
-								}
+						try (Transaction transaction = Transaction.openOuter()) {
+							if (handler.extract(ItemVariant.of(SCContent.BOUNCING_BETTY.get()), 1, transaction) == 1) {
+								transaction.commit();
+								bombsRemaining++;
+								return;
 							}
 						}
 					}

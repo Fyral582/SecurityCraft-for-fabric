@@ -1,5 +1,8 @@
 package net.geforcemods.securitycraft.entity;
 
+import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.geforcemods.securitycraft.platform.SCPlatform;
 import java.util.EnumMap;
 import java.util.Map;
@@ -66,9 +69,6 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.fluids.FluidType;
 import net.geforcemods.securitycraft.platform.network.PacketDistributor;
-import net.neoforged.neoforge.transfer.ResourceHandler;
-import net.neoforged.neoforge.transfer.item.ItemResource;
-import net.neoforged.neoforge.transfer.item.VanillaContainerWrapper;
 
 public abstract class AbstractSecuritySeaBoat extends AbstractChestBoat implements IOwnable, IPasscodeProtected, IModuleInventory, ICustomizable {
 	private static final EntityDataAccessor<Owner> OWNER = SynchedEntityData.<Owner>defineId(AbstractSecuritySeaBoat.class, Owner.getSerializer());
@@ -296,8 +296,8 @@ public abstract class AbstractSecuritySeaBoat extends AbstractChestBoat implemen
 		super.remove(reason);
 	}
 
-	public static ResourceHandler<ItemResource> getCapability(AbstractSecuritySeaBoat boat, Direction direction) {
-		ResourceHandler<ItemResource> resourceHandler = VanillaContainerWrapper.of(boat);
+	public static Storage<ItemVariant> getCapability(AbstractSecuritySeaBoat boat, Direction direction) {
+		Storage<ItemVariant> resourceHandler = InventoryStorage.of(boat, null);
 
 		return BlockUtils.isAllowedToExtractFromProtectedObject(direction, boat, boat.level(), boat.blockPosition()) ? resourceHandler : new InsertOnlyResourceHandler<>(resourceHandler);
 	}

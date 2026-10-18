@@ -7,19 +7,12 @@ import net.geforcemods.securitycraft.ClientHandler;
 import net.geforcemods.securitycraft.ConfigHandler;
 import net.geforcemods.securitycraft.SecurityCraft;
 import net.geforcemods.securitycraft.util.Utils;
+import net.geforcemods.securitycraft.platform.ChatLinks;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.ModList;
-import net.neoforged.fml.VersionChecker;
-import net.neoforged.fml.VersionChecker.Status;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
-import net.neoforged.neoforge.common.CommonHooks;
 
-@EventBusSubscriber(modid = SecurityCraft.MODID, value = Dist.CLIENT)
 public class Tips {
 	public static final Map<String, String> TIPS_WITH_LINK = new HashMap<>();
 
@@ -31,8 +24,11 @@ public class Tips {
 
 	private Tips() {}
 
-	@SubscribeEvent
-	public static void onLoggingIn(ClientPlayerNetworkEvent.LoggingIn event) {
+	public static void register() {
+		ClientPlayConnectionEvents.JOIN.register((handler, sender, mc) -> onLoggingIn());
+	}
+
+	public static void onLoggingIn() {
 		if (!ConfigHandler.SERVER.disableThanksMessage.get() && ConfigHandler.CLIENT.sayThanksMessage.get()) {
 			//@formatter:off
 			String tipKey = getRandomTip();
@@ -46,7 +42,7 @@ public class Tips {
 			//@formatter:on
 
 			if (TIPS_WITH_LINK.containsKey(tipKey.split("\\.")[2]))
-				message = message.append(CommonHooks.newChatWithLinks(TIPS_WITH_LINK.get(tipKey.split("\\.")[2])));
+				message = message.append(ChatLinks.newChatWithLinks(TIPS_WITH_LINK.get(tipKey.split("\\.")[2])));
 
 			ClientHandler.getClientPlayer().displayClientMessage(message, false);
 		}
@@ -67,6 +63,6 @@ public class Tips {
 	}
 
 	private static boolean isOutdated() {
-		return VersionChecker.getResult(ModList.get().getModContainerById(SecurityCraft.MODID).get().getModInfo()).status() == Status.OUTDATED;
+		return false; //NeoForge's update checker is not available on Fabric
 	}
 }

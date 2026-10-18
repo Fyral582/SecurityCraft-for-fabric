@@ -1,5 +1,10 @@
 package net.geforcemods.securitycraft.blockentities;
 
+import java.util.List;
+import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.fabricmc.fabric.api.transfer.v1.storage.base.CombinedStorage;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.UUID;
@@ -47,11 +52,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-import net.neoforged.neoforge.model.data.ModelData;
-import net.neoforged.neoforge.transfer.CombinedResourceHandler;
-import net.neoforged.neoforge.transfer.ResourceHandler;
-import net.neoforged.neoforge.transfer.item.ItemResource;
-import net.neoforged.neoforge.transfer.item.VanillaContainerWrapper;
+import net.geforcemods.securitycraft.platform.model.ModelData;
 
 public class KeypadChestBlockEntity extends ChestBlockEntity implements IPasscodeProtected, IOwnable, IModuleInventory, ICustomizable, ILockable, ISentryBulletContainer {
 	private byte[] passcode;
@@ -65,19 +66,19 @@ public class KeypadChestBlockEntity extends ChestBlockEntity implements IPasscod
 	private long cooldownEnd = 0;
 	private Map<ModuleType, Boolean> moduleStates = new EnumMap<>(ModuleType.class);
 	private Identifier previousChest;
-	private static final DoubleBlockCombiner.Combiner<ChestBlockEntity, ResourceHandler<ItemResource>> CHEST_COMBINER_HANDLER = new DoubleBlockCombiner.Combiner<>() {
+	private static final DoubleBlockCombiner.Combiner<ChestBlockEntity, Storage<ItemVariant>> CHEST_COMBINER_HANDLER = new DoubleBlockCombiner.Combiner<>() {
 		@Override
-		public ResourceHandler<ItemResource> acceptDouble(ChestBlockEntity chest1, ChestBlockEntity chest2) {
-			return new CombinedResourceHandler<>(VanillaContainerWrapper.of(chest1), VanillaContainerWrapper.of(chest2));
+		public Storage<ItemVariant> acceptDouble(ChestBlockEntity chest1, ChestBlockEntity chest2) {
+			return new CombinedStorage<>(List.of(InventoryStorage.of(chest1, null), InventoryStorage.of(chest2, null)));
 		}
 
 		@Override
-		public ResourceHandler<ItemResource> acceptSingle(ChestBlockEntity chest) {
-			return VanillaContainerWrapper.of(chest);
+		public Storage<ItemVariant> acceptSingle(ChestBlockEntity chest) {
+			return InventoryStorage.of(chest, null);
 		}
 
 		@Override
-		public ResourceHandler<ItemResource> acceptNone() {
+		public Storage<ItemVariant> acceptNone() {
 			return null;
 		}
 	};
@@ -176,16 +177,16 @@ public class KeypadChestBlockEntity extends ChestBlockEntity implements IPasscod
 		return openersCounter.getOpenerCount();
 	}
 
-	public static ResourceHandler<ItemResource> getCapability(KeypadChestBlockEntity be, Direction side) {
-		ResourceHandler<ItemResource> resourceHandler = ((KeypadChestBlock) be.getBlockState().getBlock()).combine(be.getBlockState(), be.getLevel(), be.getBlockPos(), true).apply(CHEST_COMBINER_HANDLER);
+	public static Storage<ItemVariant> getCapability(KeypadChestBlockEntity be, Direction side) {
+		Storage<ItemVariant> resourceHandler = ((KeypadChestBlock) be.getBlockState().getBlock()).combine(be.getBlockState(), be.getLevel(), be.getBlockPos(), true).apply(CHEST_COMBINER_HANDLER);
 
 		return BlockUtils.isAllowedToExtractFromProtectedObject(side, be) ? resourceHandler : new InsertOnlyResourceHandler<>(resourceHandler);
 	}
 
 	@Override
-	public ResourceHandler<ItemResource> getHandlerForSentry(Sentry entity) {
+	public Storage<ItemVariant> getHandlerForSentry(Sentry entity) {
 		if (entity.getOwner().owns(this))
-			return VanillaContainerWrapper.of(this);
+			return InventoryStorage.of(this, null);
 		else
 			return null;
 	}

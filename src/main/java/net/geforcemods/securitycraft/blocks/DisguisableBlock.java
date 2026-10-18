@@ -24,7 +24,7 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.neoforged.neoforge.common.world.AuxiliaryLightManager;
+import net.geforcemods.securitycraft.platform.ext.AuxiliaryLightManager;
 
 public abstract class DisguisableBlock extends OwnableBlock implements IOverlayDisplay, SimpleWaterloggedBlock, IDisguisable {
 	public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;

@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.entity.camera;
 
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +20,7 @@ import net.geforcemods.securitycraft.blockentities.SecurityCameraBlockEntity;
 import net.geforcemods.securitycraft.blocks.SecurityCameraBlock;
 import net.geforcemods.securitycraft.util.PlayerUtils;
 import net.geforcemods.securitycraft.util.Utils;
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Camera;
 import net.minecraft.client.CameraType;
@@ -45,13 +47,7 @@ import net.minecraft.world.entity.Pose;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent;
 
-@EventBusSubscriber(modid = SecurityCraft.MODID, value = Dist.CLIENT)
 public class FrameFeedHandler {
 	private static final Map<GlobalPos, CameraFeed> FRAME_CAMERA_FEEDS = new ConcurrentHashMap<>();
 	private static GlobalPos currentlyCapturedCamera;
@@ -187,16 +183,17 @@ public class FrameFeedHandler {
 		currentlyCapturedCamera = null;
 	}
 
-	@SubscribeEvent
-	public static void onClientTickPost(ClientTickEvent.Post event) {
+	public static void register() {
+		ClientTickEvents.END_CLIENT_TICK.register(mc -> onClientTickPost());
+		WorldRenderEvents.END_EXTRACTION.register(context -> onExtractLevelRenderState(context.frustum()));
+	}
+
+	public static void onClientTickPost() {
 		if (hasFeeds())
 			FRAME_CAMERA_FEEDS.entrySet().removeIf(e -> e.getValue().shouldBeRemoved());
 	}
 
-	@SubscribeEvent
-	public static void onExtractLevelRenderState(ExtractLevelRenderStateEvent event) {
-		Frustum frustum = event.getFrustum();
-
+	public static void onExtractLevelRenderState(Frustum frustum) {
 		if (FrameFeedHandler.isCapturingCamera())
 			FrameFeedHandler.getCurrentlyCapturedFeed().setCameraFrustum(frustum);
 		else

@@ -33,7 +33,7 @@ import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.neoforged.neoforge.common.world.AuxiliaryLightManager;
+import net.geforcemods.securitycraft.platform.ext.AuxiliaryLightManager;
 
 public abstract class SpecialDoorBlock extends DoorBlock implements EntityBlock, IDisguisable, IOverlayDisplay {
 	private final float destroyTimeForOwner;

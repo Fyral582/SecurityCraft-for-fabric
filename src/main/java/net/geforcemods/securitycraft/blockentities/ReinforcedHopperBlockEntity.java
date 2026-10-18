@@ -1,5 +1,8 @@
 package net.geforcemods.securitycraft.blockentities;
 
+import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import java.util.EnumMap;
 import java.util.Map;
 
@@ -26,10 +29,7 @@ import net.minecraft.world.level.block.entity.HopperBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-import net.neoforged.neoforge.model.data.ModelData;
-import net.neoforged.neoforge.transfer.ResourceHandler;
-import net.neoforged.neoforge.transfer.item.ItemResource;
-import net.neoforged.neoforge.transfer.item.VanillaContainerWrapper;
+import net.geforcemods.securitycraft.platform.model.ModelData;
 
 public class ReinforcedHopperBlockEntity extends HopperBlockEntity implements IOwnable, IModuleInventory, IPistonMoveListener {
 	private NonNullList<ItemStack> modules = NonNullList.withSize(getMaxNumberOfModules(), ItemStack.EMPTY);
@@ -135,8 +135,8 @@ public class ReinforcedHopperBlockEntity extends HopperBlockEntity implements IO
 		return Component.translatable(SCContent.REINFORCED_HOPPER.get().getDescriptionId());
 	}
 
-	public static ResourceHandler<ItemResource> getCapability(ReinforcedHopperBlockEntity be, Direction side) {
-		ResourceHandler<ItemResource> resourceHandler = VanillaContainerWrapper.of(be);
+	public static Storage<ItemVariant> getCapability(ReinforcedHopperBlockEntity be, Direction side) {
+		Storage<ItemVariant> resourceHandler = InventoryStorage.of(be, null);
 
 		return BlockUtils.isAllowedToExtractFromProtectedObject(side, be) ? resourceHandler : new InsertOnlyResourceHandler<>(resourceHandler);
 	}

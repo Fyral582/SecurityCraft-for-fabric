@@ -43,7 +43,7 @@ import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.neoforged.neoforge.common.world.AuxiliaryLightManager;
+import net.geforcemods.securitycraft.platform.ext.AuxiliaryLightManager;
 
 public class ReinforcedDispenserBlock extends DispenserBlock implements IReinforcedBlock, SimpleWaterloggedBlock, IOverlayDisplay, IDisguisable {
 	public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;

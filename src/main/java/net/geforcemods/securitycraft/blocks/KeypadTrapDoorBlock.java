@@ -39,7 +39,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.neoforged.neoforge.common.world.AuxiliaryLightManager;
+import net.geforcemods.securitycraft.platform.ext.AuxiliaryLightManager;
 
 public class KeypadTrapDoorBlock extends BaseIronTrapDoorBlock implements IDisguisable, IOverlayDisplay {
 	public KeypadTrapDoorBlock(BlockBehaviour.Properties properties, BlockSetType blockSetType) {

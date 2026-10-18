@@ -1,5 +1,8 @@
 package net.geforcemods.securitycraft.blockentities;
 
+import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.UUID;
@@ -52,10 +55,7 @@ import net.minecraft.world.level.block.entity.ContainerOpenersCounter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-import net.neoforged.neoforge.model.data.ModelData;
-import net.neoforged.neoforge.transfer.ResourceHandler;
-import net.neoforged.neoforge.transfer.item.ItemResource;
-import net.neoforged.neoforge.transfer.item.WorldlyContainerWrapper;
+import net.geforcemods.securitycraft.platform.model.ModelData;
 
 public abstract class AbstractKeypadFurnaceBlockEntity extends AbstractFurnaceBlockEntity implements IPasscodeProtected, MenuProvider, IOwnable, IModuleInventory, ICustomizable, ILockable {
 	private Owner owner = new Owner();
@@ -185,8 +185,8 @@ public abstract class AbstractKeypadFurnaceBlockEntity extends AbstractFurnaceBl
 		owner.set(uuid, name);
 	}
 
-	public static ResourceHandler<ItemResource> getCapability(AbstractKeypadFurnaceBlockEntity be, Direction side) {
-		ResourceHandler<ItemResource> resourceHandler = new WorldlyContainerWrapper(be, side);
+	public static Storage<ItemVariant> getCapability(AbstractKeypadFurnaceBlockEntity be, Direction side) {
+		Storage<ItemVariant> resourceHandler = InventoryStorage.of(be, side);
 
 		return BlockUtils.isAllowedToExtractFromProtectedObject(side, be) ? resourceHandler : new InsertOnlyResourceHandler<>(resourceHandler);
 	}

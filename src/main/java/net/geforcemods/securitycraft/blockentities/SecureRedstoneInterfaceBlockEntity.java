@@ -28,7 +28,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.model.data.ModelData;
+import net.geforcemods.securitycraft.platform.model.ModelData;
 
 public class SecureRedstoneInterfaceBlockEntity extends DisguisableBlockEntity implements ITickingBlockEntity {
 	public static final Vector3f SENDER_PARTICLE_COLOR = new Vector3f(0.0F, 1.0F, 0.0F);

@@ -34,7 +34,7 @@ import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.neoforged.neoforge.common.world.AuxiliaryLightManager;
+import net.geforcemods.securitycraft.platform.ext.AuxiliaryLightManager;
 
 public class ScannerTrapDoorBlock extends BaseIronTrapDoorBlock implements IDisguisable, IOverlayDisplay {
 	public ScannerTrapDoorBlock(BlockBehaviour.Properties properties, BlockSetType blockSetType) {

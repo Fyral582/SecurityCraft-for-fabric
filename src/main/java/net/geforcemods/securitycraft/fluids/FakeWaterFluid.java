@@ -1,6 +1,6 @@
 package net.geforcemods.securitycraft.fluids;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import net.geforcemods.securitycraft.SCContent;
 import net.minecraft.core.BlockPos;
@@ -21,7 +21,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
-import net.neoforged.neoforge.fluids.BaseFlowingFluid;
+import net.geforcemods.securitycraft.platform.fluid.BaseFlowingFluid;
 
 public abstract class FakeWaterFluid extends BaseFlowingFluid {
 	protected FakeWaterFluid(Properties properties) {

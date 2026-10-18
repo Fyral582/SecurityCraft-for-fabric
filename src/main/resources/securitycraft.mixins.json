@@ -13,7 +13,9 @@
 		"f3.BetterF3TargetModuleMixin",
 		"f3.DebugEntryLookingAtBlockMixin",
 		"f3.DebugEntryLookingAtFluidMixin",
-		"taser.ItemInHandRendererMixin"
+		"taser.ItemInHandRendererMixin",
+		"taser.AvatarRendererMixin",
+		"taser.HumanoidModelMixin"
 	],
 	"mixins": [
 		"camera.ChunkMapMixin",
@@ -36,8 +38,7 @@
 		"reinforced.HopperBlockEntityMixin",
 		"reinforced.PortalForcerMixin",
 		"reinforced.ShearsItemMixin",
-		"reinforced.ToolMaterialMixin",
-		"reinforced.VanillaInventoryCodeHooksMixin"
+		"reinforced.ToolMaterialMixin"
 	],
 	"minVersion": "0.8",
 	"mixinextras": {

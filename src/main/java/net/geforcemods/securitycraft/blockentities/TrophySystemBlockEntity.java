@@ -1,5 +1,8 @@
 package net.geforcemods.securitycraft.blockentities;
 
+import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -59,9 +62,6 @@ import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
 import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 import net.geforcemods.securitycraft.platform.network.PacketDistributor;
-import net.neoforged.neoforge.transfer.ResourceHandler;
-import net.neoforged.neoforge.transfer.item.ItemResource;
-import net.neoforged.neoforge.transfer.item.VanillaContainerWrapper;
 
 public class TrophySystemBlockEntity extends DisguisableBlockEntity implements ITickingBlockEntity, ILockable, IToggleableEntries<EntityType<?>>, MenuProvider, ContainerListener {
 	/** The range (in blocks) that the trophy system will search for projectiles in */
@@ -182,8 +182,8 @@ public class TrophySystemBlockEntity extends DisguisableBlockEntity implements I
 		super.preRemoveSideEffects(pos, state);
 	}
 
-	public static ResourceHandler<ItemResource> getCapability(TrophySystemBlockEntity be, Direction side) {
-		ResourceHandler<ItemResource> resourceHandler = VanillaContainerWrapper.of(be.lens);
+	public static Storage<ItemVariant> getCapability(TrophySystemBlockEntity be, Direction side) {
+		Storage<ItemVariant> resourceHandler = InventoryStorage.of(be.lens, null);
 
 		return BlockUtils.isAllowedToExtractFromProtectedObject(side, be) ? resourceHandler : new InsertOnlyResourceHandler<>(resourceHandler);
 	}

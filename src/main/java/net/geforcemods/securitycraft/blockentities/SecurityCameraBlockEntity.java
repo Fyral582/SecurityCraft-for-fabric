@@ -1,5 +1,8 @@
 package net.geforcemods.securitycraft.blockentities;
 
+import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -54,9 +57,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-import net.neoforged.neoforge.transfer.ResourceHandler;
-import net.neoforged.neoforge.transfer.item.ItemResource;
-import net.neoforged.neoforge.transfer.item.VanillaContainerWrapper;
 
 public class SecurityCameraBlockEntity extends DisguisableBlockEntity implements ITickingBlockEntity, IEMPAffectedBE, MenuProvider, ContainerListener, SingleLensContainer {
 	private static final Map<ServerPlayer, Set<SecurityCameraBlockEntity>> RECENTLY_UNVIEWED_CAMERAS = new HashMap<>();
@@ -208,8 +208,8 @@ public class SecurityCameraBlockEntity extends DisguisableBlockEntity implements
 		super.preRemoveSideEffects(pos, state);
 	}
 
-	public static ResourceHandler<ItemResource> getCapability(SecurityCameraBlockEntity be, Direction side) {
-		ResourceHandler<ItemResource> resourceHandler = VanillaContainerWrapper.of(be.lens);
+	public static Storage<ItemVariant> getCapability(SecurityCameraBlockEntity be, Direction side) {
+		Storage<ItemVariant> resourceHandler = InventoryStorage.of(be.lens, null);
 
 		return BlockUtils.isAllowedToExtractFromProtectedObject(side, be) ? resourceHandler : new InsertOnlyResourceHandler<>(resourceHandler);
 	}

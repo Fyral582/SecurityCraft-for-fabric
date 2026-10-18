@@ -47,7 +47,10 @@
 		"KeyMappingExtensionImplMixin",
 		"client.ClientPacketListenerMixin",
 		"client.LevelEventHandlerMixin",
-		"client.MultiPlayerGameModeMixin"
+		"client.MultiPlayerGameModeMixin",
+		"client.MinecraftInputMixin",
+		"client.GameRendererHandMixin",
+		"client.ScreenshotMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

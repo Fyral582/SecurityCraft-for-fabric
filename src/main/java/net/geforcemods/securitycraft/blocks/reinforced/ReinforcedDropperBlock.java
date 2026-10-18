@@ -1,6 +1,11 @@
 package net.geforcemods.securitycraft.blocks.reinforced;
 
+import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.geforcemods.securitycraft.blockentities.ReinforcedDropperBlockEntity;
+import net.minecraft.world.Container;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.dispenser.BlockSource;
@@ -16,8 +21,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.HopperBlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.transfer.item.ContainerOrHandler;
-import net.neoforged.neoforge.transfer.item.ItemUtil;
 
 public class ReinforcedDropperBlock extends ReinforcedDispenserBlock {
 	private static final DispenseItemBehavior DISPENSE_BEHAVIOUR = new DefaultDispenseItemBehavior();
@@ -49,16 +52,12 @@ public class ReinforcedDropperBlock extends ReinforcedDispenserBlock {
 
 				if (!dispenseStack.isEmpty()) {
 					Direction direction = level.getBlockState(pos).getValue(FACING);
-					ContainerOrHandler containerOrHandler = HopperBlockEntity.getContainerOrHandlerAt(level, pos.relative(direction), direction.getOpposite());
+					BlockPos targetPos = pos.relative(direction);
+					Container container = HopperBlockEntity.getContainerAt(level, targetPos);
 					ItemStack afterDispenseStack;
 
-					if (containerOrHandler.isEmpty())
-						afterDispenseStack = DISPENSE_BEHAVIOUR.dispense(source, dispenseStack);
-					else {
-						if (containerOrHandler.container() != null)
-							afterDispenseStack = HopperBlockEntity.addItem(be, containerOrHandler.container(), dispenseStack.copyWithCount(1), direction.getOpposite());
-						else
-							afterDispenseStack = ItemUtil.insertItemReturnRemaining(containerOrHandler.itemHandler(), dispenseStack.copyWithCount(1), false, null);
+					if (container != null) {
+						afterDispenseStack = HopperBlockEntity.addItem(be, container, dispenseStack.copyWithCount(1), direction.getOpposite());
 
 						if (afterDispenseStack.isEmpty()) {
 							afterDispenseStack = dispenseStack.copy();
@@ -66,6 +65,22 @@ public class ReinforcedDropperBlock extends ReinforcedDispenserBlock {
 						}
 						else
 							afterDispenseStack = dispenseStack.copy();
+					}
+					else {
+						Storage<ItemVariant> storage = ItemStorage.SIDED.find(level, targetPos, direction.getOpposite());
+
+						if (storage == null)
+							afterDispenseStack = DISPENSE_BEHAVIOUR.dispense(source, dispenseStack);
+						else {
+							afterDispenseStack = dispenseStack.copy();
+
+							try (Transaction transaction = Transaction.openOuter()) {
+								if (storage.insert(ItemVariant.of(dispenseStack), 1, transaction) == 1) {
+									transaction.commit();
+									afterDispenseStack.shrink(1);
+								}
+							}
+						}
 					}
 
 					be.setItem(randomSlot, afterDispenseStack);

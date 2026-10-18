@@ -15,7 +15,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
+import net.geforcemods.securitycraft.platform.gui.VanillaGuiLayers;
 import net.geforcemods.securitycraft.platform.network.IPayloadContext;
 
 public record SetCameraView(int id) implements CustomPacketPayload {

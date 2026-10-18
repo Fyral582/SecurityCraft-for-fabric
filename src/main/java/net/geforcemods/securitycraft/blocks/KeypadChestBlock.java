@@ -64,8 +64,8 @@ import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.neoforged.neoforge.common.Tags;
-import net.neoforged.neoforge.common.world.AuxiliaryLightManager;
+import net.fabricmc.fabric.api.tag.convention.v2.ConventionalBlockTags;
+import net.geforcemods.securitycraft.platform.ext.AuxiliaryLightManager;
 
 public class KeypadChestBlock extends ChestBlock implements IOverlayDisplay, IDisguisable {
 	private static final DoubleBlockCombiner.Combiner<ChestBlockEntity, Optional<MenuProvider>> CONTAINER_MERGER = new DoubleBlockCombiner.Combiner<>() {
@@ -362,7 +362,7 @@ public class KeypadChestBlock extends ChestBlock implements IOverlayDisplay, IDi
 	public static class Convertible implements IPasscodeConvertible {
 		@Override
 		public boolean isUnprotectedBlock(BlockState state) {
-			return state.is(Tags.Blocks.CHESTS_WOODEN);
+			return state.is(ConventionalBlockTags.WOODEN_CHESTS);
 		}
 
 		@Override

@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.entity.camera;
 
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -30,15 +31,9 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.client.event.ScreenshotEvent;
-import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
+import net.geforcemods.securitycraft.platform.gui.VanillaGuiLayers;
 import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
-@EventBusSubscriber(modid = SecurityCraft.MODID, value = Dist.CLIENT)
 public class CameraController {
 	public static CameraType previousCameraType;
 	public static boolean resetOverlaysAfterDismount = false;
@@ -55,8 +50,12 @@ public class CameraController {
 
 	private CameraController() {}
 
-	@SubscribeEvent
-	public static void onClientTickPre(ClientTickEvent.Pre event) {
+	public static void register() {
+		ClientTickEvents.START_CLIENT_TICK.register(mc -> onClientTickPre());
+		ClientTickEvents.END_CLIENT_TICK.register(mc -> onClientTickPost());
+	}
+
+	public static void onClientTickPre() {
 		//up/down/left/right handling is split to prevent players who are viewing a camera from moving around in a boat or on a horse
 		Entity cameraEntity = Minecraft.getInstance().getCameraEntity();
 
@@ -74,8 +73,7 @@ public class CameraController {
 		}
 	}
 
-	@SubscribeEvent
-	public static void onClientTickPost(ClientTickEvent.Post event) {
+	public static void onClientTickPost() {
 		Entity cameraEntity = Minecraft.getInstance().getCameraEntity();
 
 		if (cameraEntity instanceof SecurityCamera cam) {
@@ -114,8 +112,7 @@ public class CameraController {
 		}
 	}
 
-	@SubscribeEvent
-	public static void onScreenshot(ScreenshotEvent event) {
+	public static void onScreenshot() {
 		Player player = Minecraft.getInstance().player;
 
 		if (PlayerUtils.isPlayerMountedOnCamera(player) && screenshotSoundCooldown <= 0) {

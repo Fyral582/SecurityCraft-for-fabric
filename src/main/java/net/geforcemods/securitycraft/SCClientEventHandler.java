@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft;
 
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -49,19 +50,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.client.event.InputEvent;
-import net.neoforged.neoforge.client.event.RenderHandEvent;
-import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
-import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
-import net.neoforged.neoforge.event.level.ChunkEvent;
-import net.neoforged.neoforge.event.level.LevelEvent;
 import net.geforcemods.securitycraft.platform.registry.DeferredHolder;
 
-@EventBusSubscriber(modid = SecurityCraft.MODID, value = Dist.CLIENT)
 public class SCClientEventHandler {
 	public static final Identifier BACKGROUND_SPRITE = SecurityCraft.resLoc("hud/camera/background");
 	public static final Identifier LIVE_SPRITE = SecurityCraft.resLoc("hud/camera/live");
@@ -89,8 +79,16 @@ public class SCClientEventHandler {
 
 	private SCClientEventHandler() {}
 
-	@SubscribeEvent
-	public static void onClientTickPost(ClientTickEvent.Post event) {
+	public static void register() {
+		ClientTickEvents.END_CLIENT_TICK.register(mc -> onClientTickPost());
+		WorldRenderEvents.BEFORE_TRANSLUCENT.register(SCClientEventHandler::onRenderLevelStage);
+		ClientChunkEvents.CHUNK_UNLOAD.register((level, chunk) -> onChunkUnload(chunk.getPos()));
+		ClientWorldEvents.AFTER_CLIENT_WORLD_CHANGE.register((mc, level) -> onLevelUnload());
+		ClientPlayConnectionEvents.DISCONNECT.register((handler, mc) -> onLevelUnload());
+		ItemTooltipCallback.EVENT.register(SCClientEventHandler::onItemTooltip);
+	}
+
+	public static void onClientTickPost() {
 		Minecraft mc = Minecraft.getInstance();
 
 		if (cameraInfoMessageTime >= 0)
@@ -100,10 +98,9 @@ public class SCClientEventHandler {
 			mc.setScreen(null);
 	}
 
-	@SubscribeEvent
-	public static void onRenderLevelStage(RenderLevelStageEvent.AfterTripwireBlocks event) {
-		Vec3 camPos = event.getLevelRenderState().cameraRenderState.pos;
-		PoseStack pose = event.getPoseStack();
+	public static void onRenderLevelStage(WorldRenderContext context) {
+		Vec3 camPos = context.worldState().cameraRenderState.pos;
+		PoseStack pose = context.matrices();
 		Minecraft mc = Minecraft.getInstance();
 		Level level = mc.level;
 		VertexConsumer consumer = mc.renderBuffers().bufferSource().getBuffer(ClientHandler.OVERLAY_LINES);
@@ -125,49 +122,45 @@ public class SCClientEventHandler {
 		}
 	}
 
-	@SubscribeEvent
-	public static void renderHandEvent(RenderHandEvent event) {
-		if (ClientHandler.isPlayerMountedOnCamera())
-			event.setCanceled(true);
+	/**
+	 * @return true if rendering the hand should be canceled
+	 */
+	public static boolean renderHandEvent() {
+		return ClientHandler.isPlayerMountedOnCamera();
 	}
 
-	@SubscribeEvent
-	public static void onClickInput(InputEvent.InteractionKeyMappingTriggered event) {
+	/**
+	 * Called when an attack, use or pick block key mapping is triggered
+	 *
+	 * @param hand The hand that is used, may be null when attacking or picking a block
+	 * @param isUseItem Whether the use key was triggered
+	 * @return true if the input should be canceled
+	 */
+	public static boolean onClickInput(InteractionHand hand, boolean isUseItem) {
 		if (ClientHandler.isPlayerMountedOnCamera()) {
 			Minecraft mc = Minecraft.getInstance();
-			InteractionHand hand = event.getHand();
 
-			if (mc.player.getItemInHand(hand).is(SCContent.CAMERA_MONITOR.get()) && event.isUseItem())
+			if (hand != null && mc.player.getItemInHand(hand).is(SCContent.CAMERA_MONITOR.get()) && isUseItem)
 				SCContent.CAMERA_MONITOR.get().use(mc.level, mc.player, hand);
 
-			event.setCanceled(true);
-			event.setSwingHand(false);
+			return true;
 		}
+
+		return false;
 	}
 
-	@SubscribeEvent
-	public static void onChunkUnload(ChunkEvent.Unload event) {
-		if (event.getLevel().isClientSide()) {
-			ChunkPos pos = event.getChunk().getPos();
-
-			CameraViewAreaExtension.onChunkUnload(pos.x, pos.z);
-		}
+	public static void onChunkUnload(ChunkPos pos) {
+		CameraViewAreaExtension.onChunkUnload(pos.x, pos.z);
 	}
 
-	@SubscribeEvent
-	public static void onLevelUnload(LevelEvent.Unload event) {
+	public static void onLevelUnload() {
 		FrameFeedHandler.removeAllFeeds();
 		CameraClientChunkCacheExtension.clear();
 		CameraViewAreaExtension.clear();
 	}
 
-	@SubscribeEvent
-	public static void onItemTooltip(ItemTooltipEvent event) {
-		ItemStack stack = event.getItemStack();
-		TooltipContext ctx = event.getContext();
+	public static void onItemTooltip(ItemStack stack, TooltipContext ctx, TooltipFlag flag, List<Component> tooltip) {
 		TooltipDisplay display = stack.getOrDefault(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT);
-		List<Component> tooltip = event.getToolTip();
-		TooltipFlag flag = event.getFlags();
 		int nextIndex = 0;
 
 		for (int i = 0; i < COMPONENTS_WITH_GLOBAL_TOOLTIP.size(); i++) {

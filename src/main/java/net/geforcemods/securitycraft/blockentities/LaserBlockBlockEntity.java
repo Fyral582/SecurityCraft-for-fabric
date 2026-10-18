@@ -1,5 +1,8 @@
 package net.geforcemods.securitycraft.blockentities;
 
+import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
@@ -52,11 +55,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-import net.neoforged.neoforge.model.data.ModelData;
+import net.geforcemods.securitycraft.platform.model.ModelData;
 import net.geforcemods.securitycraft.platform.network.PacketDistributor;
-import net.neoforged.neoforge.transfer.ResourceHandler;
-import net.neoforged.neoforge.transfer.item.ItemResource;
-import net.neoforged.neoforge.transfer.item.VanillaContainerWrapper;
 
 public class LaserBlockBlockEntity extends LinkableBlockEntity implements MenuProvider, ContainerListener {
 	protected List<LinkedBlock> linkedBlocks = new ArrayList<>();
@@ -311,8 +311,8 @@ public class LaserBlockBlockEntity extends LinkableBlockEntity implements MenuPr
 		}
 	}
 
-	public static ResourceHandler<ItemResource> getCapability(LaserBlockBlockEntity be, Direction side) {
-		ResourceHandler<ItemResource> resourceHandler = VanillaContainerWrapper.of(be.lenses);
+	public static Storage<ItemVariant> getCapability(LaserBlockBlockEntity be, Direction side) {
+		Storage<ItemVariant> resourceHandler = InventoryStorage.of(be.lenses, null);
 
 		return BlockUtils.isAllowedToExtractFromProtectedObject(side, be) ? resourceHandler : new InsertOnlyResourceHandler<>(resourceHandler);
 	}

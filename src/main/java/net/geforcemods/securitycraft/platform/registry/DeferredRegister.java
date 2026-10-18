@@ -114,7 +114,14 @@ public class DeferredRegister<T> {
 
 		for (Map.Entry<DeferredHolder<T, ? extends T>, Supplier<? extends T>> entry : entries.entrySet()) {
 			DeferredHolder<T, ? extends T> holder = entry.getKey();
-			Holder<T> registered = Registry.registerForHolder(registry, holder.getKey(), entry.getValue().get());
+			T value = entry.getValue().get();
+			Holder<T> registered;
+
+			//the value may have already been registered by a Fabric API helper (e.g. ArgumentTypeRegistry)
+			if (registry.getResourceKey(value).isPresent())
+				registered = registry.wrapAsHolder(value);
+			else
+				registered = Registry.registerForHolder(registry, holder.getKey(), value);
 
 			((DeferredHolder) holder).bind(registered);
 		}
