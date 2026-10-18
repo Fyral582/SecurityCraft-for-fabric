@@ -24,6 +24,7 @@ loom {
 		client {
 			client()
 			runDir 'run/client'
+			vmArg '-Dsecuritycraft.mixinAudit=true'
 		}
 		server {
 			server()

@@ -44,5 +44,8 @@
 	"mixinextras": {
 		"minVersion": "0.5.0"
 	},
-	"plugin": "net.geforcemods.securitycraft.mixin.SCMixinPlugin"
+	"plugin": "net.geforcemods.securitycraft.mixin.SCMixinPlugin",
+	"injectors": {
+		"defaultRequire": 1
+	}
 }

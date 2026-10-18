@@ -2,7 +2,10 @@ package net.geforcemods.securitycraft;
 
 import fuzs.forgeconfigapiport.fabric.api.v5.ConfigRegistry;
 import fuzs.forgeconfigapiport.fabric.api.v5.client.ConfigScreenFactoryRegistry;
+import org.spongepowered.asm.mixin.MixinEnvironment;
+
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.geforcemods.securitycraft.entity.camera.CameraController;
 import net.geforcemods.securitycraft.entity.camera.FrameFeedHandler;
 import net.geforcemods.securitycraft.items.properties.HitCheck;
@@ -25,5 +28,9 @@ public class SecurityCraftClient implements ClientModInitializer {
 		CameraController.register();
 		FrameFeedHandler.register();
 		Tips.register();
+
+		//development only: loads all mixin targets to find mixins that fail to apply, see the runClient configuration in build.gradle
+		if (Boolean.getBoolean("securitycraft.mixinAudit"))
+			ClientLifecycleEvents.CLIENT_STARTED.register(mc -> MixinEnvironment.getCurrentEnvironment().audit());
 	}
 }

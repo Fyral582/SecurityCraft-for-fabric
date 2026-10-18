@@ -19,12 +19,12 @@ import net.minecraft.world.level.material.FluidState;
 		"me.cominixo.betterf3.modules.TargetModule"
 })
 public class BetterF3TargetModuleMixin {
-	@ModifyVariable(method = "update", name = "blockState", at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/client/multiplayer/ClientLevel;getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;"))
+	@ModifyVariable(method = "update", ordinal = 0, at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/client/multiplayer/ClientLevel;getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;"))
 	private BlockState securitycraft$spoofBlockState(BlockState state, @Local(ordinal = 0) BlockPos blockPos) {
 		return F3Spoofer.spoofBlockState(state, blockPos);
 	}
 
-	@ModifyVariable(method = "update", name = "fluidState", at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/client/multiplayer/ClientLevel;getFluidState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/material/FluidState;"))
+	@ModifyVariable(method = "update", ordinal = 0, at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/client/multiplayer/ClientLevel;getFluidState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/material/FluidState;"))
 	private FluidState securitycraft$spoofFluidState(FluidState originalState) {
 		return F3Spoofer.spoofFluidState(originalState);
 	}
