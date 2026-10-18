@@ -43,7 +43,8 @@
 		"teleport.TeleportRandomlyConsumeEffectMixin",
 		"teleport.ThrownEnderpearlMixin",
 		"AbstractBoatMixin",
-		"ResultSlotMixin"
+		"ResultSlotMixin",
+		"ItemStackHolderMixin"
 	],
 	"client": [
 		"KeyMappingExtensionImplMixin",
