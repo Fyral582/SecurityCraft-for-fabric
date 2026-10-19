@@ -28,7 +28,7 @@ public class LayerToggleHandler {
 	public static HudElement wrap(Identifier layer, HudElement element) {
 		return (guiGraphics, deltaTracker) -> {
 			if (!isDisabled(layer))
-				element.render(guiGraphics, deltaTracker);
+				element.extractRenderState(guiGraphics, deltaTracker);
 		};
 	}
 

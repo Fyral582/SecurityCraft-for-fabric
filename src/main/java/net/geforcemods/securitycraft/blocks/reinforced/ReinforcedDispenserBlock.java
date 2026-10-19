@@ -20,7 +20,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.BlockAndLightGetter;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
@@ -81,7 +81,7 @@ public class ReinforcedDispenserBlock extends DispenserBlock implements IReinfor
 	protected void dispenseFrom(ServerLevel level, BlockState state, BlockPos pos) {
 		if (level.getBlockEntity(pos) instanceof ReinforcedDispenserBlockEntity be) {
 			BlockSource source = new BlockSource(level, pos, state, be);
-			int randomSlot = be.getRandomSlot(level.random);
+			int randomSlot = be.getRandomSlot(level.getRandom());
 
 			if (randomSlot < 0) {
 				level.levelEvent(LevelEvent.SOUND_DISPENSER_FAIL, pos, 0);
@@ -167,7 +167,7 @@ public class ReinforcedDispenserBlock extends DispenserBlock implements IReinfor
 	}
 
 	@Override
-	public BlockState getAppearance(BlockState state, BlockAndTintGetter level, BlockPos pos, Direction side, BlockState queryState, BlockPos queryPos) {
+	public BlockState getAppearance(BlockState state, BlockAndLightGetter level, BlockPos pos, Direction side, BlockState queryState, BlockPos queryPos) {
 		return IDisguisable.getDisguisedBlockState(level.getBlockEntity(pos)).orElse(state);
 	}
 

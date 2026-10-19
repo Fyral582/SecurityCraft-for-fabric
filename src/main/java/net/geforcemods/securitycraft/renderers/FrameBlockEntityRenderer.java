@@ -10,9 +10,11 @@ import org.joml.Vector4f;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.pipeline.BlendFunction;
+import com.mojang.blaze3d.pipeline.ColorTargetState;
+import com.mojang.blaze3d.pipeline.DepthStencilState;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.pipeline.RenderTarget;
-import com.mojang.blaze3d.platform.DepthTestFunction;
+import com.mojang.blaze3d.platform.CompareOp;
 import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -43,10 +45,10 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
-import net.minecraft.client.renderer.state.CameraRenderState;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
-import net.minecraft.client.resources.model.Material;
+import net.minecraft.client.resources.model.sprite.SpriteId;
 import net.minecraft.core.Direction;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.Vec3i;
@@ -62,7 +64,7 @@ public class FrameBlockEntityRenderer implements BlockEntityRenderer<FrameBlockE
 	private static final Identifier CAMERA_NOT_FOUND = SecurityCraft.resLoc("textures/entity/frame/camera_not_found.png");
 	private static final Identifier INACTIVE = SecurityCraft.resLoc("textures/entity/frame/inactive.png");
 	private static final Identifier NO_REDSTONE_SIGNAL = SecurityCraft.resLoc("textures/entity/frame/no_redstone_signal.png");
-	private static final Material NOISE_BACKGROUND = new Material(TextureAtlas.LOCATION_BLOCKS, SecurityCraft.resLoc("entity/frame/noise_background"));
+	private static final SpriteId NOISE_BACKGROUND = new SpriteId(TextureAtlas.LOCATION_BLOCKS, SecurityCraft.resLoc("entity/frame/noise_background"));
 	private static final Identifier SELECT_CAMERA = SecurityCraft.resLoc("textures/entity/frame/select_camera.png");
 	private static final Identifier WHITE = SecurityCraft.resLoc("textures/entity/frame/white.png");
 	//@formatter:off
@@ -72,8 +74,8 @@ public class FrameBlockEntityRenderer implements BlockEntityRenderer<FrameBlockE
 			.withFragmentShader(SecurityCraft.resLoc("frame_draw_fb_in_area"))
 			.withVertexFormat(DefaultVertexFormat.POSITION_TEX, VertexFormat.Mode.QUADS)
 			.withSampler("Sampler0")
-			.withBlend(BlendFunction.TRANSLUCENT)
-			.withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
+			.withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+			.withDepthStencilState(new DepthStencilState(CompareOp.LESS_THAN_OR_EQUAL, true))
 			.build();
 	//@formatter:on
 	private static final float MARGIN = 0.0625F;
@@ -235,10 +237,10 @@ public class FrameBlockEntityRenderer implements BlockEntityRenderer<FrameBlockE
 	}
 
 	public abstract class WrappingGeometryRenderer implements CustomGeometryRenderer {
-		public final Material material;
+		public final SpriteId spriteId;
 
-		public WrappingGeometryRenderer(Material material) {
-			this.material = material;
+		public WrappingGeometryRenderer(SpriteId spriteId) {
+			this.spriteId = spriteId;
 		}
 	}
 

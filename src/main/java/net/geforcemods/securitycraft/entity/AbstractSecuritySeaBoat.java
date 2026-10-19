@@ -1,6 +1,6 @@
 package net.geforcemods.securitycraft.entity;
 
-import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ContainerStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.geforcemods.securitycraft.platform.SCPlatform;
@@ -106,7 +106,7 @@ public abstract class AbstractSecuritySeaBoat extends AbstractChestBoat implemen
 	}
 
 	@Override
-	public InteractionResult interact(Player player, InteractionHand hand) {
+	public InteractionResult interact(Player player, InteractionHand hand, Vec3 location) {
 		ItemStack stack = player.getItemInHand(hand);
 		Level level = player.level();
 
@@ -193,7 +193,7 @@ public abstract class AbstractSecuritySeaBoat extends AbstractChestBoat implemen
 			return InteractionResult.SUCCESS;
 		}
 
-		return super.interact(player, hand);
+		return super.interact(player, hand, location);
 	}
 
 	@Override
@@ -285,7 +285,7 @@ public abstract class AbstractSecuritySeaBoat extends AbstractChestBoat implemen
 	}
 
 	public static Storage<ItemVariant> getCapability(AbstractSecuritySeaBoat boat, Direction direction) {
-		Storage<ItemVariant> resourceHandler = InventoryStorage.of(boat, null);
+		Storage<ItemVariant> resourceHandler = ContainerStorage.of(boat, null);
 
 		return BlockUtils.isAllowedToExtractFromProtectedObject(direction, boat, boat.level(), boat.blockPosition()) ? resourceHandler : new InsertOnlyResourceHandler<>(resourceHandler);
 	}

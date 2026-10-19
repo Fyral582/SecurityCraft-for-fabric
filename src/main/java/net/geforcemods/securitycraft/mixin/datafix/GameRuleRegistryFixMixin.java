@@ -20,7 +20,7 @@ public class GameRuleRegistryFixMixin {
 		throw new UnsupportedOperationException("Shadowing convertBoolean method failed!");
 	}
 
-	@ModifyReturnValue(method = "method_76071", at = @At("RETURN"))
+	@ModifyReturnValue(method = "lambda$makeRule$9", at = @At("RETURN"))
 	private static Dynamic<?> securitycraft$datafixSCGameRules(Dynamic<?> original) {
 		return original
 				.renameAndFixField("fakeWaterSourceConversion", "securitycraft:fake_water_source_conversion", GameRuleRegistryFixMixin::convertBoolean)

@@ -1,5 +1,5 @@
 plugins {
-	id 'fabric-loom' version '1.17.21'
+	id 'net.fabricmc.fabric-loom' version '1.19.1'
 	id 'idea'
 }
 
@@ -14,7 +14,7 @@ base {
 }
 
 java {
-	toolchain.languageVersion = JavaLanguageVersion.of(21)
+	toolchain.languageVersion = JavaLanguageVersion.of(25)
 }
 
 loom {
@@ -56,25 +56,21 @@ repositories {
 
 dependencies {
 	minecraft "com.mojang:minecraft:${project.mc_version}"
-	mappings loom.layered() {
-		officialMojangMappings()
-		parchment("org.parchmentmc.data:parchment-${project.mc_version}:${project.parchment_version}@zip")
-	}
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 	// Provides NeoForge's ModConfigSpec API on Fabric
-	modApi "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${project.fcap_version}"
+	api "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${project.fcap_version}"
 	include "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${project.fcap_version}"
 
 	// optional integrations, only used when the respective mod is installed
-	modCompileOnly "maven.modrinth:jei:vdRSQCTb"
-	modCompileOnly "maven.modrinth:jade:swJhAyak"
-	modCompileOnly "maven.modrinth:wthit:46pFaMf5"
-	modCompileOnly "maven.modrinth:badpackets:SZTlaMHp"
-	modCompileOnly "maven.modrinth:distanthorizons:oNqCUHFk"
-	modCompileOnly "maven.modrinth:sodium:RB7CDjTS"
-	modCompileOnly "maven.modrinth:betterf3:Qw1nhj7u"
-	modCompileOnly "maven.modrinth:cloth-config:xuX40TN5"
+	compileOnly "maven.modrinth:jei:b5BXTIh2"
+	compileOnly "maven.modrinth:jade:Yo9xOce3"
+	compileOnly "maven.modrinth:wthit:XqSFBb4k"
+	compileOnly "maven.modrinth:badpackets:SgNrUT3E"
+	compileOnly "maven.modrinth:distanthorizons:QHxoccsN"
+	compileOnly "maven.modrinth:sodium:tZQ3jqnf"
+	compileOnly "maven.modrinth:betterf3:aRWqyAza"
+	compileOnly "maven.modrinth:cloth-config:GFM8zh9J"
 }
 
 sourceSets.main.resources {
@@ -105,14 +101,14 @@ tasks.named('jar', Jar).configure {
 	from('LICENSE')
 }
 
-remapJar {
-	archiveFileName = "[${project.mc_version}] SecurityCraft v${version} (Fabric).jar"
+tasks.named('jar', Jar).configure {
+	archiveFileName = "[26.1.x] SecurityCraft v${version} (Fabric).jar"
 }
 
 tasks.withType(JavaCompile).configureEach {
 	options.compilerArgs << '-Xmaxerrs' << '10000'
 	options.encoding = 'UTF-8'
-	options.release = 21
+	options.release = 25
 }
 
 sourceSets.main.java {

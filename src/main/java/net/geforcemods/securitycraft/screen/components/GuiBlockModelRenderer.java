@@ -1,7 +1,5 @@
 package net.geforcemods.securitycraft.screen.components;
 
-import java.util.function.Function;
-
 import org.joml.Quaternionf;
 
 import com.mojang.blaze3d.platform.Lighting.Entry;
@@ -11,23 +9,21 @@ import com.mojang.math.Axis;
 import net.geforcemods.securitycraft.util.ClientUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.render.pip.PictureInPictureRenderer;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.MultiBufferSource.BufferSource;
-import net.minecraft.client.renderer.block.BlockRenderDispatcher;
-import net.minecraft.client.renderer.block.model.BlockStateModel;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
+import net.minecraft.client.renderer.block.BlockQuadOutput;
+import net.minecraft.client.renderer.block.ModelBlockRenderer;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
+import net.minecraft.client.renderer.feature.BlockFeatureRenderer;
 import net.minecraft.client.renderer.feature.FeatureRenderDispatcher;
-import net.minecraft.client.renderer.rendertype.RenderType;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
-import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.client.renderer.ItemBlockRenderTypes;
 
 public class GuiBlockModelRenderer extends PictureInPictureRenderer<GuiBlockModelRenderState> {
 	private static final Quaternionf DEFAULT_ROTATION = ClientUtils.fromXYZDegrees(-15.0F, -135.0F, 0.0F).mul(Axis.XP.rotationDegrees(180.0F));
@@ -60,7 +56,7 @@ public class GuiBlockModelRenderer extends PictureInPictureRenderer<GuiBlockMode
 			FeatureRenderDispatcher featureRenderDispatcher = mc.gameRenderer.getFeatureRenderDispatcher();
 
 			beRenderer.extractRenderState(guiRenderState.be(), beRenderState, mc.getDeltaTracker().getGameTimeDeltaPartialTick(true), mc.gameRenderer.getMainCamera().position(), null);
-			beRenderState.lightCoords = LightTexture.FULL_BRIGHT;
+			beRenderState.lightCoords = LightCoordsUtil.FULL_BRIGHT;
 			beRenderer.submit(beRenderState, pose, featureRenderDispatcher.getSubmitNodeStorage(), mc.levelRenderer.levelRenderState.cameraRenderState);
 			featureRenderDispatcher.renderAllFeatures();
 		}
@@ -71,11 +67,17 @@ public class GuiBlockModelRenderer extends PictureInPictureRenderer<GuiBlockMode
 		return "SC block model";
 	}
 
-	private void renderBlockModel(Minecraft mc, BlockAndTintGetter blockAndTintGetter, BlockState state, PoseStack pose, MultiBufferSource bufferSource) {
+	private void renderBlockModel(Minecraft mc, BlockAndTintGetter blockAndTintGetter, BlockState state, PoseStack pose, MultiBufferSource.BufferSource bufferSource) {
 		if (state.getRenderShape() == RenderShape.MODEL) {
-			BlockRenderDispatcher blockRenderer = mc.getBlockRenderer();
-			BlockStateModel blockModel = blockRenderer.getBlockModel(state);
-			blockRenderer.getModelRenderer().tesselateWithoutAO(blockAndTintGetter, blockModel.collectParts(RandomSource.create(42L)), state, BlockPos.ZERO, pose, bufferSource.getBuffer(ItemBlockRenderTypes.getMovingBlockRenderType(state)), false, OverlayTexture.NO_OVERLAY);
+			BlockQuadOutput output = (x, y, z, quad, instance) -> BlockFeatureRenderer.putBakedQuad(pose, bufferSource, x, y, z, quad, instance, quad.materialInfo().layer());
+			BlockQuadOutput solidOutput = (x, y, z, quad, instance) -> BlockFeatureRenderer.putBakedQuad(pose, bufferSource, x, y, z, quad, instance, ChunkSectionLayer.SOLID);
+			boolean ambientOcclusion = mc.options.ambientOcclusion().get();
+			boolean cutoutLeaves = mc.options.cutoutLeaves().get();
+			ModelBlockRenderer blockRenderer = new ModelBlockRenderer(ambientOcclusion, false, mc.getBlockColors());
+			BlockStateModel blockModel = mc.getModelManager().getBlockStateModelSet().get(state);
+			BlockQuadOutput blockOutput = ModelBlockRenderer.forceOpaque(cutoutLeaves, state) ? solidOutput : output;
+
+			blockRenderer.tesselateBlock(blockOutput, 0.0F, 0.0F, 0.0F, blockAndTintGetter, BlockPos.ZERO, state, blockModel, 42L);
 		}
 	}
 }

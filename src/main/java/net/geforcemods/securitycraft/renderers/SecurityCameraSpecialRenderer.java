@@ -19,11 +19,10 @@ import net.minecraft.client.renderer.special.NoDataSpecialModelRenderer;
 import net.minecraft.client.renderer.special.SpecialModelRenderer;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.ExtraCodecs;
-import net.minecraft.world.item.ItemDisplayContext;
 
 public record SecurityCameraSpecialRenderer(SecurityCameraModel model, Identifier texture, float rotation, Optional<Integer> lensColor, Optional<Integer> light) implements NoDataSpecialModelRenderer {
 	@Override
-	public void submit(ItemDisplayContext ctx, PoseStack pose, SubmitNodeCollector collector, int packedLight, int packedOverlay, boolean glint, int outlineColor) {
+	public void submit(PoseStack pose, SubmitNodeCollector collector, int lightCoords, int overlayCoords, boolean hasFoil, int outlineColor) {
 		SecurityCameraRenderState state = new SecurityCameraRenderState();
 
 		lensColor.ifPresentOrElse(color -> {
@@ -31,7 +30,7 @@ public record SecurityCameraSpecialRenderer(SecurityCameraModel model, Identifie
 			state.lensColor = color;
 		}, () -> state.lensColor = 0x70FFFF);
 		state.cameraYRot = rotation;
-		collector.submitModel(model, state, pose, RenderTypes.entitySolid(texture), light.orElse(packedLight), packedOverlay, outlineColor, null);
+		collector.submitModel(model, state, pose, RenderTypes.entitySolid(texture), light.orElse(lightCoords), overlayCoords, outlineColor, null);
 	}
 
 	@Override
@@ -42,7 +41,7 @@ public record SecurityCameraSpecialRenderer(SecurityCameraModel model, Identifie
 		model.root().getExtentsForGui(poseStack, extents);
 	}
 
-	public static record Unbaked(Identifier texture, float rotation, Optional<Integer> lensColor, Optional<Integer> light) implements SpecialModelRenderer.Unbaked {
+	public record Unbaked(Identifier texture, float rotation, Optional<Integer> lensColor, Optional<Integer> light) implements SpecialModelRenderer.Unbaked<Void> {
 
 		//@formatter:off
 		public static final MapCodec<SecurityCameraSpecialRenderer.Unbaked> MAP_CODEC = RecordCodecBuilder.mapCodec(
@@ -59,7 +58,7 @@ public record SecurityCameraSpecialRenderer(SecurityCameraModel model, Identifie
 		}
 
 		@Override
-		public SpecialModelRenderer<?> bake(BakingContext ctx) {
+		public SecurityCameraSpecialRenderer bake(BakingContext ctx) {
 			SecurityCameraModel model = new SecurityCameraModel(ctx.entityModelSet().bakeLayer(ClientHandler.SECURITY_CAMERA_LOCATION));
 
 			return new SecurityCameraSpecialRenderer(model, texture.withPrefix("textures/entity/security_camera/").withSuffix(".png"), rotation, lensColor, light);

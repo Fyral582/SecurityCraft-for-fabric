@@ -10,7 +10,7 @@ import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -119,7 +119,7 @@ public class InventoryScannerMenu extends AbstractContainerMenu {
 	}
 
 	@Override
-	public void clicked(int slotId, int dragType, ClickType clickType, Player player) {
+	public void clicked(int slotId, int dragType, ContainerInput containerInput, Player player) {
 		if (slotId >= 0 && slotId < 10 && getSlot(slotId) instanceof OwnerRestrictedSlot slot && slot.isGhostSlot()) {
 			if (!player.isSpectator() && be.isOwnedBy(player)) {
 				ItemStack pickedUpStack = getCarried().copy();
@@ -130,6 +130,6 @@ public class InventoryScannerMenu extends AbstractContainerMenu {
 			}
 		}
 		else
-			super.clicked(slotId, dragType, clickType, player);
+			super.clicked(slotId, dragType, containerInput, player);
 	}
 }

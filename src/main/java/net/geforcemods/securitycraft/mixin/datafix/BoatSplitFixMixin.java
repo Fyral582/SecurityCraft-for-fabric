@@ -23,7 +23,7 @@ public class BoatSplitFixMixin {
 			cir.setReturnValue(true);
 	}
 
-	@ModifyVariable(method = "method_64402", at = @At("STORE"), ordinal = 0)
+	@ModifyVariable(method = "lambda$makeRule$0", at = @At("STORE"), ordinal = 0)
 	private static String securitycraft$mapSecuritySeaBoat(String orElse, @Local(ordinal = 0) Optional<String> entityId, @Local(ordinal = 1) Optional<String> oldType) {
 		if (entityId.get().equals("securitycraft:security_sea_boat")) {
 			return oldType.map(type -> switch (type) {

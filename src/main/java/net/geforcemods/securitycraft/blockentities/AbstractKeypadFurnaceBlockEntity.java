@@ -1,6 +1,6 @@
 package net.geforcemods.securitycraft.blockentities;
 
-import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ContainerStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import java.util.EnumMap;
@@ -186,7 +186,7 @@ public abstract class AbstractKeypadFurnaceBlockEntity extends AbstractFurnaceBl
 	}
 
 	public static Storage<ItemVariant> getCapability(AbstractKeypadFurnaceBlockEntity be, Direction side) {
-		Storage<ItemVariant> resourceHandler = InventoryStorage.of(be, side);
+		Storage<ItemVariant> resourceHandler = ContainerStorage.of(be, side);
 
 		return BlockUtils.isAllowedToExtractFromProtectedObject(side, be) ? resourceHandler : new InsertOnlyResourceHandler<>(resourceHandler);
 	}
@@ -200,7 +200,7 @@ public abstract class AbstractKeypadFurnaceBlockEntity extends AbstractFurnaceBl
 	@Override
 	public boolean shouldAttemptCodebreak(Player player) {
 		if (isDisabled()) {
-			player.displayClientMessage(Utils.localize("gui.securitycraft:scManual.disabled"), true);
+			player.sendOverlayMessage(Utils.localize("gui.securitycraft:scManual.disabled"));
 			return false;
 		}
 

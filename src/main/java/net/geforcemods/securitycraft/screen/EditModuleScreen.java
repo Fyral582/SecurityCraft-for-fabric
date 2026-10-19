@@ -21,7 +21,7 @@ import net.geforcemods.securitycraft.screen.components.ToggleComponentButton;
 import net.geforcemods.securitycraft.util.PlayerUtils;
 import net.geforcemods.securitycraft.util.Utils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
@@ -135,14 +135,14 @@ public class EditModuleScreen extends Screen implements StillValid {
 	}
 
 	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		super.render(guiGraphics, mouseX, mouseY, partialTicks);
-		guiGraphics.drawWordWrap(font, editModule, leftPos + xSize / 2 - font.width(editModule) / 2, topPos + 6, width, CommonColors.DARK_GRAY, false);
+	public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
+		super.extractRenderState(guiGraphics, mouseX, mouseY, partialTicks);
+		guiGraphics.textWithWordWrap(font, editModule, leftPos + xSize / 2 - font.width(editModule) / 2, topPos + 6, width, CommonColors.DARK_GRAY, false);
 	}
 
 	@Override
-	public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-		renderTransparentBackground(guiGraphics);
+	public void extractBackground(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+		extractTransparentBackground(guiGraphics);
 		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, leftPos, topPos, 0.0F, 0.0F, xSize, ySize, 256, 256);
 	}
 
@@ -311,12 +311,12 @@ public class EditModuleScreen extends Screen implements StillValid {
 		}
 
 		@Override
-		protected void drawBackground(GuiGraphics guiGraphics, float partialTick) {
+		protected void drawBackground(GuiGraphicsExtractor guiGraphics, float partialTick) {
 			drawGradientRect(guiGraphics, left, top, right, bottom, 0xC0101010, 0xD0101010);
 		}
 
 		@Override
-		protected void drawPanel(GuiGraphics guiGraphics, int entryRight, int relativeY, int mouseX, int mouseY) {
+		protected void drawPanel(GuiGraphicsExtractor guiGraphics, int entryRight, int relativeY, int mouseX, int mouseY) {
 			ListModuleData listModuleData = module.get(SCContent.LIST_MODULE_DATA);
 
 			if (listModuleData != null) {
@@ -339,7 +339,7 @@ public class EditModuleScreen extends Screen implements StillValid {
 					String name = players.get(i);
 
 					if (!name.isEmpty())
-						guiGraphics.drawString(font, name, left - 2 + width / 2 - font.width(name) / 2, relativeY + (SLOT_HEIGHT * i), 0xFFC6C6C6, false);
+						guiGraphics.text(font, name, left - 2 + width / 2 - font.width(name) / 2, relativeY + (SLOT_HEIGHT * i), 0xFFC6C6C6, false);
 				}
 			}
 		}
@@ -400,14 +400,14 @@ public class EditModuleScreen extends Screen implements StillValid {
 		}
 
 		@Override
-		protected void drawBackground(GuiGraphics guiGraphics, float partialTick) {
+		protected void drawBackground(GuiGraphicsExtractor guiGraphics, float partialTick) {
 			drawGradientRect(guiGraphics, left, top, right, bottom, 0xC0101010, 0xD0101010);
 		}
 
 		@Override
-		public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+		public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
 			if (active) {
-				super.render(guiGraphics, mouseX, mouseY, partialTick);
+				super.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
 
 				//draw tooltip for long patron names
 				int mouseListY = (int) (mouseY - top + scrollDistance - (border / 2));
@@ -425,7 +425,7 @@ public class EditModuleScreen extends Screen implements StillValid {
 		}
 
 		@Override
-		protected void drawPanel(GuiGraphics guiGraphics, int entryRight, int relativeY, int mouseX, int mouseY) {
+		protected void drawPanel(GuiGraphicsExtractor guiGraphics, int entryRight, int relativeY, int mouseX, int mouseY) {
 			int baseY = top + border - (int) scrollDistance;
 			int mouseListY = (int) (mouseY - top + scrollDistance - (border / 2));
 			int slotIndex = mouseListY / SLOT_HEIGHT;
@@ -439,7 +439,7 @@ public class EditModuleScreen extends Screen implements StillValid {
 				int yStart = relativeY + (SLOT_HEIGHT * i);
 				PlayerTeam team = availableTeams.get(i);
 
-				guiGraphics.drawString(font, team.getDisplayName(), left + 15, yStart, 0xFFC6C6C6, false);
+				guiGraphics.text(font, team.getDisplayName(), left + 15, yStart, 0xFFC6C6C6, false);
 				guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, teamsListedStatus.get(team) ? CONFIRM_SPRITE : CANCEL_SPRITE, left + 1, yStart - 3, 12, 12);
 			}
 		}
@@ -470,7 +470,7 @@ public class EditModuleScreen extends Screen implements StillValid {
 		}
 	}
 
-	private void renderBox(GuiGraphics guiGraphics, int min, int max, int slotTop, int slotBuffer, int borderColor) {
+	private void renderBox(GuiGraphicsExtractor guiGraphics, int min, int max, int slotTop, int slotBuffer, int borderColor) {
 		guiGraphics.fill(min, slotTop - 2, max, slotTop + slotBuffer + 2, borderColor);
 		guiGraphics.fill(min + 1, slotTop - 1, max - 1, slotTop + slotBuffer + 1, 0xFF000000);
 	}

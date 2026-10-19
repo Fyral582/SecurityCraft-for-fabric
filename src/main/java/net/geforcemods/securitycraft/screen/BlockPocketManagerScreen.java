@@ -19,7 +19,7 @@ import net.geforcemods.securitycraft.screen.components.ToggleComponentButton;
 import net.geforcemods.securitycraft.util.IHasExtraAreas;
 import net.geforcemods.securitycraft.util.Utils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -31,7 +31,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.CommonColors;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
@@ -67,17 +67,13 @@ public class BlockPocketManagerScreen extends AbstractContainerScreen<BlockPocke
 	private final int previousColor;
 
 	public BlockPocketManagerScreen(BlockPocketManagerMenu menu, Inventory inv, Component title) {
-		super(menu, inv, title);
+		boolean hasStorageModule = menu.hasStorageModule;
+		super(menu, inv, title, hasStorageModule ? 256 : 176, !hasStorageModule ? 194 : 240);
 
 		be = menu.be;
 		size = be.getSize();
 		isOwner = menu.isOwner;
-		hasStorageModule = menu.hasStorageModule;
-
-		if (hasStorageModule)
-			imageWidth = 256;
-
-		imageHeight = !hasStorageModule ? 194 : 240;
+		this.hasStorageModule = hasStorageModule;
 		previousColor = be.getColor();
 	}
 
@@ -132,46 +128,46 @@ public class BlockPocketManagerScreen extends AbstractContainerScreen<BlockPocke
 	}
 
 	@Override
-	protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-		guiGraphics.drawString(font, title, (hasStorageModule ? 123 : imageWidth) / 2 - font.width(title) / 2, 6, CommonColors.DARK_GRAY, false);
+	protected void extractLabels(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY) {
+		guiGraphics.text(font, title, (hasStorageModule ? 123 : imageWidth) / 2 - font.width(title) / 2, 6, CommonColors.DARK_GRAY, false);
 
 		if (hasStorageModule)
-			guiGraphics.drawString(font, playerInventoryTitle, 8, imageHeight - 94, CommonColors.DARK_GRAY, false);
+			guiGraphics.text(font, playerInventoryTitle, 8, imageHeight - 94, CommonColors.DARK_GRAY, false);
 
 		if (!be.isEnabled() && isOwner) {
 			if (!hasStorageModule) {
-				guiGraphics.drawString(font, youNeed, imageWidth / 2 - font.width(youNeed) / 2, 83, CommonColors.DARK_GRAY, false);
+				guiGraphics.text(font, youNeed, imageWidth / 2 - font.width(youNeed) / 2, 83, CommonColors.DARK_GRAY, false);
 
-				guiGraphics.drawString(font, wallsNeededOverall + "", 42, 100, CommonColors.DARK_GRAY, false);
-				guiGraphics.renderItem(BLOCK_POCKET_WALL, 25, 96);
+				guiGraphics.text(font, wallsNeededOverall + "", 42, 100, CommonColors.DARK_GRAY, false);
+				guiGraphics.item(BLOCK_POCKET_WALL, 25, 96);
 
-				guiGraphics.drawString(font, pillarsNeededOverall + "", 94, 100, CommonColors.DARK_GRAY, false);
-				guiGraphics.renderItem(REINFORCED_CRYSTAL_QUARTZ_PILLAR, 77, 96);
+				guiGraphics.text(font, pillarsNeededOverall + "", 94, 100, CommonColors.DARK_GRAY, false);
+				guiGraphics.item(REINFORCED_CRYSTAL_QUARTZ_PILLAR, 77, 96);
 
-				guiGraphics.drawString(font, CHISELED_NEEDED_OVERALL + "", 147, 100, CommonColors.DARK_GRAY, false);
-				guiGraphics.renderItem(REINFORCED_CHISELED_CRYSTAL_QUARTZ, 130, 96);
+				guiGraphics.text(font, CHISELED_NEEDED_OVERALL + "", 147, 100, CommonColors.DARK_GRAY, false);
+				guiGraphics.item(REINFORCED_CHISELED_CRYSTAL_QUARTZ, 130, 96);
 			}
 			else {
-				guiGraphics.drawString(font, youNeed, 169 + 87 / 2 - font.width(youNeed) / 2, imageHeight - 83, CommonColors.DARK_GRAY, false);
+				guiGraphics.text(font, youNeed, 169 + 87 / 2 - font.width(youNeed) / 2, imageHeight - 83, CommonColors.DARK_GRAY, false);
 
-				guiGraphics.drawString(font, Math.max(0, wallsStillNeeded) + "", 192, imageHeight - 66, CommonColors.DARK_GRAY, false);
-				guiGraphics.renderItem(BLOCK_POCKET_WALL, 175, imageHeight - 70);
+				guiGraphics.text(font, Math.max(0, wallsStillNeeded) + "", 192, imageHeight - 66, CommonColors.DARK_GRAY, false);
+				guiGraphics.item(BLOCK_POCKET_WALL, 175, imageHeight - 70);
 
-				guiGraphics.drawString(font, Math.max(0, pillarsStillNeeded) + "", 192, imageHeight - 44, CommonColors.DARK_GRAY, false);
-				guiGraphics.renderItem(REINFORCED_CRYSTAL_QUARTZ_PILLAR, 175, imageHeight - 48);
+				guiGraphics.text(font, Math.max(0, pillarsStillNeeded) + "", 192, imageHeight - 44, CommonColors.DARK_GRAY, false);
+				guiGraphics.item(REINFORCED_CRYSTAL_QUARTZ_PILLAR, 175, imageHeight - 48);
 
-				guiGraphics.drawString(font, Math.max(0, chiseledStillNeeded) + "", 192, imageHeight - 22, CommonColors.DARK_GRAY, false);
-				guiGraphics.renderItem(REINFORCED_CHISELED_CRYSTAL_QUARTZ, 175, imageHeight - 26);
+				guiGraphics.text(font, Math.max(0, chiseledStillNeeded) + "", 192, imageHeight - 22, CommonColors.DARK_GRAY, false);
+				guiGraphics.item(REINFORCED_CHISELED_CRYSTAL_QUARTZ, 175, imageHeight - 26);
 			}
 		}
 	}
 
 	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		super.render(guiGraphics, mouseX, mouseY, partialTicks);
+	public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
+		super.extractRenderState(guiGraphics, mouseX, mouseY, partialTicks);
 
 		if (hasStorageModule)
-			renderTooltip(guiGraphics, mouseX, mouseY);
+			extractTooltip(guiGraphics, mouseX, mouseY);
 
 		if (!be.isEnabled() && isOwner) {
 			for (StackHoverChecker shc : hoverCheckers) {
@@ -184,7 +180,8 @@ public class BlockPocketManagerScreen extends AbstractContainerScreen<BlockPocke
 	}
 
 	@Override
-	protected void renderBg(GuiGraphics guiGraphics, float partialTicks, int mouseX, int mouseY) {
+	public void extractBackground(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float a) {
+		super.extractBackground(guiGraphics, mouseX, mouseY, a);
 		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, hasStorageModule ? TEXTURE_STORAGE : TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
 	}
 
@@ -202,9 +199,9 @@ public class BlockPocketManagerScreen extends AbstractContainerScreen<BlockPocke
 	}
 
 	@Override
-	protected void slotClicked(Slot slot, int slotId, int mouseButton, ClickType type) {
+	protected void slotClicked(Slot slot, int slotId, int mouseButton, ContainerInput containerInput) {
 		//the super call needs to be before calculating the stored materials, as it is responsible for putting the stack inside the slot
-		super.slotClicked(slot, slotId, mouseButton, type);
+		super.slotClicked(slot, slotId, mouseButton, containerInput);
 		//every time items are added/removed, the mouse is clicking a slot and these values are recomputed
 		//not the best place, as this code will run when an empty slot is clicked while not holding any item, but it's good enough
 		updateMaterialInformation(true);

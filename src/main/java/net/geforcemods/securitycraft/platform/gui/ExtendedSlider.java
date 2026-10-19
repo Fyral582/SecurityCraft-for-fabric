@@ -2,7 +2,7 @@ package net.geforcemods.securitycraft.platform.gui;
 
 import java.text.DecimalFormat;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -153,15 +153,15 @@ public class ExtendedSlider extends AbstractSliderButton {
 	protected void applyValue() {}
 
 	@Override
-	public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+	public void extractWidgetRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
 		if (fgColor != -1) {
 			Component message = getMessage();
 
 			setMessage(message.copy().withColor(fgColor & 0xFFFFFF));
-			super.renderWidget(guiGraphics, mouseX, mouseY, partialTick);
+			super.extractWidgetRenderState(guiGraphics, mouseX, mouseY, partialTick);
 			setMessage(message);
 		}
 		else
-			super.renderWidget(guiGraphics, mouseX, mouseY, partialTick);
+			super.extractWidgetRenderState(guiGraphics, mouseX, mouseY, partialTick);
 	}
 }

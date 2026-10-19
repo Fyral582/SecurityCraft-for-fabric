@@ -5,7 +5,7 @@ import java.util.Deque;
 import java.util.Iterator;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 
 /**
@@ -66,11 +66,11 @@ public final class ScreenLayers {
 		}
 	}
 
-	public static void renderLayers(GuiGraphics guiGraphics, float partialTick) {
+	public static void renderLayers(GuiGraphicsExtractor guiGraphics, float partialTick) {
 		Iterator<Screen> iterator = LAYERS.descendingIterator();
 
 		while (iterator.hasNext()) {
-			iterator.next().renderWithTooltipAndSubtitles(guiGraphics, -1, -1, partialTick);
+			iterator.next().extractRenderStateWithTooltipAndSubtitles(guiGraphics, -1, -1, partialTick);
 		}
 	}
 

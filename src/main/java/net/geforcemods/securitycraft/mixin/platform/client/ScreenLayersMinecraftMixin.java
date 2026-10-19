@@ -19,7 +19,7 @@ public class ScreenLayersMinecraftMixin {
 		ScreenLayers.onSetScreen();
 	}
 
-	@Inject(method = "resizeDisplay", at = @At("TAIL"))
+	@Inject(method = "resizeGui", at = @At("TAIL"))
 	private void securitycraft$resizeLayers(CallbackInfo ci) {
 		Minecraft mc = (Minecraft) (Object) this;
 

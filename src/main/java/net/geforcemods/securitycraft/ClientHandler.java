@@ -4,10 +4,10 @@ import net.fabricmc.fabric.api.client.model.loading.v1.ExtraModelKey;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
 import net.fabricmc.fabric.api.client.model.loading.v1.SimpleUnbakedExtraModel;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
-import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
-import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
-import net.fabricmc.fabric.api.client.rendering.v1.SpecialGuiElementRegistry;
+import net.fabricmc.fabric.api.client.particle.v1.ParticleProviderRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.BlockColorRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.ModelLayerRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.PictureInPictureRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.geforcemods.securitycraft.platform.menu.MenuDataPayload;
 import net.minecraft.client.color.item.ItemTintSources;
@@ -18,24 +18,27 @@ import net.minecraft.client.renderer.item.properties.numeric.RangeSelectItemMode
 import net.minecraft.client.renderer.item.properties.select.SelectItemModelProperties;
 import net.minecraft.client.renderer.special.SpecialModelRenderers;
 
-import net.fabricmc.fabric.api.client.rendering.v1.BlockRenderLayerMap;
+import net.fabricmc.fabric.api.client.render.fluid.v1.FluidRenderingRegistry;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
 
 import com.google.common.base.Suppliers;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.OctahedralGroup;
 
+import it.unimi.dsi.fastutil.ints.IntList;
 import net.geforcemods.securitycraft.api.IDisguisable;
 import net.geforcemods.securitycraft.api.IOwnable;
 import net.geforcemods.securitycraft.api.IPasscodeProtected;
-import net.geforcemods.securitycraft.api.IReinforcedBlock;
 import net.geforcemods.securitycraft.blockentities.AlarmBlockEntity;
 import net.geforcemods.securitycraft.blockentities.FrameBlockEntity;
 import net.geforcemods.securitycraft.blockentities.InventoryScannerBlockEntity;
@@ -139,25 +142,25 @@ import net.geforcemods.securitycraft.util.BlockEntityRenderDelegate;
 import net.geforcemods.securitycraft.util.ClientUtils;
 import net.geforcemods.securitycraft.util.Reinforced;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.color.block.BlockColor;
+import net.minecraft.client.color.block.BlockTintSource;
+import net.minecraft.client.color.block.BlockTintSources;
 import net.minecraft.client.model.HumanoidModel.ArmPose;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.BiomeColors;
-import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.renderer.block.model.BlockStateModel;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
+import net.minecraft.client.renderer.block.FluidStateModelSet;
+import net.minecraft.client.renderer.block.dispatch.BlockModelRotation;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.blockentity.LecternRenderer;
 import net.minecraft.client.renderer.blockentity.ShelfRenderer;
-import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.entity.NoopRenderer;
 import net.minecraft.client.renderer.rendertype.LayeringTransform;
 import net.minecraft.client.renderer.rendertype.OutputTarget;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
-import net.minecraft.client.resources.model.BlockModelRotation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.BlockPos.MutableBlockPos;
 import net.minecraft.core.Direction;
@@ -174,15 +177,12 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
-import net.minecraft.world.level.BlockAndTintGetter;
-import net.minecraft.world.level.GrassColor;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.SnowyDirtBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.geforcemods.securitycraft.platform.registry.DeferredBlock;
-
+import net.minecraft.world.level.block.state.properties.Property;
 public class ClientHandler {
 	public static final ModelLayerLocation BULLET_LOCATION = new ModelLayerLocation(SecurityCraft.resLoc("bullet"), "main");
 	public static final ModelLayerLocation IMS_BOMB_LOCATION = new ModelLayerLocation(SecurityCraft.resLoc("ims_bomb"), "main");
@@ -319,56 +319,8 @@ public class ClientHandler {
 	}
 
 	private static void onFMLClientSetup() {
-		ChunkSectionLayer cutout = ChunkSectionLayer.CUTOUT;
-		ChunkSectionLayer translucent = ChunkSectionLayer.TRANSLUCENT;
-
-		BlockRenderLayerMap.putFluid(SCContent.FAKE_WATER.get(), translucent);
-		BlockRenderLayerMap.putFluid(SCContent.FLOWING_FAKE_WATER.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_COPPER_BARS.get(), cutout);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_EXPOSED_COPPER_BARS.get(), cutout);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_WEATHERED_COPPER_BARS.get(), cutout);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_OXIDIZED_COPPER_BARS.get(), cutout);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_IRON_BARS.get(), cutout);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_LIGHTNING_ROD.get(), cutout);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_EXPOSED_LIGHTNING_ROD.get(), cutout);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_WEATHERED_LIGHTNING_ROD.get(), cutout);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_OXIDIZED_LIGHTNING_ROD.get(), cutout);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_WHITE_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_ORANGE_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_MAGENTA_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_LIGHT_BLUE_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_YELLOW_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_LIME_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_PINK_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_GRAY_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_LIGHT_GRAY_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_CYAN_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_PURPLE_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_BLUE_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_BROWN_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_GREEN_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_RED_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_BLACK_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_WHITE_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_ORANGE_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_MAGENTA_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_LIGHT_BLUE_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_YELLOW_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_LIME_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_PINK_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_GRAY_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_LIGHT_GRAY_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_CYAN_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_PURPLE_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_BLUE_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_BROWN_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_GREEN_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_RED_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_BLACK_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_PALE_MOSS_CARPET.get(), cutout);
-		BlockRenderLayerMap.putBlock(SCContent.TRACK_MINE.get(), cutout);
+		FluidRenderingRegistry.register(SCContent.FAKE_WATER.get(), SCContent.FLOWING_FAKE_WATER.get(), FluidStateModelSet.WATER_MODEL);
+		FluidRenderingRegistry.register(SCContent.FAKE_LAVA.get(), SCContent.FLOWING_FAKE_LAVA.get(), FluidStateModelSet.LAVA_MODEL);
 	}
 
 	private static void registerMenuScreens() {
@@ -399,7 +351,7 @@ public class ClientHandler {
 	}
 
 	private static void registerPipRenderers() {
-		SpecialGuiElementRegistry.register(ctx -> new GuiBlockModelRenderer(ctx.vertexConsumers()));
+		PictureInPictureRendererRegistry.register(ctx -> new GuiBlockModelRenderer(ctx.bufferSource()));
 	}
 
 	private static void registerEntityRenderers() {
@@ -464,18 +416,18 @@ public class ClientHandler {
 	}
 
 	private static void registerLayerDefinitions() {
-		EntityModelLayerRegistry.registerModelLayer(BULLET_LOCATION, BulletModel::createLayer);
-		EntityModelLayerRegistry.registerModelLayer(IMS_BOMB_LOCATION, IMSBombModel::createLayer);
-		EntityModelLayerRegistry.registerModelLayer(DISPLAY_CASE_LOCATION, DisplayCaseModel::createModelLayer);
-		EntityModelLayerRegistry.registerModelLayer(SENTRY_LOCATION, SentryModel::createLayer);
-		EntityModelLayerRegistry.registerModelLayer(SECURITY_CAMERA_LOCATION, SecurityCameraModel::createLayer);
-		EntityModelLayerRegistry.registerModelLayer(SONIC_SECURITY_SYSTEM_LOCATION, SonicSecuritySystemModel::createLayer);
-		EntityModelLayerRegistry.registerModelLayer(SECURE_REDSTONE_INTERFACE_DISH_LAYER_LOCATION, SecureRedstoneInterfaceDishModel::createLayer);
+		ModelLayerRegistry.registerModelLayer(BULLET_LOCATION, BulletModel::createLayer);
+		ModelLayerRegistry.registerModelLayer(IMS_BOMB_LOCATION, IMSBombModel::createLayer);
+		ModelLayerRegistry.registerModelLayer(DISPLAY_CASE_LOCATION, DisplayCaseModel::createModelLayer);
+		ModelLayerRegistry.registerModelLayer(SENTRY_LOCATION, SentryModel::createLayer);
+		ModelLayerRegistry.registerModelLayer(SECURITY_CAMERA_LOCATION, SecurityCameraModel::createLayer);
+		ModelLayerRegistry.registerModelLayer(SONIC_SECURITY_SYSTEM_LOCATION, SonicSecuritySystemModel::createLayer);
+		ModelLayerRegistry.registerModelLayer(SECURE_REDSTONE_INTERFACE_DISH_LAYER_LOCATION, SecureRedstoneInterfaceDishModel::createLayer);
 	}
 
 	private static void registerParticleProviders() {
-		ParticleFactoryRegistry.getInstance().register(SCContent.FLOOR_TRAP_CLOUD.get(), FloorTrapCloudParticle.Provider::new);
-		ParticleFactoryRegistry.getInstance().register(SCContent.INTERFACE_HIGHLIGHT.get(), InterfaceHighlightParticle.Provider::new);
+		ParticleProviderRegistry.getInstance().register(SCContent.FLOOR_TRAP_CLOUD.get(), FloorTrapCloudParticle.Provider::new);
+		ParticleProviderRegistry.getInstance().register(SCContent.INTERFACE_HIGHLIGHT.get(), InterfaceHighlightParticle.Provider::new);
 	}
 
 	private static void onRegisterClientPayloadsHandlers() {
@@ -524,78 +476,59 @@ public class ClientHandler {
 
 	private static void onRegisterBlockColorHandlers() {
 		initTint();
-		blocksWithReinforcedTint.forEach((block, tint) -> ColorProviderRegistry.BLOCK.register((state, level, pos, tintIndex) -> {
-			if (tintIndex == 0)
-				return mixWithReinforcedTintIfEnabled(tint, safeGetBlockEntity(level, pos) instanceof IOwnable ownable ? ownable : null);
-			else
-				return 0xFFFFFFFF;
-		}, block));
-		blocksWithCustomTint.forEach((block, tint) -> ColorProviderRegistry.BLOCK.register((state, level, pos, tintIndex) -> {
-			if (tintIndex == 0)
-				return tint;
-			else
-				return 0xFFFFFFFF;
-		}, block));
+		final Map<Integer, List<BlockTintSource>> mixCache = new HashMap<>();
+		final Map<Block, List<BlockTintSource>> staticTints = new HashMap<>();
 
-		BlockColor disguisableBlockColor = (state, level, pos, tintIndex) -> {
-			Block block = state.getBlock();
+		blocksWithReinforcedTint.forEach((block, tint) -> staticTints.put(block, mixCache.computeIfAbsent(tint, t -> List.of(mixedReinforcedTintSource(t)))));
+		blocksWithCustomTint.forEach((block, tint) -> staticTints.put(block, List.of(BlockTintSources.constant(tint))));
+		staticTints.put(SCContent.REINFORCED_GRASS_BLOCK.get(), List.of(reinforcedTintSource(), mixTintSourceWithReinforcedTint(BlockTintSources.grassBlock())));
+		staticTints.put(SCContent.REINFORCED_WATER_CAULDRON.get(), List.of(reinforcedTintSource(), BlockTintSources.water()));
+		staticTints.put(SCContent.LASER_FIELD.get(), List.of(laserFieldTintSource()));
+		staticTints.put(SCContent.INVENTORY_SCANNER_FIELD.get(), List.of(inventoryScannerFieldTintSource()));
 
-			if (block instanceof IDisguisable disguisedBlock) {
+		//Fabric doesn't allow a block to have both static tint sources and a dynamic tint factory, so disguisable blocks get a factory that falls back to their static tint sources
+		Block[] dynamicBlocks = Stream.concat(Arrays.stream(disguisableBlocks.get()), Stream.of(SCContent.SECURE_REDSTONE_INTERFACE.get())).distinct().toArray(Block[]::new);
+		Map<Block, List<BlockTintSource>> fallbackTints = new HashMap<>();
+
+		for (Block block : dynamicBlocks) {
+			List<BlockTintSource> fallback = staticTints.remove(block);
+
+			if (fallback != null)
+				fallbackTints.put(block, fallback);
+		}
+
+		staticTints.forEach((block, tintSources) -> BlockColorRegistry.register(tintSources, block));
+		BlockColorRegistry.register((state, level, pos, tintValues) -> {
+			if (state.getBlock() instanceof IDisguisable disguisedBlock) {
 				Block blockFromItem = Block.byItem(disguisedBlock.getDisguisedStack(level, pos).getItem());
 				BlockState defaultBlockState = blockFromItem.defaultBlockState();
 
-				if (!defaultBlockState.isAir() && !(blockFromItem instanceof IDisguisable))
-					return Minecraft.getInstance().getBlockColors().getColor(defaultBlockState, level, pos, tintIndex);
+				if (!defaultBlockState.isAir() && !(blockFromItem instanceof IDisguisable)) {
+					List<BlockTintSource> tintSources = Minecraft.getInstance().getBlockColors().getTintSources(defaultBlockState);
+
+					tintSources.stream().map(tintSource -> tintSource.colorInWorld(state, level, pos)).forEach(tintValues::add);
+					return;
+				}
 			}
 
-			if (block instanceof IReinforcedBlock)
-				return mixWithReinforcedTintIfEnabled(0xFFFFFFFF, safeGetBlockEntity(level, pos) instanceof IOwnable ownable ? ownable : null);
-			else
-				return 0xFFFFFFFF;
-		};
+			List<BlockTintSource> fallback = fallbackTints.get(state.getBlock());
 
-		ColorProviderRegistry.BLOCK.register(disguisableBlockColor, disguisableBlocks.get());
-		ColorProviderRegistry.BLOCK.register(disguisableBlockColor, SCContent.SECURE_REDSTONE_INTERFACE.get());
-		ColorProviderRegistry.BLOCK.register((state, level, pos, tintIndex) -> {
-			if (tintIndex == 1 && !state.getValue(SnowyDirtBlock.SNOWY)) {
-				int grassTint = level != null && pos != null ? BiomeColors.getAverageGrassColor(level, pos) : GrassColor.get(0.5D, 1.0D);
-
-				return mixWithReinforcedTintIfEnabled(grassTint, safeGetBlockEntity(level, pos) instanceof IOwnable ownable ? ownable : null);
-			}
-
-			return mixWithReinforcedTintIfEnabled(0xFFFFFFFF, safeGetBlockEntity(level, pos) instanceof IOwnable ownable ? ownable : null);
-		}, SCContent.REINFORCED_GRASS_BLOCK.get());
-		ColorProviderRegistry.BLOCK.register((state, level, pos, tintIndex) -> {
-			if (tintIndex == 1)
-				return level != null && pos != null ? BiomeColors.getAverageWaterColor(level, pos) : -1;
-
-			return mixWithReinforcedTintIfEnabled(0xFFFFFFFF, safeGetBlockEntity(level, pos) instanceof IOwnable ownable ? ownable : null);
-		}, SCContent.REINFORCED_WATER_CAULDRON.get());
-		ColorProviderRegistry.BLOCK.register((state, level, pos, tintIndex) -> {
-			Direction direction = LaserFieldBlock.getFieldDirection(state);
-
-			return iterateFields(level, pos, direction, ConfigHandler.SERVER.laserBlockRange.get(), SCContent.LASER_BLOCK.get(), LaserBlockBlockEntity.class::isInstance, be -> ((LaserBlockBlockEntity) be).getLensContainer().getItem(direction.getOpposite().ordinal()));
-		}, SCContent.LASER_FIELD.get());
-		ColorProviderRegistry.BLOCK.register((state, level, pos, tintIndex) -> {
-			Direction direction = state.getValue(InventoryScannerFieldBlock.FACING);
-
-			return iterateFields(level, pos, direction, ConfigHandler.SERVER.inventoryScannerRange.get(), SCContent.INVENTORY_SCANNER.get(), InventoryScannerBlockEntity.class::isInstance, be -> ((InventoryScannerBlockEntity) be).getLensContainer().getItem(0));
-		}, SCContent.INVENTORY_SCANNER_FIELD.get());
+			if (fallback != null)
+				fallback.stream().map(tintSource -> tintSource.colorInWorld(state, level, pos)).forEach(tintValues::add);
+		}, dynamicBlocks);
 	}
 
 	public static int iterateFields(BlockAndTintGetter level, BlockPos pos, Direction direction, int range, Block block, Predicate<BlockEntity> beTest, Function<BlockEntity, ItemStack> lensGetter) {
-		if (level != null && pos != null) {
+		try {
+			return iterateFieldsInternal(level, pos, direction, range, block, beTest, lensGetter);
+		}
+		catch (Exception e1) {
+			direction = direction.getOpposite();
+
 			try {
 				return iterateFieldsInternal(level, pos, direction, range, block, beTest, lensGetter);
 			}
-			catch (Exception e1) {
-				direction = direction.getOpposite();
-
-				try {
-					return iterateFieldsInternal(level, pos, direction, range, block, beTest, lensGetter);
-				}
-				catch (Exception e2) {}
-			}
+			catch (Exception e2) {}
 		}
 
 		return -1;
@@ -612,7 +545,7 @@ public class ClientHandler {
 					ItemStack stack = lensGetter.apply(be);
 
 					if (stack.has(DataComponents.DYED_COLOR))
-						return stack.get(DataComponents.DYED_COLOR).rgb();
+						return ARGB.opaque(stack.get(DataComponents.DYED_COLOR).rgb());
 
 					break;
 				}
@@ -622,6 +555,80 @@ public class ClientHandler {
 		}
 
 		return -1;
+	}
+
+	private static BlockTintSource reinforcedTintSource() {
+		return mixedReinforcedTintSource(0xFFFFFFFF);
+	}
+
+	private static BlockTintSource mixedReinforcedTintSource(int tint) {
+		return new BlockTintSource() {
+			@Override
+			public int color(BlockState state) {
+				return mixWithReinforcedTintIfEnabled(tint, null);
+			}
+
+			@Override
+			public int colorInWorld(BlockState state, BlockAndTintGetter level, BlockPos pos) {
+				return mixWithReinforcedTintIfEnabled(tint, level.getBlockEntity(pos) instanceof IOwnable ownable ? ownable : null);
+			}
+		};
+	}
+
+	public static BlockTintSource mixTintSourceWithReinforcedTint(BlockTintSource parent) {
+		return new BlockTintSource() {
+			@Override
+			public int color(BlockState state) {
+				return mixWithReinforcedTintIfEnabled(parent.color(state), null);
+			}
+
+			@Override
+			public int colorInWorld(BlockState state, BlockAndTintGetter level, BlockPos pos) {
+				return mixWithReinforcedTintIfEnabled(parent.colorInWorld(state, level, pos), level.getBlockEntity(pos) instanceof IOwnable ownable ? ownable : null);
+			}
+
+			@Override
+			public int colorAsTerrainParticle(BlockState state, BlockAndTintGetter level, BlockPos pos) {
+				return mixWithReinforcedTintIfEnabled(parent.colorAsTerrainParticle(state, level, pos), level.getBlockEntity(pos) instanceof IOwnable ownable ? ownable : null);
+			}
+
+			@Override
+			public Set<Property<?>> relevantProperties() {
+				return parent.relevantProperties();
+			}
+		};
+	}
+
+	public static BlockTintSource laserFieldTintSource() {
+		return new BlockTintSource() {
+			@Override
+			public int color(BlockState state) {
+				return -1;
+			}
+
+			@Override
+			public int colorInWorld(BlockState state, BlockAndTintGetter level, BlockPos pos) {
+				Direction direction = LaserFieldBlock.getFieldDirection(state);
+
+				return iterateFields(level, pos, direction, ConfigHandler.SERVER.laserBlockRange.get(), SCContent.LASER_BLOCK.get(), LaserBlockBlockEntity.class::isInstance, be -> ((LaserBlockBlockEntity) be).getLensContainer().getItem(direction.getOpposite().ordinal()));
+			}
+		};
+	}
+
+	public static BlockTintSource inventoryScannerFieldTintSource() {
+		return new BlockTintSource() {
+			@Override
+			public int color(BlockState state) {
+				return -1;
+			}
+
+			@Override
+			public int colorInWorld(BlockState state, BlockAndTintGetter level, BlockPos pos) {
+				Direction direction = state.getValue(InventoryScannerFieldBlock.FACING);
+
+				return iterateFields(level, pos, direction, ConfigHandler.SERVER.inventoryScannerRange.get(), SCContent.INVENTORY_SCANNER.get(), InventoryScannerBlockEntity.class::isInstance, be -> ((InventoryScannerBlockEntity) be).getLensContainer().getItem(0));
+			}
+		};
 	}
 
 	public static int mixWithReinforcedTintIfEnabled(int tint, IOwnable ownable) {
@@ -756,12 +763,5 @@ public class ClientHandler {
 				case EAST -> OctahedralGroup.BLOCK_ROT_X_90.compose(OctahedralGroup.BLOCK_ROT_Y_90);
 			});
 		}
-	}
-
-	private static BlockEntity safeGetBlockEntity(BlockAndTintGetter level, BlockPos pos) {
-		if (level != null && pos != null)
-			return level.getBlockEntity(pos);
-		else
-			return null;
 	}
 }

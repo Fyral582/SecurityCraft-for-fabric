@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.platform.registry;
 
+import net.minecraft.core.component.DataComponentMap;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -128,6 +129,16 @@ public class DeferredHolder<R, T extends R> implements Holder<R>, Supplier<T> {
 	@Override
 	public Stream<TagKey<R>> tags() {
 		return getDelegateOrThrow().tags();
+	}
+
+	@Override
+	public boolean areComponentsBound() {
+		return isBound() && getDelegateOrThrow().areComponentsBound();
+	}
+
+	@Override
+	public DataComponentMap components() {
+		return getDelegateOrThrow().components();
 	}
 
 	@Override

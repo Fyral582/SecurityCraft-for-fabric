@@ -20,7 +20,7 @@ import net.geforcemods.securitycraft.blockentities.SecurityCameraBlockEntity;
 import net.geforcemods.securitycraft.blocks.SecurityCameraBlock;
 import net.geforcemods.securitycraft.util.PlayerUtils;
 import net.geforcemods.securitycraft.util.Utils;
-import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Camera;
 import net.minecraft.client.CameraType;
@@ -29,7 +29,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.TextureFilteringMethod;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.PanoramicScreenshotParameters;
 import net.minecraft.client.renderer.chunk.SectionRenderDispatcher;
 import net.minecraft.client.renderer.chunk.SectionRenderDispatcher.RenderSection;
 import net.minecraft.client.renderer.culling.Frustum;
@@ -70,6 +69,7 @@ public class FrameFeedHandler {
 		lastFrameRendered = currentTime;
 		profiler.popPush("securitycraft:frame_level");
 
+		boolean resourcesLoaded = mc.isGameLoadFinished();
 		Level level = player.level();
 		Camera camera = mc.gameRenderer.getMainCamera();
 		Entity oldCamEntity = mc.getCameraEntity();
@@ -94,11 +94,11 @@ public class FrameFeedHandler {
 		CameraType oldCameraType = mc.options.getCameraType();
 		Entity securityCamera = new Marker(EntityType.MARKER, level); //A separate entity is used instead of moving the player to allow the player to see themselves
 		RenderTarget oldMainRenderTarget = mc.getMainRenderTarget();
-		PanoramicScreenshotParameters oldPanoramicScreenshotParameters = mc.gameRenderer.getPanoramicScreenshotParameters();
+		boolean oldIsPanoramicMode = camera.isPanoramicMode();
 
 		camera.eyeHeight = camera.eyeHeightOld = player.getDimensions(Pose.STANDING).eyeHeight();
 		mc.gameRenderer.setRenderBlockOutline(false);
-		mc.gameRenderer.setPanoramicScreenshotParameters(new PanoramicScreenshotParameters(camera.forwardVector()));
+		camera.enablePanoramicMode();
 		window.setWidth(100);
 		window.setHeight(100); //Different width/height values seem to have no effect, although the ratio needs to be 1:1
 		mc.options.setCameraType(CameraType.FIRST_PERSON);
@@ -131,12 +131,14 @@ public class FrameFeedHandler {
 					mc.levelRenderer.endFrame(); //This fixes frame feed clouds being rendered at the position of a previous feed sometimes, due to the cloud rendering buffer not resetting itself properly
 					mc.gameRenderer.fogRenderer.endFrame(); //Same fix but for fog color
 					camera.attributeProbe = feed.attributeProbe(); //Prevents writing the frame feed's position to the main attribute probe, so the main renderer doesn't consider the frame environment attributes when interpolating
-					mc.gameRenderer.updateCamera(DeltaTracker.ONE); //Updates the camera position to be at the current camera entity
+					camera.update(DeltaTracker.ONE); //Updates the camera position to be at the current camera entity
 					camera.attributeProbe().tick(level, camera.position()); //Notifies the camera's attribute probe with the new camera entity position, so the correct sky and fog color is used
-					mc.gameRenderer.getGlobalSettingsUniform().update(oldWidth, oldHeight, mc.options.glintStrength().get(), level.getGameTime(), DeltaTracker.ONE, mc.options.getMenuBackgroundBlurriness(), camera, mc.options.textureFiltering().get() == TextureFilteringMethod.RGSS); //The camera's position also needs to be updated in here
+					mc.gameRenderer.getGlobalSettingsUniform().update(oldWidth, oldHeight, mc.options.glintStrength().get(), level.getGameTime(), DeltaTracker.ONE, mc.options.getMenuBackgroundBlurriness(), camera.position(), mc.options.textureFiltering().get() == TextureFilteringMethod.RGSS); //The camera's position also needs to be updated in here
+					mc.levelRenderer.update(camera); //Queues uncompiled visible sections for compilation
 					mc.mainRenderTarget = feed.renderTarget();
 
 					try {
+						mc.gameRenderer.extract(DeltaTracker.ONE, true);
 						mc.gameRenderer.renderLevel(DeltaTracker.ONE);
 					}
 					catch (Exception e) {
@@ -172,20 +174,28 @@ public class FrameFeedHandler {
 		camera.eyeHeightOld = oldEyeHeightO;
 		mc.options.setCameraType(oldCameraType);
 		mc.gameRenderer.setRenderBlockOutline(true);
-		mc.gameRenderer.updateCamera(mc.getDeltaTracker());
+
+		if (oldIsPanoramicMode)
+			camera.enablePanoramicMode();
+		else
+			camera.disablePanoramicMode();
+
+		camera.update(mc.getDeltaTracker());
 		camera.attributeProbe = oldAttributeProbe;
 		mc.levelRenderer.visibleSections.clear();
 		mc.levelRenderer.visibleSections.addAll(oldVisibleSections);
 		window.setWidth(oldWidth);
 		window.setHeight(oldHeight);
-		mc.gameRenderer.setPanoramicScreenshotParameters(oldPanoramicScreenshotParameters);
 		mc.mainRenderTarget = oldMainRenderTarget;
 		currentlyCapturedCamera = null;
+		//These two lines ensure that GUI rendering, which happens after frame feed capture, is done with the correct parameters
+		mc.gameRenderer.extractGui(partialTick, resourcesLoaded, resourcesLoaded);
+		mc.gameRenderer.extractWindow();
 	}
 
 	public static void register() {
 		ClientTickEvents.END_CLIENT_TICK.register(mc -> onClientTickPost());
-		WorldRenderEvents.END_EXTRACTION.register(context -> onExtractLevelRenderState(context.frustum()));
+		LevelRenderEvents.END_EXTRACTION.register(context -> onExtractLevelRenderState(context.camera().getCullFrustum()));
 	}
 
 	public static void onClientTickPost() {
@@ -260,7 +270,7 @@ public class FrameFeedHandler {
 
 	public static boolean shouldAddChunk(ChunkPos pos, int renderDistance) {
 		for (GlobalPos cameraPos : FRAME_CAMERA_FEEDS.keySet()) {
-			if (pos.getChessboardDistance(new ChunkPos(cameraPos.pos())) <= (renderDistance + 1))
+			if (pos.getChessboardDistance(ChunkPos.containing(cameraPos.pos())) <= (renderDistance + 1))
 				return true;
 		}
 

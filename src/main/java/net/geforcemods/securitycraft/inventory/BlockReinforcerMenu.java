@@ -9,7 +9,7 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
@@ -71,7 +71,7 @@ public class BlockReinforcerMenu extends AbstractContainerMenu {
 			if (slotStack.getCount() == slotStackCopy.getCount())
 				return ItemStack.EMPTY;
 
-			itemsTaken = slotStackCopy.copyWithCount(slotStackCopy.getCount() - slotStack.getCount());
+			itemsTaken = slotStackCopy.copyWithCount(slotStackCopy.count() - slotStack.count());
 			slot.onTake(player, itemsTaken); //The second parameter is different from vanilla, but this makes implementation easier
 		}
 
@@ -88,9 +88,9 @@ public class BlockReinforcerMenu extends AbstractContainerMenu {
 	}
 
 	@Override
-	public void clicked(int slot, int dragType, ClickType clickType, Player player) {
+	public void clicked(int slot, int dragType, ContainerInput containerInput, Player player) {
 		if (!(slot >= 0 && getSlot(slot).getItem().getItem() instanceof UniversalBlockReinforcerItem))
-			super.clicked(slot, dragType, clickType, player);
+			super.clicked(slot, dragType, containerInput, player);
 	}
 
 	public class ReinforcerInputSlot extends Slot {
@@ -136,8 +136,8 @@ public class BlockReinforcerMenu extends AbstractContainerMenu {
 		@Override
 		public void onTake(Player player, ItemStack itemsTaken) {
 			super.onTake(player, itemsTaken);
-			inputSlot.getItem().shrink(itemsTaken.getCount());
-			blockReinforcer.hurtAndBreak(itemsTaken.getCount(), player, player.getUsedItemHand().asEquipmentSlot());
+			inputSlot.getItem().shrink(itemsTaken.count());
+			blockReinforcer.hurtAndBreak(itemsTaken.count(), player, player.getUsedItemHand().asEquipmentSlot());
 
 			if (blockReinforcer.isEmpty()) //Ran out of durability
 				player.closeContainer();

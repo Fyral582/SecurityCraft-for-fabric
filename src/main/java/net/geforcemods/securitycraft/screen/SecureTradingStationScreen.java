@@ -10,7 +10,7 @@ import net.geforcemods.securitycraft.inventory.SecureTradingStationMenu;
 import net.geforcemods.securitycraft.network.server.RequestSecureTradingStationTransactions;
 import net.geforcemods.securitycraft.util.Utils;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
@@ -46,13 +46,14 @@ public class SecureTradingStationScreen extends AbstractContainerScreen<SecureTr
 	private int requestedTransactions;
 
 	public SecureTradingStationScreen(SecureTradingStationMenu menu, Inventory playerInventory, Component title) {
-		super(menu, playerInventory, title);
+		boolean storageVisible = menu.be.hasRewardReferenceStacks() || menu.withStorageAccess;
+		int imageHeight = storageVisible ? (menu.withStorageAccess ? 249 : 208) : 184;
+		super(menu, playerInventory, title, 176, imageHeight);
 
 		be = menu.be;
 		isOwner = be.isOwnedBy(playerInventory.player);
 		skipPaymentCheck = isOwner || be.isAllowed(playerInventory.player);
-		storageVisible = be.hasRewardReferenceStacks() || menu.withStorageAccess;
-		imageHeight = storageVisible ? (menu.withStorageAccess ? 249 : 208) : 184;
+		this.storageVisible = storageVisible;
 		inventoryLabelY = imageHeight - 94;
 	}
 
@@ -87,8 +88,8 @@ public class SecureTradingStationScreen extends AbstractContainerScreen<SecureTr
 	}
 
 	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-		super.render(guiGraphics, mouseX, mouseY, partialTick);
+	public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+		super.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
 
 		if (be.hasRewardReferenceStacks() && getTransactionsOnConfirmation() > be.rewardLimitedTransactions) {
 			guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, WARNING_HIGHLIGHTED_SPRITE, leftPos + 148, topPos + 16, 24, 24);
@@ -120,22 +121,24 @@ public class SecureTradingStationScreen extends AbstractContainerScreen<SecureTr
 			guiGraphics.setComponentTooltipForNextFrame(font, buttonTooltip, mouseX, mouseY);
 		}
 
-		renderTooltip(guiGraphics, mouseX, mouseY);
+		extractTooltip(guiGraphics, mouseX, mouseY);
 	}
 
 	@Override
-	protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-		super.renderLabels(guiGraphics, mouseX, mouseY);
-		guiGraphics.drawString(font, paymentText, 12, 24, 0xFF404040, false);
-		guiGraphics.drawString(font, rewardText, 12, 64, 0xFF404040, false);
-		guiGraphics.drawString(font, be.getSignalLength() == 0 ? rewardToggleText : rewardActivateText, 12, 76, 0xFF404040, false);
+	protected void extractLabels(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY) {
+		super.extractLabels(guiGraphics, mouseX, mouseY);
+		guiGraphics.text(font, paymentText, 12, 24, 0xFF404040, false);
+		guiGraphics.text(font, rewardText, 12, 64, 0xFF404040, false);
+		guiGraphics.text(font, be.getSignalLength() == 0 ? rewardToggleText : rewardActivateText, 12, 76, 0xFF404040, false);
 
 		if (storageVisible)
-			guiGraphics.drawString(font, storedItemsText, 12, 96, 0xFF404040, false);
+			guiGraphics.text(font, storedItemsText, 12, 96, 0xFF404040, false);
 	}
 
 	@Override
-	protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
+	public void extractBackground(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+		super.extractBackground(guiGraphics, mouseX, mouseY, partialTick);
+
 		Identifier backgroundTexture;
 
 		if (isOwner)

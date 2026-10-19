@@ -8,7 +8,7 @@ import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -86,7 +86,7 @@ public class SecureTradingStationMenu extends AbstractContainerMenu {
 	@Override
 	public void slotsChanged(Container container) {
 		super.slotsChanged(container);
-		
+
 		paymentLimitedTransactions = be.getReferenceLimitedTransactions(paymentInput, 0, 4, be.getPaymentPerTransaction(hasSmartModule), hasSmartModule);
 	}
 
@@ -144,8 +144,8 @@ public class SecureTradingStationMenu extends AbstractContainerMenu {
 	}
 
 	@Override
-	public void clicked(int slotId, int dragType, ClickType clickType, Player player) {
-		if (slotId >= 0 && slotId <= 8 && clickType != ClickType.CLONE && getSlot(slotId) instanceof OwnerRestrictedSlot slot && slot.isHighlightable() && slot.isGhostSlot()) {
+	public void clicked(int slotId, int dragType, ContainerInput containerInput, Player player) {
+		if (slotId >= 0 && slotId <= 8 && containerInput != ContainerInput.CLONE && getSlot(slotId) instanceof OwnerRestrictedSlot slot && slot.isHighlightable() && slot.isGhostSlot()) {
 			if (!player.isSpectator() && be.isOwnedBy(player)) {
 				ItemStack pickedUpStack = getCarried().copy();
 
@@ -154,6 +154,6 @@ public class SecureTradingStationMenu extends AbstractContainerMenu {
 			}
 		}
 		else
-			super.clicked(slotId, dragType, clickType, player);
+			super.clicked(slotId, dragType, containerInput, player);
 	}
 }

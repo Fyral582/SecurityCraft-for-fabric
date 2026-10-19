@@ -1,6 +1,5 @@
 package net.geforcemods.securitycraft.blocks.reinforced;
 
-import net.geforcemods.securitycraft.SCEventHandler;
 import java.util.function.BiConsumer;
 
 import net.geforcemods.securitycraft.SCContent;
@@ -18,21 +17,22 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.EntityBlock;
-import net.minecraft.world.level.block.SnowyDirtBlock;
+import net.minecraft.world.level.block.SnowyBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.feature.configurations.TreeConfiguration;
+import net.geforcemods.securitycraft.SCEventHandler;
 
-public class ReinforcedSnowyDirtBlock extends SnowyDirtBlock implements IReinforcedBlock, EntityBlock {
+public class ReinforcedSnowyBlock extends SnowyBlock implements IReinforcedBlock, EntityBlock {
 	private Block vanillaBlock;
 	private final float destroyTimeForOwner;
 
-	public ReinforcedSnowyDirtBlock(BlockBehaviour.Properties properties, Block vB) {
+	public ReinforcedSnowyBlock(BlockBehaviour.Properties properties, Block vB) {
 		super(OwnableBlock.withReinforcedDestroyTime(properties));
 		this.vanillaBlock = vB;
 		destroyTimeForOwner = OwnableBlock.getStoredDestroyTime();
@@ -55,7 +55,7 @@ public class ReinforcedSnowyDirtBlock extends SnowyDirtBlock implements IReinfor
 	}
 
 	@Override
-	public boolean onTreeGrow(BlockState state, LevelReader level, BiConsumer<BlockPos, BlockState> placeFunction, RandomSource randomSource, BlockPos pos, TreeConfiguration config) {
+	public boolean onTreeGrow(BlockState state, WorldGenLevel level, BiConsumer<BlockPos, BlockState> placeFunction, RandomSource randomSource, BlockPos pos, TreeConfiguration config) {
 		return true; //Do not allow trees to replace reinforced blocks with dirt when growing
 	}
 

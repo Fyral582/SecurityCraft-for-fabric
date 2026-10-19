@@ -1,11 +1,13 @@
 {
 	"required": true,
 	"package": "net.geforcemods.securitycraft.mixin",
-	"compatibilityLevel": "JAVA_21",
+	"compatibilityLevel": "JAVA_25",
 	"client": [
+		"camera.CameraMixin",
 		"camera.ClientChunkCacheMixin",
 		"camera.CustomFeatureRendererMixin",
 		"camera.GameRendererMixin",
+		"camera.LevelRendererLocalPlayerMixin",
 		"camera.LevelRendererMixin",
 		"camera.LocalPlayerMixin",
 		"camera.MinecraftMixin",
@@ -23,6 +25,7 @@
 		"camera.ServerPlayerMixin",
 		"camera.TrackedEntityMixin",
 		"datafix.BoatSplitFixMixin",
+		"datafix.DimensionStorageFileFixMixin",
 		"datafix.GameRuleRegistryFixMixin",
 		"datafix.ItemStackComponentizationFixMixin",
 		"datafix.V1460Mixin",

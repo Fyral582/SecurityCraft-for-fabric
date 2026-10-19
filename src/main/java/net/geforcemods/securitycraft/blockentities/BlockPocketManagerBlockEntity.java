@@ -1,6 +1,6 @@
 package net.geforcemods.securitycraft.blockentities;
 
-import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ContainerStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.FilteringStorage;
@@ -628,7 +628,7 @@ public class BlockPocketManagerBlockEntity extends CustomizableBlockEntity imple
 	}
 
 	public static Storage<ItemVariant> getCapability(BlockPocketManagerBlockEntity be, Direction side) {
-		Storage<ItemVariant> resourceHandler = InventoryStorage.of(Utils.createContainerFromList(be.storage), null);
+		Storage<ItemVariant> resourceHandler = ContainerStorage.of(Utils.createContainerFromList(be.storage), null);
 
 		//prevent extracting while auto building the block pocket
 		if (!be.isModifyingBlocks() && BlockUtils.isAllowedToExtractFromProtectedObject(side, be))

@@ -1,6 +1,6 @@
 package net.geforcemods.securitycraft.blockentities;
 
-import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ContainerStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.geforcemods.securitycraft.SCContent;
@@ -13,6 +13,7 @@ import net.geforcemods.securitycraft.api.Option.TargetingModeOption;
 import net.geforcemods.securitycraft.blocks.mines.ClaymoreBlock;
 import net.geforcemods.securitycraft.inventory.InsertOnlyResourceHandler;
 import net.geforcemods.securitycraft.inventory.LensContainer;
+import net.geforcemods.securitycraft.inventory.SimpleListenerContainer.ContainerListener;
 import net.geforcemods.securitycraft.inventory.SingleLensMenu;
 import net.geforcemods.securitycraft.inventory.SingleLensMenu.SingleLensContainer;
 import net.geforcemods.securitycraft.misc.ModuleType;
@@ -26,7 +27,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Container;
-import net.minecraft.world.ContainerListener;
 import net.minecraft.world.Containers;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.LivingEntity;
@@ -50,7 +50,7 @@ public class ClaymoreBlockEntity extends CustomizableBlockEntity implements ITic
 
 	public ClaymoreBlockEntity(BlockPos pos, BlockState state) {
 		super(SCContent.CLAYMORE_BLOCK_ENTITY.get(), pos, state);
-		lens.addListener(this);
+		lens.setListener(this);
 	}
 
 	@Override
@@ -107,7 +107,7 @@ public class ClaymoreBlockEntity extends CustomizableBlockEntity implements ITic
 	}
 
 	public static Storage<ItemVariant> getCapability(ClaymoreBlockEntity be, Direction side) {
-		Storage<ItemVariant> resourceHandler = InventoryStorage.of(be.lens, null);
+		Storage<ItemVariant> resourceHandler = ContainerStorage.of(be.lens, null);
 
 		return BlockUtils.isAllowedToExtractFromProtectedObject(side, be) ? resourceHandler : new InsertOnlyResourceHandler<>(resourceHandler);
 	}

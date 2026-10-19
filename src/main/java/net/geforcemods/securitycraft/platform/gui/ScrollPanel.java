@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.List;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.components.events.AbstractContainerEventHandler;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -67,7 +67,7 @@ public abstract class ScrollPanel extends AbstractContainerEventHandler implemen
 	/**
 	 * Draws the background of the scroll panel. By default, this draws a dark gradient like vanilla's lists.
 	 */
-	protected void drawBackground(GuiGraphics guiGraphics, float partialTick) {
+	protected void drawBackground(GuiGraphicsExtractor guiGraphics, float partialTick) {
 		guiGraphics.fillGradient(left, top, right, bottom, 0xC0101010, 0xD0101010);
 	}
 
@@ -77,7 +77,7 @@ public abstract class ScrollPanel extends AbstractContainerEventHandler implemen
 	 * @param entryRight The x position of the right edge of the content area
 	 * @param relativeY The y position the content starts at, taking scrolling into account
 	 */
-	protected abstract void drawPanel(GuiGraphics guiGraphics, int entryRight, int relativeY, int mouseX, int mouseY);
+	protected abstract void drawPanel(GuiGraphicsExtractor guiGraphics, int entryRight, int relativeY, int mouseX, int mouseY);
 
 	protected boolean clickPanel(double mouseX, double mouseY, MouseButtonEvent event) {
 		return false;
@@ -176,7 +176,7 @@ public abstract class ScrollPanel extends AbstractContainerEventHandler implemen
 	}
 
 	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+	public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
 		drawBackground(guiGraphics, partialTick);
 		guiGraphics.enableScissor(left, top, right, bottom);
 
@@ -201,7 +201,7 @@ public abstract class ScrollPanel extends AbstractContainerEventHandler implemen
 		guiGraphics.disableScissor();
 	}
 
-	protected void drawGradientRect(GuiGraphics guiGraphics, int left, int top, int right, int bottom, int color1, int color2) {
+	protected void drawGradientRect(GuiGraphicsExtractor guiGraphics, int left, int top, int right, int bottom, int color1, int color2) {
 		guiGraphics.fillGradient(left, top, right, bottom, color1, color2);
 	}
 

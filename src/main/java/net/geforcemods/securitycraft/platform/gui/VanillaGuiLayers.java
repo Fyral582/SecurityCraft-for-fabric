@@ -9,7 +9,7 @@ import net.minecraft.resources.Identifier;
 public final class VanillaGuiLayers {
 	public static final Identifier CONTEXTUAL_INFO_BAR = VanillaHudElements.INFO_BAR;
 	public static final Identifier CONTEXTUAL_INFO_BAR_BACKGROUND = VanillaHudElements.INFO_BAR;
-	public static final Identifier EFFECTS = VanillaHudElements.STATUS_EFFECTS;
+	public static final Identifier EFFECTS = VanillaHudElements.MOB_EFFECTS;
 	public static final Identifier EXPERIENCE_LEVEL = VanillaHudElements.EXPERIENCE_LEVEL;
 
 	private VanillaGuiLayers() {}

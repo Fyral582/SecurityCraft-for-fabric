@@ -35,7 +35,7 @@ public final class JadeDataProvider extends HudModHandler implements IWailaPlugi
 		registration.registerEntityComponent(new SecurityCraftEntityInfo(), Sentry.class);
 		registration.registerEntityComponent(new SecurityCraftEntityInfo(), AbstractSecuritySeaBoat.class);
 
-		registration.addBeforeRenderCallback((tooltip, rect, guiGraphics, accessor) -> ClientHandler.isPlayerMountedOnCamera());
+		registration.addBeforeRenderCallback((_, _, _, _) -> ClientHandler.isPlayerMountedOnCamera());
 		registration.addRayTraceCallback((hit, accessor, original) -> {
 			if (accessor instanceof BlockAccessor blockAccessor) {
 				Block block = blockAccessor.getBlock();

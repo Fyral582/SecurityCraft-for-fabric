@@ -144,7 +144,6 @@ import net.geforcemods.securitycraft.blocks.reinforced.ReinforcedAmethystBlock;
 import net.geforcemods.securitycraft.blocks.reinforced.ReinforcedButtonBlock;
 import net.geforcemods.securitycraft.blocks.reinforced.ReinforcedCarpetBlock;
 import net.geforcemods.securitycraft.blocks.reinforced.ReinforcedCauldronBlock;
-import net.geforcemods.securitycraft.blocks.reinforced.ReinforcedCauldronBlock.IReinforcedCauldronInteraction;
 import net.geforcemods.securitycraft.blocks.reinforced.ReinforcedChainBlock;
 import net.geforcemods.securitycraft.blocks.reinforced.ReinforcedChiseledBookshelfBlock;
 import net.geforcemods.securitycraft.blocks.reinforced.ReinforcedCobwebBlock;
@@ -191,7 +190,7 @@ import net.geforcemods.securitycraft.blocks.reinforced.ReinforcedRotatedPillarBl
 import net.geforcemods.securitycraft.blocks.reinforced.ReinforcedScaffoldingBlock;
 import net.geforcemods.securitycraft.blocks.reinforced.ReinforcedShelfBlock;
 import net.geforcemods.securitycraft.blocks.reinforced.ReinforcedSlabBlock;
-import net.geforcemods.securitycraft.blocks.reinforced.ReinforcedSnowyDirtBlock;
+import net.geforcemods.securitycraft.blocks.reinforced.ReinforcedSnowyBlock;
 import net.geforcemods.securitycraft.blocks.reinforced.ReinforcedSoulSandBlock;
 import net.geforcemods.securitycraft.blocks.reinforced.ReinforcedStainedGlassBlock;
 import net.geforcemods.securitycraft.blocks.reinforced.ReinforcedStainedGlassPaneBlock;
@@ -270,6 +269,7 @@ import net.geforcemods.securitycraft.misc.ModuleStatesSerializer;
 import net.geforcemods.securitycraft.misc.ModuleType;
 import net.geforcemods.securitycraft.misc.OwnerDataSerializer;
 import net.geforcemods.securitycraft.misc.PageGroup;
+import net.geforcemods.securitycraft.misc.ReinforcedCauldronInteractions;
 import net.geforcemods.securitycraft.particle.InterfaceHighlightParticleType;
 import net.geforcemods.securitycraft.recipe.BlockReinforcingRecipe;
 import net.geforcemods.securitycraft.recipe.BlockUnreinforcingRecipe;
@@ -309,7 +309,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.SignItem;
 import net.minecraft.world.item.component.ItemContainerContents;
-import net.minecraft.world.item.crafting.CustomRecipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.equipment.EquipmentAssets;
 import net.minecraft.world.item.equipment.Equippable;
@@ -339,7 +338,7 @@ import net.minecraft.world.level.gamerules.GameRuleTypeVisitor;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
-import net.minecraft.world.level.storage.loot.predicates.LootItemConditionType;
+import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 import net.geforcemods.securitycraft.platform.menu.IMenuTypeExtension;
 import net.geforcemods.securitycraft.platform.fluid.BaseFlowingFluid;
 import net.geforcemods.securitycraft.platform.registry.DeferredBlock;
@@ -357,7 +356,7 @@ public class SCContent {
 	public static final DeferredRegister<Fluid> FLUIDS = DeferredRegister.create(Registries.FLUID, SecurityCraft.MODID);
 	public static final DeferredRegister<GameRule<?>> GAME_RULES = DeferredRegister.create(Registries.GAME_RULE, SecurityCraft.MODID);
 	public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(SecurityCraft.MODID);
-	public static final DeferredRegister<LootItemConditionType> LOOT_ITEM_CONDITION_TYPES = DeferredRegister.create(Registries.LOOT_CONDITION_TYPE, SecurityCraft.MODID);
+	public static final DeferredRegister<MapCodec<? extends LootItemCondition>> LOOT_ITEM_CONDITION_TYPES = DeferredRegister.create(Registries.LOOT_CONDITION_TYPE, SecurityCraft.MODID);
 	public static final DeferredRegister<MenuType<?>> MENU_TYPES = DeferredRegister.create(Registries.MENU, SecurityCraft.MODID);
 	public static final DeferredRegister<ParticleType<?>> PARTICLE_TYPES = DeferredRegister.create(Registries.PARTICLE_TYPE, SecurityCraft.MODID);
 	public static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZERS = DeferredRegister.create(Registries.RECIPE_SERIALIZER, SecurityCraft.MODID);
@@ -372,7 +371,7 @@ public class SCContent {
 	public static final Holder<ArgumentTypeInfo<?, ?>> LOWERCASED_ENUM_COMMAND_ARGUMENT_TYPE = COMMAND_ARGUMENT_TYPES.register("lowercased_enum", () -> registerArgumentType("lowercased_enum", LowercasedEnumArgument.class, new LowercasedEnumArgument.Info()));
 
 	//loot item condition types
-	public static final DeferredHolder<LootItemConditionType, LootItemConditionType> BLOCK_ENTITY_NBT = LOOT_ITEM_CONDITION_TYPES.register("tile_entity_nbt", () -> new LootItemConditionType(BlockEntityNBTCondition.CODEC));
+	public static final DeferredHolder<MapCodec<? extends LootItemCondition>, MapCodec<BlockEntityNBTCondition>> BLOCK_ENTITY_NBT = LOOT_ITEM_CONDITION_TYPES.register("tile_entity_nbt", () -> BlockEntityNBTCondition.CODEC);
 
 	//game rules
 	public static final DeferredHolder<GameRule<?>, GameRule<Boolean>> FAKE_WATER_SOURCE_CONVERSION = GAME_RULES.register("fake_water_source_conversion", () -> createBooleanGameRule(GameRuleCategory.UPDATES, true));
@@ -394,13 +393,10 @@ public class SCContent {
 	public static final DeferredHolder<DataComponentType<?>, DataComponentType<Double>> SUCCESS_CHANCE = DATA_COMPONENTS.registerComponentType("success_chance", builder -> builder.persistent(Codec.doubleRange(-1.0D, 1.0D)).networkSynchronized(ByteBufCodecs.DOUBLE).cacheEncoding());
 
 	//recipe serializers
-	public static final DeferredHolder<RecipeSerializer<?>, CustomRecipe.Serializer<BlockReinforcingRecipe>> BLOCK_REINFORCING_RECIPE_SERIALIZER = RECIPE_SERIALIZERS.register("block_reinforcing_recipe", () -> new CustomRecipe.Serializer<>(BlockReinforcingRecipe::new));
-	public static final DeferredHolder<RecipeSerializer<?>, CustomRecipe.Serializer<BlockUnreinforcingRecipe>> BLOCK_UNREINFORCING_RECIPE_SERIALIZER = RECIPE_SERIALIZERS.register("block_unreinforcing_recipe", () -> new CustomRecipe.Serializer<>(BlockUnreinforcingRecipe::new));
-	public static final DeferredHolder<RecipeSerializer<?>, CustomRecipe.Serializer<CopyPositionComponentItemRecipe<NamedPositions>>> COPY_CAMERA_MONITOR_RECIPE_SERIALIZER = RECIPE_SERIALIZERS.register("copy_camera_monitor_recipe", () -> new CustomRecipe.Serializer<>(CopyPositionComponentItemRecipe::cameraMonitor));
-	public static final DeferredHolder<RecipeSerializer<?>, CustomRecipe.Serializer<CopyPositionComponentItemRecipe<GlobalPositions>>> COPY_MINE_REMOTE_ACCESS_TOOL_RECIPE_SERIALIZER = RECIPE_SERIALIZERS.register("copy_mine_remote_access_tool_recipe", () -> new CustomRecipe.Serializer<>(CopyPositionComponentItemRecipe::mineRemoteAccessTool));
-	public static final DeferredHolder<RecipeSerializer<?>, CustomRecipe.Serializer<CopyPositionComponentItemRecipe<NamedPositions>>> COPY_SENTRY_REMOTE_ACCESS_TOOL_RECIPE_SERIALIZER = RECIPE_SERIALIZERS.register("copy_sentry_remote_access_tool_recipe", () -> new CustomRecipe.Serializer<>(CopyPositionComponentItemRecipe::sentryRemoteAccessTool));
-	public static final DeferredHolder<RecipeSerializer<?>, CustomRecipe.Serializer<CopyPositionComponentItemRecipe<GlobalPositions>>> COPY_SONIC_SECURITY_SYSTEM_RECIPE_SERIALIZER = RECIPE_SERIALIZERS.register("copy_sonic_security_system_recipe", () -> new CustomRecipe.Serializer<>(CopyPositionComponentItemRecipe::sonicSecuritySystem));
-	public static final DeferredHolder<RecipeSerializer<?>, CustomRecipe.Serializer<LimitedUseKeycardRecipe>> LIMITED_USE_KEYCARD_RECIPE_SERIALIZER = RECIPE_SERIALIZERS.register("limited_use_keycard_recipe", () -> new CustomRecipe.Serializer<>(LimitedUseKeycardRecipe::new));
+	public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<?>> BLOCK_REINFORCING_RECIPE_SERIALIZER = RECIPE_SERIALIZERS.register("block_reinforcing_recipe", () -> BlockReinforcingRecipe.SERIALIZER);
+	public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<?>> BLOCK_UNREINFORCING_RECIPE_SERIALIZER = RECIPE_SERIALIZERS.register("block_unreinforcing_recipe", () -> BlockUnreinforcingRecipe.SERIALIZER);
+	public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<?>> COPY_POSITION_COMPONENT_ITEM_RECIPE = RECIPE_SERIALIZERS.register("copy_position_component_item_recipe", () -> CopyPositionComponentItemRecipe.SERIALIZER);
+	public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<?>> LIMITED_USE_KEYCARD_RECIPE_SERIALIZER = RECIPE_SERIALIZERS.register("limited_use_keycard_recipe", () -> LimitedUseKeycardRecipe.SERIALIZER);
 
 	//data serializer entries
 	public static final DeferredHolder<EntityDataSerializer<?>, EntityDataSerializer<Owner>> OWNER_SERIALIZER = DATA_SERIALIZERS.register("owner", () -> new OwnerDataSerializer());
@@ -741,7 +737,7 @@ public class SCContent {
 	@HasManualPage(PageGroup.REINFORCED)
 	@OwnableBE
 	@Reinforced
-	public static final DeferredBlock<ReinforcedSnowyDirtBlock> REINFORCED_PODZOL = reinforcedBlock("reinforced_podzol", Blocks.PODZOL, ReinforcedSnowyDirtBlock::new);
+	public static final DeferredBlock<ReinforcedSnowyBlock> REINFORCED_PODZOL = reinforcedBlock("reinforced_podzol", Blocks.PODZOL, ReinforcedSnowyBlock::new);
 	@HasManualPage(PageGroup.REINFORCED)
 	@OwnableBE
 	@Reinforced
@@ -1392,7 +1388,7 @@ public class SCContent {
 	@HasManualPage(PageGroup.REINFORCED)
 	@OwnableBE
 	@Reinforced
-	public static final DeferredBlock<ReinforcedSnowyDirtBlock> REINFORCED_MYCELIUM = reinforcedBlock("reinforced_mycelium", Blocks.MYCELIUM, ReinforcedSnowyDirtBlock::new);
+	public static final DeferredBlock<ReinforcedSnowyBlock> REINFORCED_MYCELIUM = reinforcedBlock("reinforced_mycelium", Blocks.MYCELIUM, ReinforcedSnowyBlock::new);
 	@HasManualPage(PageGroup.REINFORCED)
 	@OwnableBE
 	@Reinforced
@@ -2386,13 +2382,13 @@ public class SCContent {
 
 	//ordered by vanilla <1.19.3 brewing tab order
 	@Reinforced
-	public static final DeferredBlock<ReinforcedCauldronBlock> REINFORCED_CAULDRON = reinforcedBlock("reinforced_cauldron", Blocks.CAULDRON, (p, b) -> new ReinforcedCauldronBlock(p, IReinforcedCauldronInteraction.EMPTY));
+	public static final DeferredBlock<ReinforcedCauldronBlock> REINFORCED_CAULDRON = reinforcedBlock("reinforced_cauldron", Blocks.CAULDRON, (p, b) -> new ReinforcedCauldronBlock(p, ReinforcedCauldronInteractions.EMPTY));
 	@Reinforced(registerBlockItem = false)
-	public static final DeferredBlock<ReinforcedLayeredCauldronBlock> REINFORCED_WATER_CAULDRON = reinforcedBlock("reinforced_water_cauldron", Blocks.WATER_CAULDRON, (p, b) -> new ReinforcedLayeredCauldronBlock(Biome.Precipitation.RAIN, IReinforcedCauldronInteraction.WATER, p, b));
+	public static final DeferredBlock<ReinforcedLayeredCauldronBlock> REINFORCED_WATER_CAULDRON = reinforcedBlock("reinforced_water_cauldron", Blocks.WATER_CAULDRON, (p, b) -> new ReinforcedLayeredCauldronBlock(Biome.Precipitation.RAIN, ReinforcedCauldronInteractions.WATER, p, b));
 	@Reinforced(registerBlockItem = false)
 	public static final DeferredBlock<ReinforcedLavaCauldronBlock> REINFORCED_LAVA_CAULDRON = reinforcedBlock("reinforced_lava_cauldron", Blocks.LAVA_CAULDRON, (p, b) -> new ReinforcedLavaCauldronBlock(p));
 	@Reinforced(registerBlockItem = false)
-	public static final DeferredBlock<ReinforcedLayeredCauldronBlock> REINFORCED_POWDER_SNOW_CAULDRON = reinforcedBlock("reinforced_powder_snow_cauldron", Blocks.POWDER_SNOW_CAULDRON, (p, b) -> new ReinforcedLayeredCauldronBlock(Biome.Precipitation.SNOW, IReinforcedCauldronInteraction.POWDER_SNOW, p, b));
+	public static final DeferredBlock<ReinforcedLayeredCauldronBlock> REINFORCED_POWDER_SNOW_CAULDRON = reinforcedBlock("reinforced_powder_snow_cauldron", Blocks.POWDER_SNOW_CAULDRON, (p, b) -> new ReinforcedLayeredCauldronBlock(Biome.Precipitation.SNOW, ReinforcedCauldronInteractions.POWDER_SNOW, p, b));
 
 	//1.19.3+ content
 	@HasManualPage(PageGroup.REINFORCED)

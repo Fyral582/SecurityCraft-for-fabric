@@ -177,7 +177,7 @@ public class UsernameLoggerBlockEntity extends DisguisableBlockEntity implements
 			UsernameLoggerEntry entry = getEntry(i);
 
 			if (entry != null)
-				PacketDistributor.sendToPlayersTrackingChunk((ServerLevel) level, new ChunkPos(worldPosition), new UpdateLogger(worldPosition, i, entry.playerName, entry.uuid, entry.timestamp));
+				PacketDistributor.sendToPlayersTrackingChunk((ServerLevel) level, ChunkPos.containing(worldPosition), new UpdateLogger(worldPosition, i, entry.playerName, entry.uuid, entry.timestamp));
 		}
 	}
 

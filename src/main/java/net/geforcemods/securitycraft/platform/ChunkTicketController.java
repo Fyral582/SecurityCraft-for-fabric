@@ -47,7 +47,7 @@ public class ChunkTicketController {
 	private synchronized boolean forceChunkInternal(ServerLevel level, Object owner, int chunkX, int chunkZ, boolean add, boolean ticking) {
 		ChunkPos chunkPos = new ChunkPos(chunkX, chunkZ);
 		Map<Long, Set<Object>> chunks = forcedChunks.computeIfAbsent(level.dimension(), k -> new HashMap<>());
-		long key = chunkPos.toLong();
+		long key = chunkPos.pack();
 		TicketType type = ticking ? tickingTicket : loadingTicket;
 
 		if (add) {

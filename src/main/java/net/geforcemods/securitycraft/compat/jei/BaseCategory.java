@@ -10,7 +10,7 @@ import net.geforcemods.securitycraft.SecurityCraft;
 import net.geforcemods.securitycraft.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.CommonColors;
 import net.minecraft.world.item.ItemStack;
@@ -27,11 +27,11 @@ public abstract class BaseCategory implements IRecipeCategory<ReinforcerRecipe> 
 	}
 
 	@Override
-	public void draw(ReinforcerRecipe recipe, IRecipeSlotsView recipeSlotsView, GuiGraphics guiGraphics, double mouseX, double mouseY) {
+	public void draw(ReinforcerRecipe recipe, IRecipeSlotsView recipeSlotsView, GuiGraphicsExtractor guiGraphics, double mouseX, double mouseY) {
 		Font font = Minecraft.getInstance().font;
 
 		background.draw(guiGraphics);
-		guiGraphics.drawString(font, OUTPUT_TEXT, 103 - font.width(OUTPUT_TEXT), 5, CommonColors.DARK_GRAY, false);
+		guiGraphics.text(font, OUTPUT_TEXT, 103 - font.width(OUTPUT_TEXT), 5, CommonColors.DARK_GRAY, false);
 	}
 
 	@Override

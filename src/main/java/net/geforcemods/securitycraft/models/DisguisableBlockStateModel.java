@@ -5,19 +5,17 @@ import java.util.function.Predicate;
 
 import org.jetbrains.annotations.Nullable;
 
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
 import net.geforcemods.securitycraft.platform.model.ModelData;
 import net.geforcemods.securitycraft.platform.model.ModelProperty;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.ItemBlockRenderTypes;
-import net.minecraft.client.renderer.block.model.BlockModelPart;
-import net.minecraft.client.renderer.block.model.BlockStateModel;
-import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
+import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -29,29 +27,28 @@ public class DisguisableBlockStateModel implements BlockStateModel {
 		this.oldModel = oldModel;
 	}
 
+	@Nullable
+	private BlockStateModel getDisguisedModel(@Nullable BlockState disguisedState) {
+		if (disguisedState != null && !disguisedState.is(Blocks.AIR)) {
+			BlockStateModel model = Minecraft.getInstance().getModelManager().getBlockStateModelSet().get(disguisedState);
+
+			if (model != this)
+				return model;
+		}
+
+		return null;
+	}
+
 	@Override
 	public void emitQuads(QuadEmitter emitter, BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random, Predicate<@Nullable Direction> cullTest) {
 		ModelData modelData = level.getModelData(pos);
 		BlockState disguisedState = modelData.get(DISGUISED_STATE);
+		BlockStateModel model = getDisguisedModel(disguisedState);
 
-		if (disguisedState != null && !disguisedState.is(Blocks.AIR)) {
-			BlockStateModel model = Minecraft.getInstance().getBlockRenderer().getBlockModel(disguisedState);
-
-			if (model != this) {
-				ChunkSectionLayer layer = ItemBlockRenderTypes.getChunkRenderType(disguisedState);
-
-				//the disguised model should be rendered in the render layer of the disguised block
-				emitter.pushTransform(quad -> {
-					quad.renderLayer(layer);
-					return true;
-				});
-				model.emitQuads(emitter, level, pos, disguisedState, random, cullTest);
-				emitter.popTransform();
-				return;
-			}
-		}
-
-		emitOldQuads(modelData, emitter, level, pos, state, random, cullTest);
+		if (model != null)
+			model.emitQuads(emitter, level, pos, disguisedState, random, cullTest);
+		else
+			emitOldQuads(modelData, emitter, level, pos, state, random, cullTest);
 	}
 
 	public void emitOldQuads(ModelData modelData, QuadEmitter emitter, BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random, Predicate<@Nullable Direction> cullTest) {
@@ -59,31 +56,49 @@ public class DisguisableBlockStateModel implements BlockStateModel {
 	}
 
 	@Override
-	public void collectParts(RandomSource random, List<BlockModelPart> modelList) {
-		oldModel.collectParts(random, modelList);
+	public void collectParts(RandomSource random, List<BlockStateModelPart> parts) {
+		oldModel.collectParts(random, parts);
 	}
 
 	@Override
-	public TextureAtlasSprite particleSprite(BlockAndTintGetter level, BlockPos pos, BlockState state) {
+	public Material.Baked particleMaterial(BlockAndTintGetter level, BlockPos pos, BlockState state) {
 		ModelData modelData = level.getModelData(pos);
 		BlockState disguisedState = modelData.get(DISGUISED_STATE);
+		BlockStateModel model = getDisguisedModel(disguisedState);
 
-		if (disguisedState != null && !disguisedState.is(Blocks.AIR)) {
-			BlockStateModel model = Minecraft.getInstance().getBlockRenderer().getBlockModel(disguisedState);
+		if (model != null)
+			return model.particleMaterial(level, pos, disguisedState);
 
-			if (model != this)
-				return model.particleSprite(level, pos, disguisedState);
-		}
-
-		return oldParticleIcon(modelData, level, pos, state);
+		return oldParticleMaterial(modelData, level, pos, state);
 	}
 
-	public TextureAtlasSprite oldParticleIcon(ModelData modelData, BlockAndTintGetter level, BlockPos pos, BlockState state) {
-		return oldModel.particleSprite(level, pos, state);
+	public Material.Baked oldParticleMaterial(ModelData modelData, BlockAndTintGetter level, BlockPos pos, BlockState state) {
+		return oldModel.particleMaterial(level, pos, state);
 	}
 
 	@Override
-	public TextureAtlasSprite particleIcon() {
-		return oldModel.particleIcon();
+	public Material.Baked particleMaterial() {
+		return oldModel.particleMaterial();
+	}
+
+	@Override
+	public int materialFlags(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random) {
+		ModelData modelData = level.getModelData(pos);
+		BlockState disguisedState = modelData.get(DISGUISED_STATE);
+		BlockStateModel model = getDisguisedModel(disguisedState);
+
+		if (model != null)
+			return model.materialFlags(level, pos, disguisedState, random);
+
+		return oldMaterialFlags(modelData, level, pos, state, random);
+	}
+
+	public int oldMaterialFlags(ModelData modelData, BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random) {
+		return oldModel.materialFlags(level, pos, state, random);
+	}
+
+	@Override
+	public int materialFlags() {
+		return oldModel.materialFlags();
 	}
 }

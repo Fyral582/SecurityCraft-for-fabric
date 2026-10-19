@@ -15,7 +15,7 @@ import net.minecraft.network.chat.Component;
  */
 @Mixin(AbstractButton.class)
 public class AbstractButtonMixin {
-	@WrapOperation(method = "renderDefaultLabel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/AbstractButton;renderScrollingStringOverContents(Lnet/minecraft/client/gui/ActiveTextCollector;Lnet/minecraft/network/chat/Component;I)V"))
+	@WrapOperation(method = "extractDefaultLabel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/AbstractButton;extractScrollingStringOverContents(Lnet/minecraft/client/gui/ActiveTextCollector;Lnet/minecraft/network/chat/Component;I)V"))
 	private void securitycraft$applyFGColor(AbstractButton button, ActiveTextCollector collector, Component text, int padding, Operation<Void> original) {
 		int color = button.getFGColor();
 

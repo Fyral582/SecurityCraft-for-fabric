@@ -1,6 +1,6 @@
 package net.geforcemods.securitycraft.blockentities;
 
-import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ContainerStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import java.util.EnumMap;
@@ -204,7 +204,7 @@ public class KeypadBarrelBlockEntity extends RandomizableContainerBlockEntity im
 	}
 
 	public static Storage<ItemVariant> getCapability(KeypadBarrelBlockEntity be, Direction side) {
-		Storage<ItemVariant> resourceHandler = InventoryStorage.of(be, null);
+		Storage<ItemVariant> resourceHandler = ContainerStorage.of(be, null);
 
 		return BlockUtils.isAllowedToExtractFromProtectedObject(side, be) ? resourceHandler : new InsertOnlyResourceHandler<>(resourceHandler);
 	}
@@ -212,7 +212,7 @@ public class KeypadBarrelBlockEntity extends RandomizableContainerBlockEntity im
 	@Override
 	public Storage<ItemVariant> getHandlerForSentry(Sentry entity) {
 		if (entity.getOwner().owns(this))
-			return InventoryStorage.of(this, null);
+			return ContainerStorage.of(this, null);
 		else
 			return null;
 	}
@@ -398,7 +398,7 @@ public class KeypadBarrelBlockEntity extends RandomizableContainerBlockEntity im
 		double y = worldPosition.getY() + 0.5D + facingNormal.getY() / 2.0D;
 		double z = worldPosition.getZ() + 0.5D + facingNormal.getZ() / 2.0D;
 
-		level.playSound(null, x, y, z, sound, SoundSource.BLOCKS, 0.5F, level.random.nextFloat() * 0.1F + 0.9F);
+		level.playSound(null, x, y, z, sound, SoundSource.BLOCKS, 0.5F, level.getRandom().nextFloat() * 0.1F + 0.9F);
 	}
 
 	public void setPreviousBarrel(Block previousBarrel) {

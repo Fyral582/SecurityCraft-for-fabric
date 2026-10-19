@@ -26,7 +26,7 @@ import net.geforcemods.securitycraft.screen.components.TextHoverChecker;
 import net.geforcemods.securitycraft.util.IHasExtraAreas;
 import net.geforcemods.securitycraft.util.Utils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
@@ -59,11 +59,9 @@ public class BlockChangeDetectorScreen extends AbstractContainerScreen<BlockChan
 	private final int previousColor;
 
 	public BlockChangeDetectorScreen(BlockChangeDetectorMenu menu, Inventory inv, Component title) {
-		super(menu, inv, title);
+		super(menu, inv, title, 200, 256);
 		menu.addSlotListener(this);
 		be = (BlockChangeDetectorBlockEntity) menu.be;
-		imageWidth = 200;
-		imageHeight = 256;
 		previousMode = be.getMode();
 		wasShowingHighlights = be.isShowingHighlights();
 		previousColor = be.getColor();
@@ -131,22 +129,23 @@ public class BlockChangeDetectorScreen extends AbstractContainerScreen<BlockChan
 	}
 
 	@Override
-	protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-		guiGraphics.drawString(font, title, imageWidth / 2 - font.width(title) / 2, 6, CommonColors.DARK_GRAY, false);
+	protected void extractLabels(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY) {
+		guiGraphics.text(font, title, imageWidth / 2 - font.width(title) / 2, 6, CommonColors.DARK_GRAY, false);
 	}
 
 	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-		super.render(guiGraphics, mouseX, mouseY, partialTick);
+	public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+		super.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
 
 		if (smartModuleHoverChecker != null && smartModuleHoverChecker.checkHover(mouseX, mouseY) && !be.isModuleEnabled(ModuleType.SMART))
 			guiGraphics.setComponentTooltipForNextFrame(font, smartModuleHoverChecker.getLines(), mouseX, mouseY);
 
-		renderTooltip(guiGraphics, mouseX, mouseY);
+		extractTooltip(guiGraphics, mouseX, mouseY);
 	}
 
 	@Override
-	protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
+	public void extractBackground(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float a) {
+		super.extractBackground(guiGraphics, mouseX, mouseY, a);
 		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
 	}
 
@@ -240,7 +239,7 @@ public class BlockChangeDetectorScreen extends AbstractContainerScreen<BlockChan
 		}
 
 		@Override
-		public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+		public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
 			int height = 0;
 
 			for (int i = 0; i < filteredEntries.size(); i++) {
@@ -252,7 +251,7 @@ public class BlockChangeDetectorScreen extends AbstractContainerScreen<BlockChan
 			}
 
 			applyScrollLimits();
-			super.render(guiGraphics, mouseX, mouseY, partialTicks);
+			super.extractRenderState(guiGraphics, mouseX, mouseY, partialTicks);
 
 			for (int i = 0; i < filteredEntries.size(); i++) {
 				filteredEntries.get(i).renderLongMessageTooltip(guiGraphics, font);
@@ -260,9 +259,9 @@ public class BlockChangeDetectorScreen extends AbstractContainerScreen<BlockChan
 		}
 
 		@Override
-		protected void drawPanel(GuiGraphics guiGraphics, int entryRight, int relativeY, int mouseX, int mouseY) {
+		protected void drawPanel(GuiGraphicsExtractor guiGraphics, int entryRight, int relativeY, int mouseX, int mouseY) {
 			for (int i = 0; i < filteredEntries.size(); i++) {
-				filteredEntries.get(i).render(guiGraphics, mouseX, mouseY, 0.0F);
+				filteredEntries.get(i).extractRenderState(guiGraphics, mouseX, mouseY, 0.0F);
 			}
 		}
 
@@ -395,16 +394,16 @@ public class BlockChangeDetectorScreen extends AbstractContainerScreen<BlockChan
 		}
 
 		@Override
-		public void renderContents(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-			super.renderContents(guiGraphics, mouseX, mouseY, partialTick);
+		public void extractContents(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+			super.extractContents(guiGraphics, mouseX, mouseY, partialTick);
 
 			if (currentIndex == DetectionMode.BREAK.ordinal())
-				guiGraphics.renderItem(ironPickaxe, getX() + 2, getY() + 2);
+				guiGraphics.item(ironPickaxe, getX() + 2, getY() + 2);
 			else if (currentIndex == DetectionMode.PLACE.ordinal())
-				guiGraphics.renderItem(grassBlock, getX() + 2, getY() + 2);
+				guiGraphics.item(grassBlock, getX() + 2, getY() + 2);
 			else if (currentIndex == DetectionMode.BOTH.ordinal()) {
-				guiGraphics.renderItem(grassBlock, getX() + 2, getY() + 2);
-				guiGraphics.renderItem(ironPickaxe, getX() + 2, getY() + 2);
+				guiGraphics.item(grassBlock, getX() + 2, getY() + 2);
+				guiGraphics.item(ironPickaxe, getX() + 2, getY() + 2);
 			}
 		}
 

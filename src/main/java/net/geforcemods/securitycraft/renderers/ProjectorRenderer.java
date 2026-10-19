@@ -8,15 +8,15 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.geforcemods.securitycraft.ClientHandler;
 import net.geforcemods.securitycraft.blockentities.ProjectorBlockEntity;
 import net.geforcemods.securitycraft.renderers.state.ProjectorRenderState;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.block.MovingBlockRenderState;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
-import net.minecraft.client.renderer.state.CameraRenderState;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -51,8 +51,7 @@ public class ProjectorRenderer implements BlockEntityRenderer<ProjectorBlockEnti
 
 		List<ProjectionInfo> renderPositions = new ArrayList<>();
 
-		if (be.isActive() && !be.isEmpty()) {
-			Level level = be.getLevel();
+		if (be.isActive() && !be.isEmpty() && be.getLevel() instanceof ClientLevel level) {
 			BlockPos projectorPos = be.getBlockPos();
 			AABB projectedBlocksArea = be.getProjectedBlocksArea().deflate(0.1D);
 
@@ -66,7 +65,8 @@ public class ProjectorRenderer implements BlockEntityRenderer<ProjectorBlockEnti
 					movingBlockRenderState.blockPos = projectionPos;
 					movingBlockRenderState.blockState = be.getProjectedState();
 					movingBlockRenderState.biome = level.getBiome(projectionPos);
-					movingBlockRenderState.level = level;
+					movingBlockRenderState.cardinalLighting = level.cardinalLighting();
+					movingBlockRenderState.lightEngine = level.getLightEngine();
 					renderPositions.add(new ProjectionInfo(new BlockPos(relativePos), movingBlockRenderState));
 				}
 			}

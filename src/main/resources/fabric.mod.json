@@ -39,23 +39,24 @@
 	"accessWidener": "securitycraft.accesswidener",
 	"custom": {
 		"loom:injected_interfaces": {
-			"net/minecraft/class_2248": ["net/geforcemods/securitycraft/platform/ext/SCBlockExtension"],
-			"net/minecraft/class_2680": ["net/geforcemods/securitycraft/platform/ext/SCBlockStateExtension"],
-			"net/minecraft/class_2586": ["net/geforcemods/securitycraft/platform/ext/SCBlockEntityExtension"],
-			"net/minecraft/class_1792": ["net/geforcemods/securitycraft/platform/ext/SCItemExtension"],
-			"net/minecraft/class_9322": ["net/geforcemods/securitycraft/platform/ext/SCDataComponentHolderExtension"],
-			"net/minecraft/class_1799": ["net/geforcemods/securitycraft/platform/ext/SCItemStackExtension"],
-			"net/minecraft/class_1792$class_1793": ["net/geforcemods/securitycraft/platform/ext/SCItemPropertiesExtension"],
-			"net/minecraft/class_3908": ["net/geforcemods/securitycraft/platform/ext/SCMenuProviderExtension"],
-			"net/minecraft/class_304": ["net/geforcemods/securitycraft/platform/ext/SCKeyMappingExtension"],
-			"net/minecraft/class_1922": ["net/geforcemods/securitycraft/platform/ext/SCBlockGetterExtension"],
-			"net/minecraft/class_339": ["net/geforcemods/securitycraft/platform/ext/SCAbstractWidgetExtension"]
+			"net/minecraft/world/level/block/Block": ["net/geforcemods/securitycraft/platform/ext/SCBlockExtension"],
+			"net/minecraft/world/level/block/state/BlockState": ["net/geforcemods/securitycraft/platform/ext/SCBlockStateExtension"],
+			"net/minecraft/world/level/block/entity/BlockEntity": ["net/geforcemods/securitycraft/platform/ext/SCBlockEntityExtension"],
+			"net/minecraft/world/item/Item": ["net/geforcemods/securitycraft/platform/ext/SCItemExtension"],
+			"net/minecraft/core/component/DataComponentHolder": ["net/geforcemods/securitycraft/platform/ext/SCDataComponentHolderExtension"],
+			"net/minecraft/world/item/ItemStack": ["net/geforcemods/securitycraft/platform/ext/SCItemStackExtension"],
+			"net/minecraft/world/item/Item$Properties": ["net/geforcemods/securitycraft/platform/ext/SCItemPropertiesExtension"],
+			"net/minecraft/world/MenuProvider": ["net/geforcemods/securitycraft/platform/ext/SCMenuProviderExtension"],
+			"net/minecraft/client/KeyMapping": ["net/geforcemods/securitycraft/platform/ext/SCKeyMappingExtension"],
+			"net/minecraft/world/level/BlockGetter": ["net/geforcemods/securitycraft/platform/ext/SCBlockGetterExtension"],
+			"net/minecraft/client/gui/components/AbstractWidget": ["net/geforcemods/securitycraft/platform/ext/SCAbstractWidgetExtension"],
+			"net/minecraft/client/gui/components/EditBox": ["net/geforcemods/securitycraft/platform/ext/SCEditBoxExtension"]
 		}
 	},
 	"depends": {
 		"fabricloader": ">=0.17.0",
-		"minecraft": "~1.21.11",
-		"java": ">=21",
+		"minecraft": ">=26.1 <26.2",
+		"java": ">=25",
 		"fabric-api": "*",
 		"forgeconfigapiport": "*"
 	}

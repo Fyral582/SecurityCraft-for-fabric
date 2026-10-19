@@ -2,7 +2,7 @@ package net.geforcemods.securitycraft.platform.ext;
 
 import com.mojang.blaze3d.platform.InputConstants;
 
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.KeyMapping;
 
 /**
@@ -10,6 +10,6 @@ import net.minecraft.client.KeyMapping;
  */
 public interface SCKeyMappingExtension {
 	default boolean isActiveAndMatches(InputConstants.Key keyCode) {
-		return keyCode != InputConstants.UNKNOWN && keyCode.equals(KeyBindingHelper.getBoundKeyOf((KeyMapping) this));
+		return keyCode != InputConstants.UNKNOWN && keyCode.equals(KeyMappingHelper.getBoundKeyOf((KeyMapping) this));
 	}
 }

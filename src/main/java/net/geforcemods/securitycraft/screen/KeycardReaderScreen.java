@@ -22,7 +22,7 @@ import net.geforcemods.securitycraft.screen.components.TextHoverChecker;
 import net.geforcemods.securitycraft.screen.components.TogglePictureButton;
 import net.geforcemods.securitycraft.util.ClientUtils;
 import net.geforcemods.securitycraft.util.Utils;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
@@ -78,7 +78,7 @@ public class KeycardReaderScreen extends AbstractContainerScreen<KeycardReaderMe
 	private boolean firstTick = true;
 
 	public KeycardReaderScreen(KeycardReaderMenu menu, Inventory inv, Component title) {
-		super(menu, inv, title);
+		super(menu, inv, title, 176, 249);
 
 		be = menu.be;
 		previousSignature = Mth.clamp(be.getSignature(), 0, MAX_SIGNATURE);
@@ -86,7 +86,6 @@ public class KeycardReaderScreen extends AbstractContainerScreen<KeycardReaderMe
 		acceptedLevels = be.getAcceptedLevels();
 		hasSmartModule = be.isModuleEnabled(ModuleType.SMART);
 		isOwner = be.isOwnedBy(inv.player);
-		imageHeight = 249;
 
 		if (hasSmartModule)
 			smartModuleTooltip = Utils.localize("gui.securitycraft:keycard_reader.smartModule");
@@ -222,17 +221,17 @@ public class KeycardReaderScreen extends AbstractContainerScreen<KeycardReaderMe
 	}
 
 	@Override
-	protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-		guiGraphics.drawString(font, title, imageWidth / 2 - font.width(title) / 2, 6, CommonColors.DARK_GRAY, false);
-		guiGraphics.drawString(font, signatureText, signatureTextStartX, 23, CommonColors.DARK_GRAY, false);
-		guiGraphics.drawString(font, keycardLevelsText, 170 - font.width(keycardLevelsText), 56, CommonColors.DARK_GRAY, false);
+	protected void extractLabels(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY) {
+		guiGraphics.text(font, title, imageWidth / 2 - font.width(title) / 2, 6, CommonColors.DARK_GRAY, false);
+		guiGraphics.text(font, signatureText, signatureTextStartX, 23, CommonColors.DARK_GRAY, false);
+		guiGraphics.text(font, keycardLevelsText, 170 - font.width(keycardLevelsText), 56, CommonColors.DARK_GRAY, false);
 
 		//numbers infront of keycard levels buttons
 		for (int i = 1; i <= 5; i++) {
-			guiGraphics.drawString(font, "" + i, 91, 55 + 17 * i, CommonColors.DARK_GRAY, false);
+			guiGraphics.text(font, "" + i, 91, 55 + 17 * i, CommonColors.DARK_GRAY, false);
 		}
 
-		guiGraphics.drawString(font, Utils.INVENTORY_TEXT, 8, imageHeight - 93, CommonColors.DARK_GRAY, false);
+		guiGraphics.text(font, Utils.INVENTORY_TEXT, 8, imageHeight - 93, CommonColors.DARK_GRAY, false);
 	}
 
 	@Override
@@ -270,8 +269,8 @@ public class KeycardReaderScreen extends AbstractContainerScreen<KeycardReaderMe
 	}
 
 	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		super.render(guiGraphics, mouseX, mouseY, partialTicks);
+	public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
+		super.extractRenderState(guiGraphics, mouseX, mouseY, partialTicks);
 
 		ItemStack stack = menu.keycardSlot.getItem();
 
@@ -289,12 +288,13 @@ public class KeycardReaderScreen extends AbstractContainerScreen<KeycardReaderMe
 		if (!usesTextField.active && !stack.isEmpty() && usesHoverChecker.checkHover(mouseX, mouseY))
 			guiGraphics.setComponentTooltipForNextFrame(font, usesHoverChecker.getLines(), mouseX, mouseY);
 
-		renderTooltip(guiGraphics, mouseX, mouseY);
+		extractTooltip(guiGraphics, mouseX, mouseY);
 		ClientUtils.renderModuleInfo(guiGraphics, font, ModuleType.SMART, smartModuleTooltip, hasSmartModule, leftPos + 5, topPos + 5, mouseX, mouseY);
 	}
 
 	@Override
-	protected void renderBg(GuiGraphics guiGraphics, float partialTicks, int mouseX, int mouseY) {
+	public void extractBackground(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float a) {
+		super.extractBackground(guiGraphics, mouseX, mouseY, a);
 		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
 	}
 

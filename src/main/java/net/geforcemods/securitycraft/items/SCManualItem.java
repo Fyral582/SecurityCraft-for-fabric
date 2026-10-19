@@ -11,7 +11,6 @@ import net.geforcemods.securitycraft.SCContent;
 import net.geforcemods.securitycraft.SecurityCraft;
 import net.geforcemods.securitycraft.misc.PageGroup;
 import net.geforcemods.securitycraft.misc.SCManualPage;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
@@ -48,7 +47,6 @@ public class SCManualItem extends Item {
 	}
 
 	public static Optional<List<RecipeDisplay>> findRecipes(MinecraftServer server, Item item, PageGroup pageGroup) {
-		HolderLookup.Provider registryAccess = server.registryAccess();
 		CraftingInput dummyInput = CraftingInput.of(3, 3, NonNullList.withSize(9, ItemStack.EMPTY));
 
 		if (pageGroup == PageGroup.REINFORCED || item == SCContent.REINFORCED_HOPPER.get().asItem())
@@ -56,12 +54,12 @@ public class SCManualItem extends Item {
 		else if (pageGroup == PageGroup.NONE) {
 			for (RecipeHolder<?> recipeHolder : server.getRecipeManager().getRecipes()) {
 				if (recipeHolder.value() instanceof ShapedRecipe shapedRecipe) {
-					ItemStack resultItem = safeAssemble(shapedRecipe, dummyInput, registryAccess);
+					ItemStack resultItem = safeAssemble(shapedRecipe, dummyInput);
 
 					if (resultItem.is(item) && !(resultItem.is(SCContent.LENS.get()) && resultItem.has(DataComponents.DYED_COLOR)))
 						return Optional.of(shapedRecipe.display());
 				}
-				else if (recipeHolder.value() instanceof ShapelessRecipe shapelessRecipe && safeAssemble(shapelessRecipe, dummyInput, registryAccess).is(item)) {
+				else if (recipeHolder.value() instanceof ShapelessRecipe shapelessRecipe && safeAssemble(shapelessRecipe, dummyInput).is(item)) {
 					//don't show keycard reset recipes
 					if (recipeHolder.id().identifier().getPath().endsWith("_reset"))
 						continue;
@@ -80,7 +78,7 @@ public class SCManualItem extends Item {
 					break;
 
 				if (recipeHolder.value() instanceof ShapedRecipe shapedRecipe) {
-					ItemStack resultItem = safeAssemble(shapedRecipe, dummyInput, registryAccess);
+					ItemStack resultItem = safeAssemble(shapedRecipe, dummyInput);
 
 					if (!resultItem.isEmpty() && pageItems.contains(resultItem.getItem())) {
 						displays.addAll(shapedRecipe.display());
@@ -88,7 +86,7 @@ public class SCManualItem extends Item {
 					}
 				}
 				else if (recipeHolder.value() instanceof ShapelessRecipe shapelessRecipe) {
-					ItemStack resultItem = safeAssemble(shapelessRecipe, dummyInput, registryAccess);
+					ItemStack resultItem = safeAssemble(shapelessRecipe, dummyInput);
 
 					if (!resultItem.isEmpty() && pageItems.contains(resultItem.getItem())) {
 						//don't show keycard reset recipes
@@ -108,9 +106,9 @@ public class SCManualItem extends Item {
 		return Optional.empty();
 	}
 
-	private static ItemStack safeAssemble(CraftingRecipe recipe, CraftingInput dummyInput, HolderLookup.Provider registryAccess) {
+	private static ItemStack safeAssemble(CraftingRecipe recipe, CraftingInput dummyInput) {
 		try {
-			ItemStack result = recipe.assemble(dummyInput, registryAccess);
+			ItemStack result = recipe.assemble(dummyInput);
 
 			if (result != null)
 				return result;

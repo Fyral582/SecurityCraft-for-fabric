@@ -15,7 +15,7 @@ import net.minecraft.world.level.storage.ValueInput;
  */
 @Mixin(ClientPacketListener.class)
 public class ClientPacketListenerMixin {
-	@WrapOperation(method = "method_38542", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/entity/BlockEntity;loadWithComponents(Lnet/minecraft/world/level/storage/ValueInput;)V"))
+	@WrapOperation(method = "lambda$handleBlockEntityData$0", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/entity/BlockEntity;loadWithComponents(Lnet/minecraft/world/level/storage/ValueInput;)V"))
 	private void securitycraft$onDataPacket(BlockEntity be, ValueInput input, Operation<Void> original) {
 		be.onDataPacket(((ClientPacketListener) (Object) this).getConnection(), input);
 	}

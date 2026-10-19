@@ -19,8 +19,8 @@ import net.minecraft.world.level.block.state.BlockState;
  */
 @Mixin(ConduitBlockEntity.class)
 public class ConduitBlockEntityMixin {
-	@WrapOperation(method = "updateShape", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/state/BlockState;is(Lnet/minecraft/world/level/block/Block;)Z"))
-	private static boolean securitycraft$isConduitFrame(BlockState state, Block block, Operation<Boolean> original, @Local(argsOnly = true) Level level, @Local(argsOnly = true) BlockPos conduitPos, @Local(ordinal = 1) BlockPos framePos) {
+	@WrapOperation(method = "updateShape", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/state/BlockState;is(Ljava/lang/Object;)Z"))
+	private static boolean securitycraft$isConduitFrame(BlockState state, Object block, Operation<Boolean> original, @Local(argsOnly = true) Level level, @Local(argsOnly = true) BlockPos conduitPos, @Local(ordinal = 1) BlockPos framePos) {
 		if (original.call(state, block))
 			return true;
 

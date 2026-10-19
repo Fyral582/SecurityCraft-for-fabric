@@ -1,7 +1,7 @@
 package net.geforcemods.securitycraft.blockentities;
 
 import java.util.List;
-import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ContainerStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.CombinedStorage;
@@ -69,12 +69,12 @@ public class KeypadChestBlockEntity extends ChestBlockEntity implements IPasscod
 	private static final DoubleBlockCombiner.Combiner<ChestBlockEntity, Storage<ItemVariant>> CHEST_COMBINER_HANDLER = new DoubleBlockCombiner.Combiner<>() {
 		@Override
 		public Storage<ItemVariant> acceptDouble(ChestBlockEntity chest1, ChestBlockEntity chest2) {
-			return new CombinedStorage<>(List.of(InventoryStorage.of(chest1, null), InventoryStorage.of(chest2, null)));
+			return new CombinedStorage<>(List.of(ContainerStorage.of(chest1, null), ContainerStorage.of(chest2, null)));
 		}
 
 		@Override
 		public Storage<ItemVariant> acceptSingle(ChestBlockEntity chest) {
-			return InventoryStorage.of(chest, null);
+			return ContainerStorage.of(chest, null);
 		}
 
 		@Override
@@ -186,7 +186,7 @@ public class KeypadChestBlockEntity extends ChestBlockEntity implements IPasscod
 	@Override
 	public Storage<ItemVariant> getHandlerForSentry(Sentry entity) {
 		if (entity.getOwner().owns(this))
-			return InventoryStorage.of(this, null);
+			return ContainerStorage.of(this, null);
 		else
 			return null;
 	}

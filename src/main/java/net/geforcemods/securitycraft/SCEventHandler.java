@@ -14,11 +14,10 @@ import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.fabric.api.event.player.AttackBlockCallback;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
-import net.fabricmc.fabric.api.registry.FuelRegistryEvents;
+import net.fabricmc.fabric.api.registry.FuelValueEvents;
 import net.geforcemods.securitycraft.api.ICodebreakable;
 import net.geforcemods.securitycraft.api.IEMPAffected;
 import net.geforcemods.securitycraft.api.ILinkedAction;
@@ -120,19 +119,17 @@ public class SCEventHandler {
 	private SCEventHandler() {}
 
 	public static void register() {
-		ServerWorldEvents.LOAD.register((server, level) -> onLevelLoad(level));
 		ServerTickEvents.START_SERVER_TICK.register(SCEventHandler::onServerTickPre);
 		ServerLifecycleEvents.SYNC_DATA_PACK_CONTENTS.register((player, joined) -> onDatapackSync(player));
 		ServerEntityEvents.ENTITY_UNLOAD.register(SCEventHandler::onEntityLeaveLevel);
 		ServerLifecycleEvents.SERVER_STARTING.register(SCEventHandler::onServerAboutToStart);
-		ServerWorldEvents.UNLOAD.register((server, level) -> onLevelUnload(level));
 		ServerLifecycleEvents.SERVER_STOPPED.register(SCEventHandler::onServerStop);
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> !onLivingAttacked(entity, source));
 		ServerLivingEntityEvents.AFTER_DAMAGE.register((entity, source, baseDamageTaken, damageTaken, blocked) -> onDamageTaken(entity, source));
 		AttackBlockCallback.EVENT.register(SCEventHandler::onLeftClickBlock);
 		PlayerBlockBreakEvents.BEFORE.register((level, player, pos, state, be) -> !onBlockEventBreak(level, player, pos, state));
 		UseItemCallback.EVENT.register(SCEventHandler::onRightClickItem);
-		FuelRegistryEvents.EXCLUSIONS.register((builder, context) -> onFurnaceFuelBurnTime(builder));
+		FuelValueEvents.EXCLUSIONS.register((builder, context) -> onFurnaceFuelBurnTime(builder));
 	}
 
 	public static void onServerTickPre(MinecraftServer server) {
@@ -219,22 +216,13 @@ public class SCEventHandler {
 
 	public static void onServerAboutToStart(MinecraftServer server) {
 		PasscodeUtils.startHashingThread(server);
-	}
-
-	public static void onLevelLoad(ServerLevel level) {
-		if (level.dimension() == Level.OVERWORLD)
-			SaltData.refreshLevel(level);
-	}
-
-	public static void onLevelUnload(ServerLevel level) {
-		if (level.dimension() == Level.OVERWORLD) {
-			SaltData.invalidate();
-			BlockEntityTracker.FRAME_VIEWED_SECURITY_CAMERAS.clear();
-		}
+		SaltData.loadSalts(server);
 	}
 
 	public static void onServerStop(MinecraftServer server) {
 		PasscodeUtils.stopHashingThread();
+		SaltData.invalidate();
+		BlockEntityTracker.FRAME_VIEWED_SECURITY_CAMERAS.clear();
 	}
 
 	/**

@@ -1,6 +1,6 @@
 package net.geforcemods.securitycraft.blockentities;
 
-import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ContainerStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import java.util.EnumMap;
@@ -38,7 +38,7 @@ public class ReinforcedChiseledBookshelfBlockEntity extends ChiseledBookShelfBlo
 	}
 
 	public static Storage<ItemVariant> getCapability(ReinforcedChiseledBookshelfBlockEntity be, Direction side) {
-		Storage<ItemVariant> resourceHandler = InventoryStorage.of(be, null);
+		Storage<ItemVariant> resourceHandler = ContainerStorage.of(be, null);
 
 		return BlockUtils.isAllowedToExtractFromProtectedObject(side, be) ? resourceHandler : new InsertOnlyResourceHandler<>(resourceHandler);
 	}

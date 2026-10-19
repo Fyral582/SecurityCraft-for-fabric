@@ -21,7 +21,7 @@ import net.geforcemods.securitycraft.compat.IOverlayDisplay;
 import net.geforcemods.securitycraft.entity.AbstractSecuritySeaBoat;
 import net.geforcemods.securitycraft.entity.sentry.Sentry;
 import net.geforcemods.securitycraft.util.Utils;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.item.ItemStack;
@@ -76,7 +76,7 @@ public final class WTHITClientDataProvider extends HudModHandler implements IWai
 	}
 
 	@Override
-	public void onBeforeTooltipRender(GuiGraphics guiGraphics, Rectangle rectangle, ICommonAccessor accessor, IPluginConfig config, Canceller canceller) {
+	public void onBeforeTooltipRender(GuiGraphicsExtractor guiGraphics, Rectangle rectangle, ICommonAccessor accessor, IPluginConfig config, Canceller canceller) {
 		if (ClientHandler.isPlayerMountedOnCamera())
 			canceller.cancel();
 	}

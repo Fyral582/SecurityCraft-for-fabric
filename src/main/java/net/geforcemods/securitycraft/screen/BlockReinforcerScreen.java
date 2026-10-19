@@ -14,7 +14,7 @@ import net.geforcemods.securitycraft.screen.components.ToggleComponentButton;
 import net.geforcemods.securitycraft.util.ClientUtils;
 import net.geforcemods.securitycraft.util.IHasExtraAreas;
 import net.geforcemods.securitycraft.util.Utils;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -41,8 +41,7 @@ public class BlockReinforcerScreen extends AbstractContainerScreen<BlockReinforc
 	private TintMode oldTintMode;
 
 	public BlockReinforcerScreen(BlockReinforcerMenu menu, Inventory inv, Component title) {
-		super(menu, inv, title);
-		imageHeight = 186;
+		super(menu, inv, title, 176, 186);
 	}
 
 	@Override
@@ -89,25 +88,26 @@ public class BlockReinforcerScreen extends AbstractContainerScreen<BlockReinforc
 	}
 
 	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		super.render(guiGraphics, mouseX, mouseY, partialTicks);
-		renderTooltip(guiGraphics, mouseX, mouseY);
+	public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
+		super.extractRenderState(guiGraphics, mouseX, mouseY, partialTicks);
+		extractTooltip(guiGraphics, mouseX, mouseY);
 	}
 
 	@Override
-	protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-		guiGraphics.drawString(font, title, (imageWidth - font.width(title)) / 2, 5, CommonColors.DARK_GRAY, false);
-		guiGraphics.drawString(font, Utils.INVENTORY_TEXT, 8, imageHeight - 96 + 2, CommonColors.DARK_GRAY, false);
+	protected void extractLabels(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY) {
+		guiGraphics.text(font, title, (imageWidth - font.width(title)) / 2, 5, CommonColors.DARK_GRAY, false);
+		guiGraphics.text(font, Utils.INVENTORY_TEXT, 8, imageHeight - 96 + 2, CommonColors.DARK_GRAY, false);
 
 		if (!menu.getResult().isEmpty())
-			guiGraphics.drawString(font, output, 128 - font.width(output), 25, CommonColors.DARK_GRAY, false);
+			guiGraphics.text(font, output, 128 - font.width(output), 25, CommonColors.DARK_GRAY, false);
 
-		guiGraphics.drawString(font, mode, 8, 48, CommonColors.DARK_GRAY, false);
-		guiGraphics.drawString(font, tint, 8, 73, CommonColors.DARK_GRAY, false);
+		guiGraphics.text(font, mode, 8, 48, CommonColors.DARK_GRAY, false);
+		guiGraphics.text(font, tint, 8, 73, CommonColors.DARK_GRAY, false);
 	}
 
 	@Override
-	public void renderBg(GuiGraphics guiGraphics, float partialTicks, int mouseX, int mouseY) {
+	public void extractBackground(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float a) {
+		super.extractBackground(guiGraphics, mouseX, mouseY, a);
 		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
 	}
 

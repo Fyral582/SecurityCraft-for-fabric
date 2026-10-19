@@ -1,6 +1,6 @@
 package net.geforcemods.securitycraft.blockentities;
 
-import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ContainerStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.CombinedStorage;
@@ -26,6 +26,7 @@ import net.geforcemods.securitycraft.blocks.InventoryScannerFieldBlock;
 import net.geforcemods.securitycraft.inventory.ExtractOnlyResourceHandler;
 import net.geforcemods.securitycraft.inventory.InventoryScannerMenu;
 import net.geforcemods.securitycraft.inventory.LensContainer;
+import net.geforcemods.securitycraft.inventory.SimpleListenerContainer.ContainerListener;
 import net.geforcemods.securitycraft.misc.ModuleType;
 import net.geforcemods.securitycraft.util.BlockUtils;
 import net.geforcemods.securitycraft.util.ITickingBlockEntity;
@@ -38,7 +39,6 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
-import net.minecraft.world.ContainerListener;
 import net.minecraft.world.Containers;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.LivingEntity;
@@ -67,7 +67,7 @@ public class InventoryScannerBlockEntity extends DisguisableBlockEntity implemen
 
 	public InventoryScannerBlockEntity(BlockPos pos, BlockState state) {
 		super(SCContent.INVENTORY_SCANNER_BLOCK_ENTITY.get(), pos, state);
-		lens.addListener(this);
+		lens.setListener(this);
 	}
 
 	@Override
@@ -167,7 +167,7 @@ public class InventoryScannerBlockEntity extends DisguisableBlockEntity implemen
 
 	public static Storage<ItemVariant> getCapability(InventoryScannerBlockEntity be, Direction side) {
 		if (BlockUtils.isAllowedToExtractFromProtectedObject(side, be)) {
-			InventoryStorage storage = InventoryStorage.of(Utils.createContainerFromList(be.inventoryContents), null);
+			ContainerStorage storage = ContainerStorage.of(Utils.createContainerFromList(be.inventoryContents), null);
 
 			//don't allow extracting from the prohibited item slots
 			return new ExtractOnlyResourceHandler<>(new CombinedStorage<>(storage.getSlots().subList(10, storage.getSlots().size())));

@@ -2,7 +2,7 @@ package net.geforcemods.securitycraft.platform.ext;
 
 import org.jetbrains.annotations.Nullable;
 
-import net.fabricmc.fabric.api.blockview.v2.FabricBlockView;
+import net.fabricmc.fabric.api.blockgetter.v2.FabricBlockGetter;
 import net.geforcemods.securitycraft.platform.model.ModelData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
@@ -18,7 +18,7 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
  */
 public interface SCBlockGetterExtension {
 	default ModelData getModelData(BlockPos pos) {
-		return ((FabricBlockView) this).getBlockEntityRenderData(pos) instanceof ModelData modelData ? modelData : ModelData.EMPTY;
+		return ((FabricBlockGetter) this).getBlockEntityRenderData(pos) instanceof ModelData modelData ? modelData : ModelData.EMPTY;
 	}
 
 	@Nullable

@@ -9,7 +9,7 @@ import org.lwjgl.glfw.GLFW;
 import net.geforcemods.securitycraft.SecurityCraft;
 import net.geforcemods.securitycraft.entity.camera.CameraController;
 import net.geforcemods.securitycraft.entity.camera.SecurityCamera;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.KeyMapping;
 
 /**
@@ -40,14 +40,14 @@ public class KeyBindings {
 	private static KeyMapping register(String name, int defaultKey) {
 		KeyMapping keyMapping = new SCKeyMapping(name, defaultKey);
 
-		KeyBindingHelper.registerKeyBinding(keyMapping);
+		KeyMappingHelper.registerKeyMapping(keyMapping);
 		return keyMapping;
 	}
 
 	private static KeyMapping registerTicking(String name, int defaultKey, Consumer<SecurityCamera> action) {
 		TickingKeyMapping keyMapping = new TickingKeyMapping(name, defaultKey, action);
 
-		KeyBindingHelper.registerKeyBinding(keyMapping);
+		KeyMappingHelper.registerKeyMapping(keyMapping);
 		TICKING_KEY_MAPPINGS.add(keyMapping);
 		return keyMapping;
 	}

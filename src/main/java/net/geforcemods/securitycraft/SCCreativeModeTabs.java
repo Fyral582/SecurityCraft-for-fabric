@@ -8,11 +8,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.ToIntFunction;
+import java.util.stream.Stream;
 
 import net.geforcemods.securitycraft.api.IBlockMine;
 import net.geforcemods.securitycraft.api.IReinforcedBlock;
 import net.geforcemods.securitycraft.util.SCItemGroup;
-import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
+import net.fabricmc.fabric.api.creativetab.v1.FabricCreativeModeTab;
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -22,19 +24,19 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.DyeColor;
-import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.DyedItemColor;
 import net.geforcemods.securitycraft.platform.registry.DeferredHolder;
 import net.geforcemods.securitycraft.platform.registry.DeferredRegister;
 
 public class SCCreativeModeTabs {
-	public static final Map<SCItemGroup, List<ItemStack>> STACKS_FOR_ITEM_GROUPS = Util.make(new EnumMap<>(SCItemGroup.class), map -> Arrays.stream(SCItemGroup.values()).forEach(key -> map.put(key, new ArrayList<>())));
+	public static final Map<SCItemGroup, List<ItemStackTemplate>> STACKS_FOR_ITEM_GROUPS = Util.make(new EnumMap<>(SCItemGroup.class), map -> Arrays.stream(SCItemGroup.values()).forEach(key -> map.put(key, new ArrayList<>())));
 	public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, SecurityCraft.MODID);
 	//@formatter:off
-	public static final DeferredHolder<CreativeModeTab, CreativeModeTab> TECHNICAL_TAB = CREATIVE_MODE_TABS.register("technical", () -> FabricItemGroup.builder()
+	public static final DeferredHolder<CreativeModeTab, CreativeModeTab> TECHNICAL_TAB = CREATIVE_MODE_TABS.register("technical", () -> FabricCreativeModeTab.builder()
 			.icon(() -> new ItemStack(SCContent.USERNAME_LOGGER.get()))
 			.title(Component.translatable("itemGroup.securitycraft.technical"))
 			.displayItems((itemDisplayParameters, output) -> {
@@ -107,11 +109,11 @@ public class SCCreativeModeTabs {
 				output.accept(new ItemStack(SCContent.LENS.get()));
 
 				int colorAmount = SecurityCraft.RANDOM.nextInt(1, 4);
-				List<DyeItem> list = new ArrayList<>();
-				ItemStack coloredLens = ItemStack.EMPTY;
+				List<DyeColor> list = new ArrayList<>();
+				ItemStack coloredLens;
 
 				for (int i = 0; i < colorAmount; i++) {
-					list.add(DyeItem.byColor(DyeColor.byId(SecurityCraft.RANDOM.nextInt(16))));
+					list.add(DyeColor.byId(SecurityCraft.RANDOM.nextInt(16)));
 				}
 
 				coloredLens = DyedItemColor.applyDyes(new ItemStack(SCContent.LENS.get()), list);
@@ -148,16 +150,17 @@ public class SCCreativeModeTabs {
 				output.accept(new ItemStack(SCContent.MANGROVE_SECURITY_SEA_BOAT.get()));
 				output.accept(new ItemStack(SCContent.CHERRY_SECURITY_SEA_BOAT.get()));
 				output.accept(new ItemStack(SCContent.BAMBOO_SECURITY_SEA_RAFT.get()));
-				output.acceptAll(STACKS_FOR_ITEM_GROUPS.get(SCItemGroup.TECHNICAL));
+				output.acceptAll(getStackList(SCItemGroup.TECHNICAL));
 			}).build());
+
 	//@formatter:off
-	public static final DeferredHolder<CreativeModeTab, CreativeModeTab> MINE_TAB = CREATIVE_MODE_TABS.register("mine", () -> FabricItemGroup.builder()
+	public static final DeferredHolder<CreativeModeTab, CreativeModeTab> MINE_TAB = CREATIVE_MODE_TABS.register("mine", () -> FabricCreativeModeTab.builder()
 			.icon(() -> new ItemStack(SCContent.MINE.get()))
 			.title(Component.translatable("itemGroup.securitycraft.explosives"))
 			.displayItems((itemDisplayParameters, output) -> {
 				//@formatter:on
 				List<Item> vanillaOrderedItems = getVanillaOrderedItems();
-				List<ItemStack> mineGroupItems = new ArrayList<>(STACKS_FOR_ITEM_GROUPS.get(SCItemGroup.EXPLOSIVES));
+				List<ItemStack> mineGroupItems = new ArrayList<>(getStackList(SCItemGroup.EXPLOSIVES));
 
 				mineGroupItems.sort(stackComparator(item -> {
 					if (item instanceof BlockItem blockItem && blockItem.getBlock() instanceof IBlockMine blockMine)
@@ -176,13 +179,13 @@ public class SCCreativeModeTabs {
 				output.accept(new ItemStack(SCContent.BLAST_FURNACE_MINE.get()));
 			}).build());
 	//@formatter:off
-	public static final DeferredHolder<CreativeModeTab, CreativeModeTab> DECORATION_TAB = CREATIVE_MODE_TABS.register("decoration", () -> FabricItemGroup.builder()
+	public static final DeferredHolder<CreativeModeTab, CreativeModeTab> DECORATION_TAB = CREATIVE_MODE_TABS.register("decoration", () -> FabricCreativeModeTab.builder()
 			.icon(() -> new ItemStack(SCContent.REINFORCED_OAK_STAIRS.get()))
 			.title(Component.translatable("itemGroup.securitycraft.decoration"))
 			.displayItems((itemDisplayParameters, output) -> {
 				//@formatter:on
 				List<Item> vanillaOrderedItems = getVanillaOrderedItems();
-				List<ItemStack> decorationGroupItems = new ArrayList<>(STACKS_FOR_ITEM_GROUPS.get(SCItemGroup.DECORATION));
+				List<ItemStack> decorationGroupItems = new ArrayList<>(getStackList(SCItemGroup.DECORATION));
 
 				decorationGroupItems.sort(stackComparator(item -> {
 					if (item instanceof BlockItem blockItem && blockItem.getBlock() instanceof IReinforcedBlock reinforcedBlock)
@@ -263,6 +266,18 @@ public class SCCreativeModeTabs {
 
 	private static List<Item> getCreativeTabItems(ResourceKey<CreativeModeTab> tabKey) {
 		return BuiltInRegistries.CREATIVE_MODE_TAB.get(tabKey).get().value().getDisplayItems().stream().map(ItemStack::getItem).toList();
+	}
+
+	private static List<ItemStack> getStackList(SCItemGroup group) {
+		return getTemplateStream(group).map(ItemStackTemplate::create).toList();
+	}
+
+	public static List<Holder<Item>> getItemList(SCItemGroup group) {
+		return STACKS_FOR_ITEM_GROUPS.get(group).stream().map(ItemStackTemplate::item).toList();
+	}
+
+	private static Stream<ItemStackTemplate> getTemplateStream(SCItemGroup group) {
+		return STACKS_FOR_ITEM_GROUPS.get(group).stream();
 	}
 
 	private SCCreativeModeTabs() {}

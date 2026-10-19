@@ -124,7 +124,7 @@ public abstract class FakeLavaFluid extends BaseFlowingFluid {
 
 		BlockState state = level.getBlockState(pos);
 
-		return state.ignitedByLava() && FlammableBlockRegistry.getDefaultInstance().get(state.getBlock()).getBurnChance() > 0;
+		return state.ignitedByLava() && FlammableBlockRegistry.getDefaultInstance().get(state.getBlock()).getBurnOdds() > 0;
 	}
 
 	@Nullable

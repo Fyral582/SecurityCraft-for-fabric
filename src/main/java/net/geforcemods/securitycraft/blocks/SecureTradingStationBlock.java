@@ -63,7 +63,7 @@ public class SecureTradingStationBlock extends DisguisableBlock {
 		if (level.getBlockEntity(pos) instanceof SecureTradingStationBlockEntity be) {
 			if (player instanceof ServerPlayer serverPlayer) {
 				if (be.isDisabled())
-					player.displayClientMessage(Utils.localize("gui.securitycraft:scManual.disabled"), true);
+					player.sendOverlayMessage(Utils.localize("gui.securitycraft:scManual.disabled"));
 				else if (be.isDenied(player))
 					PlayerUtils.sendMessageToPlayer(player, Utils.localize(getDescriptionId()), Utils.localize("messages.securitycraft:module.onDenylist"), ChatFormatting.RED);
 				else

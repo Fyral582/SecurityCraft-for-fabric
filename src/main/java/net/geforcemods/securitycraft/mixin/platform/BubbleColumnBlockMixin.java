@@ -5,7 +5,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.BubbleColumnBlock;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -15,8 +15,8 @@ import net.minecraft.world.level.block.state.BlockState;
 @Mixin(BubbleColumnBlock.class)
 public class BubbleColumnBlockMixin {
 	@Inject(method = "getColumnState", at = @At("HEAD"), cancellable = true)
-	private static void securitycraft$getBubbleColumnDirection(BlockState belowState, CallbackInfoReturnable<BlockState> cir) {
-		if (!belowState.is(Blocks.BUBBLE_COLUMN)) {
+	private static void securitycraft$getBubbleColumnDirection(Block bubbleColumn, BlockState belowState, BlockState occupyState, CallbackInfoReturnable<BlockState> cir) {
+		if (!belowState.is(bubbleColumn)) {
 			BlockState columnState = belowState.getBubbleColumnDirection().getColumnState();
 
 			if (columnState != null)

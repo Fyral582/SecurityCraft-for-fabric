@@ -12,6 +12,7 @@ import net.minecraft.world.Container;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.component.BundleContents;
 import net.minecraft.world.item.component.ItemContainerContents;
 
@@ -128,7 +129,7 @@ public class InventoryUtils {
 			});
 
 			if (shouldRemoveItems)
-				bundle.set(DataComponents.BUNDLE_CONTENTS, new BundleContents(bundleItems));
+				bundle.set(DataComponents.BUNDLE_CONTENTS, new BundleContents(bundleItems.stream().map(ItemStackTemplate::fromNonEmptyStack).toList()));
 		}
 
 		return itemsLeftToFind;

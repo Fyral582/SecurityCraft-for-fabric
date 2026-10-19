@@ -85,6 +85,7 @@ import net.minecraft.world.item.CreativeModeTab.TabVisibility;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.item.alchemy.PotionBrewing;
@@ -95,8 +96,8 @@ import net.minecraft.world.level.block.Block;
 import net.geforcemods.securitycraft.platform.registry.DeferredBlock;
 import net.geforcemods.securitycraft.platform.SCBrewingRecipes;
 import net.geforcemods.securitycraft.platform.menu.MenuDataPayload;
-import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroupEntries;
-import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
+import net.fabricmc.fabric.api.creativetab.v1.FabricCreativeModeTabOutput;
+import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
@@ -142,7 +143,7 @@ public class RegistrationHandler {
 						Registry.register(BuiltInRegistries.ITEM, Utils.getRegistryName(block), blockItem);
 
 						if (group != SCItemGroup.MANUAL)
-							SCCreativeModeTabs.STACKS_FOR_ITEM_GROUPS.get(group).add(new ItemStack(blockItem));
+							SCCreativeModeTabs.STACKS_FOR_ITEM_GROUPS.get(group).add(new ItemStackTemplate(blockItem));
 					}
 					else if (field.isAnnotationPresent(RegisterItemBlock.class)) {
 						SCItemGroup group = field.getAnnotation(RegisterItemBlock.class).value();
@@ -153,7 +154,7 @@ public class RegistrationHandler {
 						Registry.register(BuiltInRegistries.ITEM, Utils.getRegistryName(block), blockItem);
 
 						if (group != SCItemGroup.MANUAL)
-							SCCreativeModeTabs.STACKS_FOR_ITEM_GROUPS.get(group).add(new ItemStack(blockItem));
+							SCCreativeModeTabs.STACKS_FOR_ITEM_GROUPS.get(group).add(new ItemStackTemplate(blockItem));
 					}
 				}
 				catch (IllegalArgumentException | IllegalAccessException e) {
@@ -178,7 +179,7 @@ public class RegistrationHandler {
 		onRegisterCapabilities();
 
 		for (ResourceKey<CreativeModeTab> tabKey : List.of(CreativeModeTabs.REDSTONE_BLOCKS, CreativeModeTabs.COLORED_BLOCKS, SCCreativeModeTabs.DECORATION_TAB.getKey(), CreativeModeTabs.OP_BLOCKS, CreativeModeTabs.TOOLS_AND_UTILITIES)) {
-			ItemGroupEvents.modifyEntriesEvent(tabKey).register(entries -> onCreativeModeTabRegister(tabKey, entries));
+			CreativeModeTabEvents.modifyOutputEvent(tabKey).register(entries -> onCreativeModeTabRegister(tabKey, entries));
 		}
 
 		registerBrewingRecipes();
@@ -302,7 +303,7 @@ public class RegistrationHandler {
 		FluidStorage.ITEM.registerForItems((stack, context) -> new FullItemFluidStorage(context, Items.BUCKET, FluidVariant.of(SCContent.FAKE_LAVA.get()), FluidConstants.BUCKET), SCContent.FAKE_LAVA_BUCKET.get());
 	}
 
-	private static void onCreativeModeTabRegister(ResourceKey<CreativeModeTab> tabKey, FabricItemGroupEntries event) {
+	private static void onCreativeModeTabRegister(ResourceKey<CreativeModeTab> tabKey, FabricCreativeModeTabOutput event) {
 		//@formatter:off
 		if (tabKey.equals(CreativeModeTabs.REDSTONE_BLOCKS)) {
 			insertAfter(event, new ItemStack(Items.LEVER), new ItemStack(SCContent.REINFORCED_LEVER.get()), TabVisibility.PARENT_AND_SEARCH_TABS);
@@ -493,8 +494,8 @@ public class RegistrationHandler {
 		}
 	}
 
-	private static void insertAfter(FabricItemGroupEntries entries, ItemStack after, ItemStack stack, TabVisibility visibility) {
-		entries.addAfter(after, List.of(stack), visibility);
+	private static void insertAfter(FabricCreativeModeTabOutput entries, ItemStack after, ItemStack stack, TabVisibility visibility) {
+		entries.insertAfter(after, List.of(stack), visibility);
 	}
 
 	public static void registerBrewingRecipes() {
@@ -511,11 +512,11 @@ public class RegistrationHandler {
 	 */
 	private static class Registrar {
 		<T extends CustomPacketPayload> void playToClient(CustomPacketPayload.Type<T> type, StreamCodec<? super RegistryFriendlyByteBuf, T> codec) {
-			PayloadTypeRegistry.playS2C().register(type, codec);
+			PayloadTypeRegistry.clientboundPlay().register(type, codec);
 		}
 
 		<T extends CustomPacketPayload> void playToServer(CustomPacketPayload.Type<T> type, StreamCodec<? super RegistryFriendlyByteBuf, T> codec, BiConsumer<T, IPayloadContext> handler) {
-			PayloadTypeRegistry.playC2S().register(type, codec);
+			PayloadTypeRegistry.serverboundPlay().register(type, codec);
 			ServerPlayNetworking.registerGlobalReceiver(type, (payload, context) -> handler.accept(payload, context::player));
 		}
 	}

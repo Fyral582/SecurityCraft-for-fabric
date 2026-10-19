@@ -33,7 +33,7 @@ public class MinecraftInputMixin {
 			ci.cancel();
 	}
 
-	@Inject(method = "pickBlock", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "pickBlockOrEntity", at = @At("HEAD"), cancellable = true)
 	private void securitycraft$onPickBlock(CallbackInfo ci) {
 		if (SCClientEventHandler.onClickInput(null, false))
 			ci.cancel();

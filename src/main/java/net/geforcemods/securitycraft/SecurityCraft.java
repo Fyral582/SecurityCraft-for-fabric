@@ -28,7 +28,6 @@ import net.geforcemods.securitycraft.blocks.KeypadChestBlock;
 import net.geforcemods.securitycraft.blocks.KeypadTrapDoorBlock;
 import net.geforcemods.securitycraft.blocks.SecureRedstoneInterfaceBlock;
 import net.geforcemods.securitycraft.blocks.mines.IMSBlock;
-import net.geforcemods.securitycraft.blocks.reinforced.ReinforcedCauldronBlock.IReinforcedCauldronInteraction;
 import net.geforcemods.securitycraft.blocks.reinforced.ReinforcedHopperBlock;
 import net.geforcemods.securitycraft.blocks.reinforced.ReinforcedPressurePlateBlock;
 import net.geforcemods.securitycraft.blocks.reinforced.ReinforcedRedstoneBlock;
@@ -38,6 +37,7 @@ import net.geforcemods.securitycraft.items.SCManualItem;
 import net.geforcemods.securitycraft.misc.CommonDoorActivator;
 import net.geforcemods.securitycraft.misc.ConfigAttackTargetCheck;
 import net.geforcemods.securitycraft.misc.PageGroup;
+import net.geforcemods.securitycraft.misc.ReinforcedCauldronInteractions;
 import net.geforcemods.securitycraft.misc.SCManualPage;
 import net.geforcemods.securitycraft.platform.ChunkTicketController;
 import net.geforcemods.securitycraft.platform.PlatformHooks;
@@ -53,7 +53,8 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -93,7 +94,7 @@ public class SecurityCraft implements ModInitializer {
 		RegistrationHandler.init();
 		SCEventHandler.register();
 		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> SCCommand.register(dispatcher));
-		ResourceLoader.get(PackType.SERVER_DATA).registerReloader(resLoc("collect_sc_content_data"), (PreparableReloadListener) (state, e1, barrier, e2) -> CompletableFuture.runAsync(() -> collectSCContentData(true), e1).thenCompose(barrier::wait));
+		ResourceLoader.get(PackType.SERVER_DATA).registerReloadListener(resLoc("collect_sc_content_data"), (PreparableReloadListener) (state, e1, barrier, e2) -> CompletableFuture.runAsync(() -> collectSCContentData(true), e1).thenCompose(barrier::wait));
 		ServerLifecycleEvents.SERVER_STARTED.register(server -> collectSCContentData(server, true));
 		registerApiContent();
 		SecurityCraftAPI.finishRegistration();
@@ -101,7 +102,7 @@ public class SecurityCraft implements ModInitializer {
 		if (SCPlatform.isModLoaded("distanthorizons"))
 			DistantHorizonsCompat.registerEvent();
 
-		IReinforcedCauldronInteraction.bootStrap();
+		ReinforcedCauldronInteractions.bootStrap();
 	}
 
 	private static void registerApiContent() {
@@ -131,7 +132,7 @@ public class SecurityCraft implements ModInitializer {
 		if (addPages && server == null)
 			return;
 
-		Map<PageGroup, List<ItemStack>> groupStacks = new EnumMap<>(PageGroup.class);
+		Map<PageGroup, List<ItemStackTemplate>> groupStacks = new EnumMap<>(PageGroup.class);
 
 		IReinforcedBlock.VANILLA_TO_SECURITYCRAFT.clear();
 		IReinforcedBlock.SECURITYCRAFT_TO_VANILLA.clear();
@@ -155,7 +156,7 @@ public class SecurityCraft implements ModInitializer {
 					Item item = ((ItemLike) o).asItem();
 					PageGroup group = hmp.value();
 					boolean wasNotAdded = false;
-					Component title = Component.translatable("");
+					Component title = Component.empty();
 					String key = "help.";
 
 					if (group != PageGroup.NONE) {
@@ -166,7 +167,8 @@ public class SecurityCraft implements ModInitializer {
 							wasNotAdded = true;
 						}
 
-						groupStacks.get(group).add(new ItemStack(item));
+						if (item != Items.AIR)
+							groupStacks.get(group).add(new ItemStackTemplate(item));
 					}
 					else {
 						title = Utils.localize(item.getDescriptionId());
@@ -182,7 +184,7 @@ public class SecurityCraft implements ModInitializer {
 			}
 		}
 
-		groupStacks.forEach((group, list) -> group.setItems(list.stream().filter(stack -> !stack.isEmpty()).toList()));
+		groupStacks.forEach(PageGroup::setItems);
 	}
 
 	public static String getVersion() {

@@ -17,12 +17,11 @@ import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.special.NoDataSpecialModelRenderer;
 import net.minecraft.client.renderer.special.SpecialModelRenderer;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.item.ItemDisplayContext;
 
 public record DisplayCaseSpecialRenderer(DisplayCaseModel model, Identifier texture, float openness, Optional<Integer> light) implements NoDataSpecialModelRenderer {
 	@Override
-	public void submit(ItemDisplayContext ctx, PoseStack pose, SubmitNodeCollector collector, int packedLight, int packedOverlay, boolean glint, int outlineColor) {
-		collector.submitModel(model, openness, pose, RenderTypes.entityCutout(texture), light.orElse(packedLight), packedOverlay, outlineColor, null);
+	public void submit(PoseStack pose, SubmitNodeCollector collector, int lightCoords, int overlayCoords, boolean hasFoil, int outlineColor) {
+		collector.submitModel(model, openness, pose, RenderTypes.entityCutout(texture), light.orElse(lightCoords), overlayCoords, outlineColor, null);
 	}
 
 	@Override
@@ -33,7 +32,7 @@ public record DisplayCaseSpecialRenderer(DisplayCaseModel model, Identifier text
 		model.root().getExtentsForGui(poseStack, extents);
 	}
 
-	public static record Unbaked(Identifier texture, float openness, Optional<Integer> light) implements SpecialModelRenderer.Unbaked {
+	public record Unbaked(Identifier texture, float openness, Optional<Integer> light) implements SpecialModelRenderer.Unbaked<Void> {
 
 		//@formatter:off
 		public static final MapCodec<DisplayCaseSpecialRenderer.Unbaked> MAP_CODEC = RecordCodecBuilder.mapCodec(
@@ -50,7 +49,7 @@ public record DisplayCaseSpecialRenderer(DisplayCaseModel model, Identifier text
 		}
 
 		@Override
-		public SpecialModelRenderer<?> bake(BakingContext ctx) {
+		public SpecialModelRenderer<Void> bake(BakingContext ctx) {
 			DisplayCaseModel model = new DisplayCaseModel(ctx.entityModelSet().bakeLayer(ClientHandler.DISPLAY_CASE_LOCATION));
 
 			return new DisplayCaseSpecialRenderer(model, texture.withPrefix("textures/entity/display_case/").withSuffix(".png"), openness, light);

@@ -44,7 +44,7 @@
 		"teleport.ThrownEnderpearlMixin",
 		"AbstractBoatMixin",
 		"ResultSlotMixin",
-		"ItemStackHolderMixin"
+		"TypedInstanceHolderMixin"
 	],
 	"client": [
 		"KeyMappingExtensionImplMixin",
@@ -58,7 +58,8 @@
 		"client.ScreenLayersMinecraftMixin",
 		"client.ScreenLayersGameRendererMixin",
 		"client.AbstractWidgetMixin",
-		"client.AbstractButtonMixin"
+		"client.AbstractButtonMixin",
+		"client.EditBoxMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
