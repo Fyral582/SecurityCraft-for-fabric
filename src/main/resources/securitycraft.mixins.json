@@ -6,6 +6,7 @@
 		"camera.ClientChunkCacheMixin",
 		"camera.CustomFeatureRendererMixin",
 		"camera.GameRendererMixin",
+		"camera.LevelRendererLocalPlayerMixin",
 		"camera.LevelRendererMixin",
 		"camera.LocalPlayerMixin",
 		"camera.MinecraftMixin",
