@@ -16,7 +16,7 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.CommonColors;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
@@ -26,7 +26,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
 public class SetPasscodeScreen extends Screen implements StillValid {
-	private static final Identifier TEXTURE = SecurityCraft.resLoc("textures/gui/container/blank.png");
+	private static final ResourceLocation TEXTURE = SecurityCraft.resLoc("textures/gui/container/blank.png");
 	private int imageWidth = 176;
 	private int imageHeight = 166;
 	private int leftPos;
@@ -51,7 +51,7 @@ public class SetPasscodeScreen extends Screen implements StillValid {
 		leftPos = (width - imageWidth) / 2;
 		topPos = (height - imageHeight) / 2;
 
-		saveAndContinueButton = addRenderableWidget(Button.builder(Utils.localize("gui.securitycraft:passcode.save"), this::saveAndContinueButtonClicked).pos(width / 2 - 48, height / 2 + 30 + 10).size(100, 20).build());
+		saveAndContinueButton = addRenderableWidget(new Button(width / 2 - 48, height / 2 + 30 + 10, 100, 20, Utils.localize("gui.securitycraft:passcode.save"), this::saveAndContinueButtonClicked, Button.DEFAULT_NARRATION));
 		saveAndContinueButton.active = false;
 		keycodeTextbox = addRenderableWidget(new EditBox(font, width / 2 - 37, height / 2 - 47, 77, 12, Component.empty()));
 		keycodeTextbox.setMaxLength(Integer.MAX_VALUE);

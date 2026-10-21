@@ -1,6 +1,6 @@
 {
   "parent": "securitycraft:block/reinforced_block",
-    "render_type": "minecraft:cutout",
+    "render_type": "minecraft:cutout_mipped",
   "textures": {
     "particle": "#texture",
     "all": "#texture"

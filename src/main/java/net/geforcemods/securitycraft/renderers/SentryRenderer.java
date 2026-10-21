@@ -8,17 +8,16 @@ import net.geforcemods.securitycraft.SecurityCraft;
 import net.geforcemods.securitycraft.entity.sentry.Sentry;
 import net.geforcemods.securitycraft.models.SentryModel;
 import net.geforcemods.securitycraft.renderers.state.SentryRenderState;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.client.renderer.rendertype.RenderType;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.CameraRenderState;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 
 public class SentryRenderer extends EntityRenderer<Sentry, SentryRenderState> {
-	private static final Identifier TEXTURE = SecurityCraft.resLoc("textures/entity/sentry.png");
+	private static final ResourceLocation TEXTURE = SecurityCraft.resLoc("textures/entity/sentry.png");
 	private final SentryModel model;
 
 	public SentryRenderer(EntityRendererProvider.Context ctx) {
@@ -29,7 +28,7 @@ public class SentryRenderer extends EntityRenderer<Sentry, SentryRenderState> {
 
 	@Override
 	public void submit(SentryRenderState state, PoseStack pose, SubmitNodeCollector collector, CameraRenderState camera) {
-		RenderType renderType = RenderTypes.entitySolid(TEXTURE);
+		RenderType renderType = RenderType.entitySolid(TEXTURE);
 		float scale = state.scale;
 
 		pose.pushPose();

@@ -41,7 +41,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.CommonColors;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffects;
@@ -60,12 +61,12 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.geforcemods.securitycraft.platform.registry.DeferredHolder;
 
 public class SCClientEventHandler {
-	public static final Identifier BACKGROUND_SPRITE = SecurityCraft.resLoc("hud/camera/background");
-	public static final Identifier LIVE_SPRITE = SecurityCraft.resLoc("hud/camera/live");
-	public static final Identifier NIGHT_VISION_INACTIVE_SPRITE = SecurityCraft.resLoc("hud/camera/night_vision_inactive");
-	public static final Identifier REDSTONE_MODULE_NOT_PRESENT_SPRITE = SecurityCraft.resLoc("hud/camera/redstone_module_not_present");
-	public static final Identifier REDSTONE_MODULE_PRESENT_SPRITE = SecurityCraft.resLoc("hud/camera/redstone_module_present");
-	public static final Identifier NIGHT_VISION = SecurityCraft.mcResLoc("textures/mob_effect/night_vision.png");
+	public static final ResourceLocation BACKGROUND_SPRITE = SecurityCraft.resLoc("hud/camera/background");
+	public static final ResourceLocation LIVE_SPRITE = SecurityCraft.resLoc("hud/camera/live");
+	public static final ResourceLocation NIGHT_VISION_INACTIVE_SPRITE = SecurityCraft.resLoc("hud/camera/night_vision_inactive");
+	public static final ResourceLocation REDSTONE_MODULE_NOT_PRESENT_SPRITE = SecurityCraft.resLoc("hud/camera/redstone_module_not_present");
+	public static final ResourceLocation REDSTONE_MODULE_PRESENT_SPRITE = SecurityCraft.resLoc("hud/camera/redstone_module_present");
+	public static final ResourceLocation NIGHT_VISION = SecurityCraft.mcResLoc("textures/mob_effect/night_vision.png");
 	public static final ItemStack REDSTONE = new ItemStack(Items.REDSTONE);
 	private static final Component REDSTONE_NOTE = Utils.localize("gui.securitycraft:camera.toggleRedstoneNote");
 	private static final Component SMART_MODULE_NOTE = Utils.localize("gui.securitycraft:camera.smartModuleNote");
@@ -117,12 +118,16 @@ public class SCClientEventHandler {
 
 			if (be instanceof BlockChangeDetectorBlockEntity bcd && bcd.isShowingHighlights() && bcd.isOwnedBy(mc.player)) {
 				int packedColor = bcd.getColor();
+				float r = ARGB.red(packedColor) / 255.0F;
+				float g = ARGB.green(packedColor) / 255.0F;
+				float b = ARGB.blue(packedColor) / 255.0F;
 
 				for (ChangeEntry changeEntry : bcd.getFilteredEntries()) {
 					BlockPos pos = changeEntry.pos();
 
 					pose.pushPose();
-					ShapeRenderer.renderShape(pose, consumer, Shapes.block(), pos.getX() - camPos.x, pos.getY() - camPos.y, pos.getZ() - camPos.z, packedColor, 1.0F);
+					pose.translate(pos.getX() - camPos.x, pos.getY() - camPos.y, pos.getZ() - camPos.z);
+					ShapeRenderer.renderLineBox(pose.last(), consumer, 0, 0, 0, 1, 1, 1, r, g, b, 1.0F);
 					pose.popPose();
 				}
 			}

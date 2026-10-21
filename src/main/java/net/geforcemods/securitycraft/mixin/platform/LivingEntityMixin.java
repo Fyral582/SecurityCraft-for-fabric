@@ -26,7 +26,7 @@ public abstract class LivingEntityMixin {
 		return state.getSoundType(self.level(), BlockPos.containing(self.getX(), self.getY() - 0.2F, self.getZ()), (Entity) self);
 	}
 
-	@ModifyExpressionValue(method = "onClimbable", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/state/BlockState;is(Lnet/minecraft/tags/TagKey;)Z", ordinal = 1))
+	@ModifyExpressionValue(method = "onClimbable", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/state/BlockState;is(Lnet/minecraft/tags/TagKey;)Z", ordinal = 0))
 	private boolean securitycraft$isLadder(boolean original, @Local BlockState state, @Local BlockPos pos) {
 		LivingEntity self = (LivingEntity) (Object) this;
 

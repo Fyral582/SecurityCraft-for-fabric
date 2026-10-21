@@ -11,10 +11,10 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.geforcemods.securitycraft.renderers.FrameBlockEntityRenderer.WrappingGeometryRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource.BufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.SubmitNodeCollection;
 import net.minecraft.client.renderer.SubmitNodeCollector.CustomGeometryRenderer;
 import net.minecraft.client.renderer.feature.CustomFeatureRenderer;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
 
 /**
  * CustomFeatureRenderer does not render the animations of textures. This mixin fixes that for
@@ -25,7 +25,7 @@ public class CustomFeatureRendererMixin {
 	@WrapOperation(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/SubmitNodeCollector$CustomGeometryRenderer;render(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;)V"))
 	private void securitycraft$renderAnimation(CustomGeometryRenderer renderer, Pose pose, VertexConsumer vertexConsumer, Operation<Void> original, SubmitNodeCollection collection, BufferSource buffer) {
 		if (renderer instanceof WrappingGeometryRenderer wrapper)
-			renderer.render(pose, wrapper.material.buffer(Minecraft.getInstance().getAtlasManager(), buffer, RenderTypes::entitySolid));
+			renderer.render(pose, wrapper.material.buffer(Minecraft.getInstance().getAtlasManager(), buffer, RenderType::entitySolid));
 		else
 			original.call(renderer, pose, vertexConsumer);
 	}

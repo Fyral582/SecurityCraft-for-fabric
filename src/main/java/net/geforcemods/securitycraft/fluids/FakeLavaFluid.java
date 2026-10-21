@@ -3,6 +3,7 @@ package net.geforcemods.securitycraft.fluids;
 import org.jetbrains.annotations.Nullable;
 
 import net.geforcemods.securitycraft.SCContent;
+import net.geforcemods.securitycraft.SecurityCraft;
 import net.fabricmc.fabric.api.registry.FlammableBlockRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -15,6 +16,7 @@ import net.minecraft.tags.FluidTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
@@ -69,7 +71,7 @@ public abstract class FakeLavaFluid extends BaseFlowingFluid {
 
 	@Override
 	public void randomTick(ServerLevel level, BlockPos pos, FluidState state, RandomSource random) {
-		if (level.canSpreadFireAround(pos)) {
+		if (level.getGameRules().getBoolean(GameRules.RULE_DOFIRETICK)) {
 			int i = random.nextInt(3);
 
 			if (i > 0) {
@@ -135,7 +137,7 @@ public abstract class FakeLavaFluid extends BaseFlowingFluid {
 
 	@Override
 	protected boolean canConvertToSource(ServerLevel level) {
-		return level.getGameRules().get(SCContent.FAKE_LAVA_SOURCE_CONVERSION.get());
+		return level.getGameRules().getBoolean(SecurityCraft.RULE_FAKE_LAVA_SOURCE_CONVERSION.get());
 	}
 
 	@Override
@@ -150,7 +152,7 @@ public abstract class FakeLavaFluid extends BaseFlowingFluid {
 
 	@Override
 	public int getSlopeFindDistance(LevelReader level) {
-		return LavaFluid.isFastLava(level) ? 4 : 2;
+		return level.dimensionType().ultraWarm() ? 4 : 2;
 	}
 
 	@Override
@@ -165,7 +167,7 @@ public abstract class FakeLavaFluid extends BaseFlowingFluid {
 
 	@Override
 	public int getDropOff(LevelReader level) {
-		return LavaFluid.isFastLava(level) ? 1 : 2;
+		return level.dimensionType().ultraWarm() ? 1 : 2;
 	}
 
 	@Override
@@ -175,7 +177,7 @@ public abstract class FakeLavaFluid extends BaseFlowingFluid {
 
 	@Override
 	public int getTickDelay(LevelReader level) {
-		return LavaFluid.isFastLava(level) ? 10 : 30;
+		return level.dimensionType().ultraWarm() ? 10 : 30;
 	}
 
 	@Override

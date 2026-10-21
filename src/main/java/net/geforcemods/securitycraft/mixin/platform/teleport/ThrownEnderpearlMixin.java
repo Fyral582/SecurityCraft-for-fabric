@@ -9,7 +9,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.geforcemods.securitycraft.SCEventHandler;
 import net.geforcemods.securitycraft.platform.event.EntityTeleportEvent;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
+import net.minecraft.world.entity.projectile.ThrownEnderpearl;
 import net.minecraft.world.level.portal.TeleportTransition;
 
 @Mixin(ThrownEnderpearl.class)

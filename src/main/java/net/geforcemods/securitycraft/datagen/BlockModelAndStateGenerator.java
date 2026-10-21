@@ -53,7 +53,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.data.BlockFamilies;
 import net.minecraft.data.BlockFamily;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
@@ -113,7 +113,7 @@ public class BlockModelAndStateGenerator {
 	//@formatter:on
 	static BlockModelGenerators blockModelGenerators;
 	static Consumer<BlockModelDefinitionGenerator> blockStateOutput;
-	static BiConsumer<Identifier, ModelInstance> modelOutput;
+	static BiConsumer<ResourceLocation, ModelInstance> modelOutput;
 	static ItemModelOutput itemInfo;
 	static Set<Block> generatedBlocks = new HashSet<>();
 
@@ -331,7 +331,7 @@ public class BlockModelAndStateGenerator {
 	}
 
 	public static void createBlockMine(Block block, Block vanillaBlock) {
-		Identifier vanillaModelPath = ModelLocationUtils.getModelLocation(vanillaBlock);
+		ResourceLocation vanillaModelPath = ModelLocationUtils.getModelLocation(vanillaBlock);
 		MultiVariant vanillaModel = BlockModelGenerators.plainVariant(vanillaModelPath);
 
 		generate(block, BlockModelGenerators.createSimpleBlock(block, vanillaModel));
@@ -340,13 +340,13 @@ public class BlockModelAndStateGenerator {
 
 	public static void createCreakingHeartMine() {
 		Block creakingHeartMine = SCContent.CREAKING_HEART_MINE.get();
-		Identifier vanillaModel = ModelLocationUtils.getModelLocation(Blocks.CREAKING_HEART);
+		ResourceLocation vanillaModel = ModelLocationUtils.getModelLocation(Blocks.CREAKING_HEART);
 
 		generateBlockMineInfo(creakingHeartMine, vanillaModel);
 		generatedBlocks.add(creakingHeartMine);
 	}
 
-	public static void generateBlockMineInfo(Block block, Identifier vanillaModel) {
+	public static void generateBlockMineInfo(Block block, ResourceLocation vanillaModel) {
 		//@formatter:off
 		itemInfo.accept(block.asItem(),
 				ItemModelUtils.select(new DisplayContext(),
@@ -364,11 +364,11 @@ public class BlockModelAndStateGenerator {
 	}
 
 	public static void createCrystalQuartzBlocks() {
-		Identifier chiseledModel = ModelLocationUtils.getModelLocation(SCContent.REINFORCED_CHISELED_QUARTZ.get());
-		Identifier blockModel = ModelLocationUtils.getModelLocation(SCContent.REINFORCED_QUARTZ_BLOCK.get());
-		Identifier bricksModel = ModelLocationUtils.getModelLocation(SCContent.REINFORCED_QUARTZ_BRICKS.get());
-		Identifier pillarModel = ModelLocationUtils.getModelLocation(SCContent.REINFORCED_QUARTZ_PILLAR.get());
-		Identifier smoothModel = ModelLocationUtils.getModelLocation(SCContent.REINFORCED_SMOOTH_QUARTZ.get());
+		ResourceLocation chiseledModel = ModelLocationUtils.getModelLocation(SCContent.REINFORCED_CHISELED_QUARTZ.get());
+		ResourceLocation blockModel = ModelLocationUtils.getModelLocation(SCContent.REINFORCED_QUARTZ_BLOCK.get());
+		ResourceLocation bricksModel = ModelLocationUtils.getModelLocation(SCContent.REINFORCED_QUARTZ_BRICKS.get());
+		ResourceLocation pillarModel = ModelLocationUtils.getModelLocation(SCContent.REINFORCED_QUARTZ_PILLAR.get());
+		ResourceLocation smoothModel = ModelLocationUtils.getModelLocation(SCContent.REINFORCED_SMOOTH_QUARTZ.get());
 
 		registerTintedItemModel(SCContent.CHISELED_CRYSTAL_QUARTZ.get(), chiseledModel, CRYSTAL_QUARTZ_TINT);
 		registerTintedItemModel(SCContent.CRYSTAL_QUARTZ_BLOCK.get(), blockModel, CRYSTAL_QUARTZ_TINT);
@@ -393,7 +393,7 @@ public class BlockModelAndStateGenerator {
 	public static void createDisplayCases() {
 		Block normal = SCContent.DISPLAY_CASE.get();
 		Block glow = SCContent.GLOW_DISPLAY_CASE.get();
-		Identifier baseModel = ModelLocationUtils.getModelLocation(normal.asItem());
+		ResourceLocation baseModel = ModelLocationUtils.getModelLocation(normal.asItem());
 
 		blockModelGenerators.createParticleOnlyBlock(normal, Blocks.IRON_BLOCK);
 		blockModelGenerators.createParticleOnlyBlock(glow, Blocks.IRON_BLOCK);
@@ -429,7 +429,7 @@ public class BlockModelAndStateGenerator {
 
 	public static void createHorizontalBlockMine(Block furnaceBlock, Block mockBlock, TexturedModel.Provider modelProvider) {
 		//@formatter:off
-		Identifier modelLocation = modelProvider.get(furnaceBlock)
+		ResourceLocation modelLocation = modelProvider.get(furnaceBlock)
 				.updateTextures(mapping -> {
 					mapping.put(TextureSlot.FRONT, TextureMapping.getBlockTexture(mockBlock, "_front"));
 					mapping.put(TextureSlot.SIDE, TextureMapping.getBlockTexture(mockBlock, "_side"));
@@ -447,7 +447,7 @@ public class BlockModelAndStateGenerator {
 		Block block = SCContent.KEYPAD_CHEST.get();
 		Block particleBlock = Blocks.IRON_BLOCK;
 		Item item = block.asItem();
-		Identifier inventoryModel = ModelTemplates.CHEST_INVENTORY.create(item, TextureMapping.particle(particleBlock), modelOutput);
+		ResourceLocation inventoryModel = ModelTemplates.CHEST_INVENTORY.create(item, TextureMapping.particle(particleBlock), modelOutput);
 		ItemModel.Unbaked defaultUnbaked = ItemModelUtils.specialModel(inventoryModel, new ChestSpecialRenderer.Unbaked(SecurityCraft.resLoc("inactive")));
 		ItemModel.Unbaked christmasUnbaked = ItemModelUtils.specialModel(inventoryModel, new ChestSpecialRenderer.Unbaked(SecurityCraft.resLoc("christmas")));
 
@@ -466,7 +466,7 @@ public class BlockModelAndStateGenerator {
 	public static void createReinforcedButton(Block block, TextureMapping textureMapping) {
 		MultiVariant defaultModel = BlockModelGenerators.plainVariant(SCModelTemplates.REINFORCED_BUTTON.create(block, textureMapping, modelOutput));
 		MultiVariant pressedModel = BlockModelGenerators.plainVariant(SCModelTemplates.REINFORCED_BUTTON_PRESSED.create(block, textureMapping, modelOutput));
-		Identifier inventoryModel = SCModelTemplates.REINFORCED_BUTTON_INVENTORY.create(block, textureMapping, modelOutput);
+		ResourceLocation inventoryModel = SCModelTemplates.REINFORCED_BUTTON_INVENTORY.create(block, textureMapping, modelOutput);
 
 		blockStateOutput.accept(BlockModelGenerators.createButton(block, defaultModel, pressedModel));
 		registerReinforcedItemModel(block, inventoryModel);
@@ -478,7 +478,7 @@ public class BlockModelAndStateGenerator {
 
 	public static void createReinforcedCarpet(Block block, String carpetReplacement) {
 		String name = name(block);
-		Identifier baseBlockName = SecurityCraft.mcResLoc(name.replace("reinforced_", "").replace("carpet", carpetReplacement));
+		ResourceLocation baseBlockName = SecurityCraft.mcResLoc(name.replace("reinforced_", "").replace("carpet", carpetReplacement));
 		Block baseBlock = BuiltInRegistries.BLOCK.get(baseBlockName).orElseThrow(() -> new IllegalStateException(baseBlockName + " does not exist!")).value();
 		MultiVariant modelLocation = BlockModelGenerators.plainVariant(SCTexturedModels.REINFORCED_CARPET.get(baseBlock).create(block, modelOutput));
 
@@ -492,7 +492,7 @@ public class BlockModelAndStateGenerator {
 		MultiVariant eastSideModel = BlockModelGenerators.plainVariant(SCModelTemplates.CUSTOM_REINFORCED_FENCE_SIDE_EAST.create(block, textureMapping, modelOutput));
 		MultiVariant southSideModel = BlockModelGenerators.plainVariant(SCModelTemplates.CUSTOM_REINFORCED_FENCE_SIDE_SOUTH.create(block, textureMapping, modelOutput));
 		MultiVariant westSideModel = BlockModelGenerators.plainVariant(SCModelTemplates.CUSTOM_REINFORCED_FENCE_SIDE_WEST.create(block, textureMapping, modelOutput));
-		Identifier inventoryModel = SCModelTemplates.CUSTOM_REINFORCED_FENCE_INVENTORY.create(block, textureMapping, modelOutput);
+		ResourceLocation inventoryModel = SCModelTemplates.CUSTOM_REINFORCED_FENCE_INVENTORY.create(block, textureMapping, modelOutput);
 
 		generate(block, BlockModelGenerators.createCustomFence(block, postModel, northSideModel, eastSideModel, southSideModel, westSideModel));
 		registerReinforcedItemModel(block, inventoryModel);
@@ -501,7 +501,7 @@ public class BlockModelAndStateGenerator {
 	public static void createReinforcedFence(Block block, TextureMapping textureMapping) {
 		MultiVariant postModel = BlockModelGenerators.plainVariant(SCModelTemplates.REINFORCED_FENCE_POST.create(block, textureMapping, modelOutput));
 		MultiVariant sideModel = BlockModelGenerators.plainVariant(SCModelTemplates.REINFORCED_FENCE_SIDE.create(block, textureMapping, modelOutput));
-		Identifier inventoryModel = SCModelTemplates.REINFORCED_FENCE_INVENTORY.create(block, textureMapping, modelOutput);
+		ResourceLocation inventoryModel = SCModelTemplates.REINFORCED_FENCE_INVENTORY.create(block, textureMapping, modelOutput);
 
 		generate(block, BlockModelGenerators.createFence(block, postModel, sideModel));
 		registerReinforcedItemModel(block, inventoryModel);
@@ -529,7 +529,7 @@ public class BlockModelAndStateGenerator {
 
 	public static void createReinforcedGrassBlock() {
 		Block block = SCContent.REINFORCED_GRASS_BLOCK.get();
-		Identifier model = ModelLocationUtils.getModelLocation(block);
+		ResourceLocation model = ModelLocationUtils.getModelLocation(block);
 		MultiVariant nonSnowyModel = BlockModelGenerators.createRotatedVariants(BlockModelGenerators.plainModel(model));
 		MultiVariant snowyModel = BlockModelGenerators.plainVariant(model.withSuffix("_snow"));
 
@@ -591,7 +591,7 @@ public class BlockModelAndStateGenerator {
 	}
 
 	public static void createReinforcedSlab(Block block, String doubleSlabModel, String texture) {
-		Identifier textureLocation = mcBlock(texture);
+		ResourceLocation textureLocation = mcBlock(texture);
 
 		generateReinforcedSlab(block, modBlock(doubleSlabModel), textureLocation, textureLocation, textureLocation, ReinforcedTint.DEFAULT_BASE);
 	}
@@ -601,13 +601,13 @@ public class BlockModelAndStateGenerator {
 	}
 
 	public static void createReinforcedSlab(Block block, String doubleSlabModel, String side, String end, ItemTintSource baseTint) {
-		Identifier endTextureLocation = mcBlock(end);
+		ResourceLocation endTextureLocation = mcBlock(end);
 
 		generateReinforcedSlab(block, modBlock(doubleSlabModel), mcBlock(side), endTextureLocation, endTextureLocation, baseTint);
 	}
 
 	public static void createTintedSlab(Block block, String doubleSlabModel, String side, String end, ItemTintSource tint) {
-		Identifier endTextureLocation = mcBlock(end);
+		ResourceLocation endTextureLocation = mcBlock(end);
 
 		generateTintedSlab(block, modBlock(doubleSlabModel), mcBlock(side), endTextureLocation, endTextureLocation, tint);
 	}
@@ -616,17 +616,17 @@ public class BlockModelAndStateGenerator {
 		generateReinforcedSlab(block, modBlock(doubleSlabModel), mcBlock(side), mcBlock(bottom), mcBlock(top), ReinforcedTint.DEFAULT_BASE);
 	}
 
-	public static void generateReinforcedSlab(Block block, MultiVariant doubleSlab, Identifier side, Identifier bottom, Identifier top, ItemTintSource baseTint) {
+	public static void generateReinforcedSlab(Block block, MultiVariant doubleSlab, ResourceLocation side, ResourceLocation bottom, ResourceLocation top, ItemTintSource baseTint) {
 		createTintedSlab(block, doubleSlab, side, bottom, top);
 		registerReinforcedItemModel(block, baseTint);
 	}
 
-	public static void generateTintedSlab(Block block, MultiVariant doubleSlab, Identifier side, Identifier bottom, Identifier top, ItemTintSource tint) {
+	public static void generateTintedSlab(Block block, MultiVariant doubleSlab, ResourceLocation side, ResourceLocation bottom, ResourceLocation top, ItemTintSource tint) {
 		createTintedSlab(block, doubleSlab, side, bottom, top);
 		itemInfo.accept(block.asItem(), ItemModelUtils.tintedModel(ModelLocationUtils.getModelLocation(block), tint));
 	}
 
-	public static void createTintedSlab(Block block, MultiVariant doubleSlab, Identifier side, Identifier bottom, Identifier top) {
+	public static void createTintedSlab(Block block, MultiVariant doubleSlab, ResourceLocation side, ResourceLocation bottom, ResourceLocation top) {
 		TextureMapping textureMapping = new TextureMapping().put(TextureSlot.BOTTOM, bottom).put(TextureSlot.SIDE, side).put(TextureSlot.TOP, top);
 		MultiVariant bottomModel = BlockModelGenerators.plainVariant(SCModelTemplates.REINFORCED_SLAB_BOTTOM.create(block, textureMapping, modelOutput));
 		MultiVariant topModel = BlockModelGenerators.plainVariant(SCModelTemplates.REINFORCED_SLAB_TOP.create(block, textureMapping, modelOutput));
@@ -635,7 +635,7 @@ public class BlockModelAndStateGenerator {
 	}
 
 	public static void createReinforcedStairs(Block block, String texture) {
-		Identifier textureLocation = mcBlock(texture);
+		ResourceLocation textureLocation = mcBlock(texture);
 
 		generateReinforcedStairs(block, textureLocation, textureLocation, textureLocation, ReinforcedTint.DEFAULT_BASE);
 	}
@@ -645,13 +645,13 @@ public class BlockModelAndStateGenerator {
 	}
 
 	public static void createReinforcedStairs(Block block, String side, String end, ItemTintSource baseTint) {
-		Identifier textureLocationEnd = mcBlock(end);
+		ResourceLocation textureLocationEnd = mcBlock(end);
 
 		generateReinforcedStairs(block, mcBlock(side), textureLocationEnd, textureLocationEnd, baseTint);
 	}
 
 	public static void createTintedStairs(Block block, String side, String end, ItemTintSource tint) {
-		Identifier textureLocationEnd = mcBlock(end);
+		ResourceLocation textureLocationEnd = mcBlock(end);
 
 		generateTintedStairs(block, mcBlock(side), textureLocationEnd, textureLocationEnd, tint);
 	}
@@ -660,14 +660,14 @@ public class BlockModelAndStateGenerator {
 		generateReinforcedStairs(block, mcBlock(side), mcBlock(bottom), mcBlock(top), ReinforcedTint.DEFAULT_BASE);
 	}
 
-	public static void generateReinforcedStairs(Block block, Identifier side, Identifier bottom, Identifier top, ItemTintSource baseTint) {
+	public static void generateReinforcedStairs(Block block, ResourceLocation side, ResourceLocation bottom, ResourceLocation top, ItemTintSource baseTint) {
 		createTintedStairs(block, side, bottom, top);
 		registerReinforcedItemModel(block, baseTint);
 	}
 
 	public static void createSecurityCamera() {
 		Block cam = SCContent.SECURITY_CAMERA.get();
-		Identifier baseModel = ModelLocationUtils.getModelLocation(cam.asItem());
+		ResourceLocation baseModel = ModelLocationUtils.getModelLocation(cam.asItem());
 
 		//@formatter:off
 		itemInfo.accept(cam.asItem(),
@@ -680,12 +680,12 @@ public class BlockModelAndStateGenerator {
 		//@formatter:on
 	}
 
-	public static void generateTintedStairs(Block block, Identifier side, Identifier bottom, Identifier top, ItemTintSource tint) {
+	public static void generateTintedStairs(Block block, ResourceLocation side, ResourceLocation bottom, ResourceLocation top, ItemTintSource tint) {
 		createTintedStairs(block, side, bottom, top);
 		itemInfo.accept(block.asItem(), ItemModelUtils.tintedModel(ModelLocationUtils.getModelLocation(block), tint));
 	}
 
-	public static void createTintedStairs(Block block, Identifier side, Identifier bottom, Identifier top) {
+	public static void createTintedStairs(Block block, ResourceLocation side, ResourceLocation bottom, ResourceLocation top) {
 		TextureMapping textureMapping = new TextureMapping().put(TextureSlot.BOTTOM, bottom).put(TextureSlot.SIDE, side).put(TextureSlot.TOP, top);
 		MultiVariant innerModel = BlockModelGenerators.plainVariant(SCModelTemplates.REINFORCED_STAIRS_INNER.create(block, textureMapping, modelOutput));
 		MultiVariant straightModel = BlockModelGenerators.plainVariant(SCModelTemplates.REINFORCED_STAIRS_STRAIGHT.create(block, textureMapping, modelOutput));
@@ -698,7 +698,7 @@ public class BlockModelAndStateGenerator {
 		MultiVariant postModel = BlockModelGenerators.plainVariant(SCModelTemplates.REINFORCED_WALL_POST.create(block, textureMapping, modelOutput));
 		MultiVariant lowSideModel = BlockModelGenerators.plainVariant(SCModelTemplates.REINFORCED_WALL_LOW_SIDE.create(block, textureMapping, modelOutput));
 		MultiVariant tallSideModel = BlockModelGenerators.plainVariant(SCModelTemplates.REINFORCED_WALL_TALL_SIDE.create(block, textureMapping, modelOutput));
-		Identifier inventoryModel = SCModelTemplates.REINFORCED_WALL_INVENTORY.create(block, textureMapping, modelOutput);
+		ResourceLocation inventoryModel = SCModelTemplates.REINFORCED_WALL_INVENTORY.create(block, textureMapping, modelOutput);
 
 		generate(block, BlockModelGenerators.createWall(block, postModel, lowSideModel, tallSideModel));
 		registerReinforcedItemModel(block, inventoryModel);
@@ -745,25 +745,25 @@ public class BlockModelAndStateGenerator {
 		generatedBlocks.add(block);
 	}
 
-	public static BlockModelDefinitionGenerator createMirroredCubeGenerator(Block cubeBlock, Variant originalModel, TextureMapping textureMapping, BiConsumer<Identifier, ModelInstance> modelOutput) {
+	public static BlockModelDefinitionGenerator createMirroredCubeGenerator(Block cubeBlock, Variant originalModel, TextureMapping textureMapping, BiConsumer<ResourceLocation, ModelInstance> modelOutput) {
 		Variant mirroredModel = BlockModelGenerators.plainModel(SCModelTemplates.REINFORCED_CUBE_MIRRORED_ALL.create(cubeBlock, textureMapping, modelOutput));
 
 		return MultiVariantGenerator.dispatch(cubeBlock, BlockModelGenerators.createRotatedVariants(originalModel, mirroredModel));
 	}
 
-	public static BlockModelDefinitionGenerator createNorthWestMirroredCubeGenerator(Block cubeBlock, Variant originalModel, TextureMapping textureMapping, BiConsumer<Identifier, ModelInstance> modelOutput) {
+	public static BlockModelDefinitionGenerator createNorthWestMirroredCubeGenerator(Block cubeBlock, Variant originalModel, TextureMapping textureMapping, BiConsumer<ResourceLocation, ModelInstance> modelOutput) {
 		Variant mirroredModel = BlockModelGenerators.plainModel(SCModelTemplates.REINFORCED_CUBE_NORTH_WEST_MIRRORED_ALL.create(cubeBlock, textureMapping, modelOutput));
 
 		return BlockModelGenerators.createSimpleBlock(cubeBlock, BlockModelGenerators.variant(mirroredModel));
 	}
 
-	public static BlockModelDefinitionGenerator createMirroredColumnGenerator(Block columnBlock, Variant originalModel, TextureMapping textureMapping, BiConsumer<Identifier, ModelInstance> modelOutput) {
+	public static BlockModelDefinitionGenerator createMirroredColumnGenerator(Block columnBlock, Variant originalModel, TextureMapping textureMapping, BiConsumer<ResourceLocation, ModelInstance> modelOutput) {
 		Variant mirroredModel = BlockModelGenerators.plainModel(SCModelTemplates.REINFORCED_CUBE_COLUMN_MIRRORED.create(columnBlock, textureMapping, modelOutput));
 
 		return MultiVariantGenerator.dispatch(columnBlock, BlockModelGenerators.createRotatedVariants(originalModel, mirroredModel)).with(BlockModelGenerators.createRotatedPillar());
 	}
 
-	public static BlockModelDefinitionGenerator createReinforcedPillarBlockUVLocked(Block block, TextureMapping textureMapping, BiConsumer<Identifier, ModelInstance> modelOutput) {
+	public static BlockModelDefinitionGenerator createReinforcedPillarBlockUVLocked(Block block, TextureMapping textureMapping, BiConsumer<ResourceLocation, ModelInstance> modelOutput) {
 		MultiVariant xModel = BlockModelGenerators.plainVariant(SCModelTemplates.REINFORCED_CUBE_COLUMN_UV_LOCKED_X.create(block, textureMapping, modelOutput));
 		MultiVariant yModel = BlockModelGenerators.plainVariant(SCModelTemplates.REINFORCED_CUBE_COLUMN_UV_LOCKED_Y.create(block, textureMapping, modelOutput));
 		MultiVariant zModel = BlockModelGenerators.plainVariant(SCModelTemplates.REINFORCED_CUBE_COLUMN_UV_LOCKED_Z.create(block, textureMapping, modelOutput));
@@ -802,7 +802,7 @@ public class BlockModelAndStateGenerator {
 
 	public static <T extends Block & IReinforcedBlock> void registerReinforcedFlatItemModel(T block) {
 		Item item = block.asItem();
-		Identifier modelLocation = ModelTemplates.FLAT_ITEM.create(ModelLocationUtils.getModelLocation(item), TextureMapping.layer0(block.getVanillaBlock().asItem()), modelOutput);
+		ResourceLocation modelLocation = ModelTemplates.FLAT_ITEM.create(ModelLocationUtils.getModelLocation(item), TextureMapping.layer0(block.getVanillaBlock().asItem()), modelOutput);
 
 		registerReinforcedItemModel(block, modelLocation);
 	}
@@ -820,7 +820,7 @@ public class BlockModelAndStateGenerator {
 		registerReinforcedItemModel(block, ModelLocationUtils.getModelLocation(block, suffix));
 	}
 
-	public static void registerReinforcedItemModel(Block block, Identifier model) {
+	public static void registerReinforcedItemModel(Block block, ResourceLocation model) {
 		registerReinforcedItemModel(block, model, ReinforcedTint.DEFAULT_BASE);
 	}
 
@@ -832,7 +832,7 @@ public class BlockModelAndStateGenerator {
 		registerReinforcedItemModel(block, ModelLocationUtils.getModelLocation(block, suffix), base);
 	}
 
-	public static void registerReinforcedItemModel(Block block, Identifier model, ItemTintSource base) {
+	public static void registerReinforcedItemModel(Block block, ResourceLocation model, ItemTintSource base) {
 		itemInfo.accept(block.asItem(), ItemModelUtils.tintedModel(model, new ReinforcedTint(base)));
 		generatedBlocks.add(block);
 	}
@@ -849,7 +849,7 @@ public class BlockModelAndStateGenerator {
 		registerSimpleItemModel(block, ModelLocationUtils.getModelLocation(block, suffix));
 	}
 
-	public static void registerSimpleItemModel(Block block, Identifier model) {
+	public static void registerSimpleItemModel(Block block, ResourceLocation model) {
 		itemInfo.accept(block.asItem(), ItemModelUtils.plainModel(model));
 		generatedBlocks.add(block);
 	}
@@ -858,12 +858,12 @@ public class BlockModelAndStateGenerator {
 		registerTintedItemModel(block, ModelLocationUtils.getModelLocation(block), tint);
 	}
 
-	public static void registerTintedItemModel(Block block, Identifier model, ItemTintSource tint) {
+	public static void registerTintedItemModel(Block block, ResourceLocation model, ItemTintSource tint) {
 		itemInfo.accept(block.asItem(), ItemModelUtils.tintedModel(model, tint));
 		generatedBlocks.add(block);
 	}
 
-	public static Identifier mcBlock(String path) {
+	public static ResourceLocation mcBlock(String path) {
 		return ModelLocationUtils.decorateBlockModelLocation(SecurityCraft.mcResLoc(path).toString());
 	}
 

@@ -15,14 +15,14 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.CommonColors;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Inventory;
 
 public class TrophySystemScreen extends AbstractContainerScreen<TrophySystemMenu> {
-	private static final Identifier GUI_TEXTURE = SecurityCraft.resLoc("textures/gui/container/trophy_system.png");
-	private static final Identifier LENS_SLOT = SecurityCraft.resLoc("slot/lens");
+	private static final ResourceLocation GUI_TEXTURE = SecurityCraft.resLoc("textures/gui/container/trophy_system.png");
+	private static final ResourceLocation LENS_SLOT = SecurityCraft.resLoc("slot/lens");
 	public final Component scrollListTitle, smartModuleTooltip;
 	private final boolean hasSmartModule;
 	private final boolean hasRedstoneModule;

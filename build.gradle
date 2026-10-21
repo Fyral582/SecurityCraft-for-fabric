@@ -67,14 +67,14 @@ dependencies {
 	include "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${project.fcap_version}"
 
 	// optional integrations, only used when the respective mod is installed
-	modCompileOnly "maven.modrinth:jei:vdRSQCTb"
-	modCompileOnly "maven.modrinth:jade:swJhAyak"
-	modCompileOnly "maven.modrinth:wthit:46pFaMf5"
-	modCompileOnly "maven.modrinth:badpackets:SZTlaMHp"
-	modCompileOnly "maven.modrinth:distanthorizons:oNqCUHFk"
-	modCompileOnly "maven.modrinth:sodium:RB7CDjTS"
-	modCompileOnly "maven.modrinth:betterf3:Qw1nhj7u"
-	modCompileOnly "maven.modrinth:cloth-config:xuX40TN5"
+	modCompileOnly "maven.modrinth:jei:8yGN172x"
+	modCompileOnly "maven.modrinth:jade:nCbsPtPw"
+	modCompileOnly "maven.modrinth:wthit:4MEFAXLk"
+	modCompileOnly "maven.modrinth:badpackets:bJjBP5HF"
+	modCompileOnly "maven.modrinth:distanthorizons:dXJr1PPw"
+	modCompileOnly "maven.modrinth:sodium:sFfidWgd"
+	modCompileOnly "maven.modrinth:betterf3:nIoTbJd0"
+	modCompileOnly "maven.modrinth:cloth-config:qMxkrrmq"
 }
 
 sourceSets.main.resources {

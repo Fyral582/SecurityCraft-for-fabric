@@ -8,9 +8,7 @@ import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
 import com.google.common.base.Predicates;
-import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.MapCodec;
 
 import net.geforcemods.securitycraft.api.NamedBlockEntity;
 import net.geforcemods.securitycraft.api.OwnableBlockEntity;
@@ -299,7 +297,6 @@ import net.minecraft.util.Unit;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.MobCategory;
-import net.minecraft.world.flag.FeatureFlagSet;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.DoubleHighBlockItem;
@@ -332,10 +329,6 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockSetType;
 import net.minecraft.world.level.block.state.properties.WoodType;
-import net.minecraft.world.level.gamerules.GameRule;
-import net.minecraft.world.level.gamerules.GameRuleCategory;
-import net.minecraft.world.level.gamerules.GameRuleType;
-import net.minecraft.world.level.gamerules.GameRuleTypeVisitor;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
@@ -355,7 +348,6 @@ public class SCContent {
 	public static final DeferredRegister<EntityDataSerializer<?>> DATA_SERIALIZERS = DeferredRegister.create(DeferredRegister.ENTITY_DATA_SERIALIZERS, SecurityCraft.MODID);
 	public static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister.create(Registries.ENTITY_TYPE, SecurityCraft.MODID);
 	public static final DeferredRegister<Fluid> FLUIDS = DeferredRegister.create(Registries.FLUID, SecurityCraft.MODID);
-	public static final DeferredRegister<GameRule<?>> GAME_RULES = DeferredRegister.create(Registries.GAME_RULE, SecurityCraft.MODID);
 	public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(SecurityCraft.MODID);
 	public static final DeferredRegister<LootItemConditionType> LOOT_ITEM_CONDITION_TYPES = DeferredRegister.create(Registries.LOOT_CONDITION_TYPE, SecurityCraft.MODID);
 	public static final DeferredRegister<MenuType<?>> MENU_TYPES = DeferredRegister.create(Registries.MENU, SecurityCraft.MODID);
@@ -374,10 +366,6 @@ public class SCContent {
 	//loot item condition types
 	public static final DeferredHolder<LootItemConditionType, LootItemConditionType> BLOCK_ENTITY_NBT = LOOT_ITEM_CONDITION_TYPES.register("tile_entity_nbt", () -> new LootItemConditionType(BlockEntityNBTCondition.CODEC));
 
-	//game rules
-	public static final DeferredHolder<GameRule<?>, GameRule<Boolean>> FAKE_WATER_SOURCE_CONVERSION = GAME_RULES.register("fake_water_source_conversion", () -> createBooleanGameRule(GameRuleCategory.UPDATES, true));
-	public static final DeferredHolder<GameRule<?>, GameRule<Boolean>> FAKE_LAVA_SOURCE_CONVERSION = GAME_RULES.register("fake_lava_source_conversion", () -> createBooleanGameRule(GameRuleCategory.UPDATES, false));
-
 	//data components
 	public static final DeferredHolder<DataComponentType<?>, DataComponentType<KeycardData>> KEYCARD_DATA = DATA_COMPONENTS.registerComponentType("keycard_data", builder -> builder.persistent(KeycardData.CODEC).networkSynchronized(KeycardData.STREAM_CODEC).cacheEncoding());
 	public static final DeferredHolder<DataComponentType<?>, DataComponentType<OwnerData>> OWNER_DATA = DATA_COMPONENTS.registerComponentType("owner", builder -> builder.persistent(OwnerData.CODEC).networkSynchronized(OwnerData.STREAM_CODEC).cacheEncoding());
@@ -388,7 +376,7 @@ public class SCContent {
 	public static final DeferredHolder<DataComponentType<?>, DataComponentType<GlobalPositions>> SSS_LINKED_BLOCKS = DATA_COMPONENTS.registerComponentType("sss_linked_blocks", builder -> builder.persistent(GlobalPositions.codec(SonicSecuritySystemBlockEntity.MAX_LINKED_BLOCKS)).networkSynchronized(GlobalPositions.streamCodec(SonicSecuritySystemBlockEntity.MAX_LINKED_BLOCKS)).cacheEncoding());
 	public static final DeferredHolder<DataComponentType<?>, DataComponentType<NamedPositions>> BOUND_SENTRIES = DATA_COMPONENTS.registerComponentType("bound_sentries", builder -> builder.persistent(NamedPositions.codec(SentryRemoteAccessToolItem.MAX_SENTRIES)).networkSynchronized(NamedPositions.streamCodec(SentryRemoteAccessToolItem.MAX_SENTRIES)).cacheEncoding());
 	public static final DeferredHolder<DataComponentType<?>, DataComponentType<Notes>> NOTES = DATA_COMPONENTS.registerComponentType("notes", builder -> builder.persistent(Notes.CODEC).networkSynchronized(Notes.STREAM_CODEC).cacheEncoding());
-	public static final DeferredHolder<DataComponentType<?>, DataComponentType<Unit>> UNREINFORCING = DATA_COMPONENTS.registerComponentType("unreinforcing", builder -> builder.persistent(MapCodec.unit(Unit.INSTANCE).codec()));
+	public static final DeferredHolder<DataComponentType<?>, DataComponentType<Unit>> UNREINFORCING = DATA_COMPONENTS.registerComponentType("unreinforcing", builder -> builder.persistent(Codec.unit(Unit.INSTANCE)));
 	public static final DeferredHolder<DataComponentType<?>, DataComponentType<ListModuleData>> LIST_MODULE_DATA = DATA_COMPONENTS.registerComponentType("list_module_data", builder -> builder.persistent(ListModuleData.CODEC).networkSynchronized(ListModuleData.STREAM_CODEC).cacheEncoding());
 	public static final DeferredHolder<DataComponentType<?>, DataComponentType<SavedBlockState>> SAVED_BLOCK_STATE = DATA_COMPONENTS.registerComponentType("saved_block_state", builder -> builder.persistent(SavedBlockState.CODEC).networkSynchronized(SavedBlockState.STREAM_CODEC).cacheEncoding());
 	public static final DeferredHolder<DataComponentType<?>, DataComponentType<Double>> SUCCESS_CHANCE = DATA_COMPONENTS.registerComponentType("success_chance", builder -> builder.persistent(Codec.doubleRange(-1.0D, 1.0D)).networkSynchronized(ByteBufCodecs.DOUBLE).cacheEncoding());
@@ -3616,10 +3604,6 @@ public class SCContent {
 	private static <A extends com.mojang.brigadier.arguments.ArgumentType<?>, T extends ArgumentTypeInfo.Template<A>, I extends ArgumentTypeInfo<A, T>> I registerArgumentType(String name, Class<? extends A> clazz, I info) {
 		ArgumentTypeRegistry.registerArgumentType(SecurityCraft.resLoc(name), clazz, info);
 		return info;
-	}
-
-	public static GameRule<Boolean> createBooleanGameRule(GameRuleCategory category, boolean defaultValue) {
-		return new GameRule<>(category, GameRuleType.BOOL, BoolArgumentType.bool(), GameRuleTypeVisitor::visitBoolean, Codec.BOOL, value -> value ? 1 : 0, defaultValue, FeatureFlagSet.of());
 	}
 
 	private SCContent() {}

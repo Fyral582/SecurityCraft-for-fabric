@@ -7,17 +7,17 @@ import net.geforcemods.securitycraft.ClientHandler;
 import net.geforcemods.securitycraft.SecurityCraft;
 import net.geforcemods.securitycraft.entity.sentry.Bullet;
 import net.geforcemods.securitycraft.models.BulletModel;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.state.ArrowRenderState;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 public class BulletRenderer extends EntityRenderer<Bullet, ArrowRenderState> {
-	private static final Identifier TEXTURE = SecurityCraft.resLoc("textures/entity/bullet.png");
+	private static final ResourceLocation TEXTURE = SecurityCraft.resLoc("textures/entity/bullet.png");
 	private final BulletModel model;
 
 	public BulletRenderer(EntityRendererProvider.Context ctx) {
@@ -29,7 +29,7 @@ public class BulletRenderer extends EntityRenderer<Bullet, ArrowRenderState> {
 	@Override
 	public void submit(ArrowRenderState state, PoseStack pose, SubmitNodeCollector collector, CameraRenderState camera) {
 		pose.mulPose(Axis.YP.rotationDegrees(state.yRot));
-		collector.submitModel(model, state, pose, RenderTypes.entitySolid(TEXTURE), state.lightCoords, OverlayTexture.NO_OVERLAY, -1, null, state.outlineColor, null);
+		collector.submitModel(model, state, pose, RenderType.entitySolid(TEXTURE), state.lightCoords, OverlayTexture.NO_OVERLAY, -1, null, state.outlineColor, null);
 	}
 
 	@Override

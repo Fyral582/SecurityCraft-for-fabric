@@ -32,7 +32,7 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.CommonColors;
@@ -42,15 +42,15 @@ import net.geforcemods.securitycraft.platform.gui.ScrollPanel;
 import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
 public class AlarmScreen extends Screen implements StillValid {
-	private static final Identifier GUI_TEXTURE = SecurityCraft.resLoc("textures/gui/container/alarm.png");
-	private static final Identifier PLAY_SOUND_SPRITE = SecurityCraft.resLoc("alarm/play_sound");
-	private static final Identifier PLAY_SOUND_HIGHLIGHTED_SPRITE = SecurityCraft.resLoc("alarm/play_sound_highlighted");
+	private static final ResourceLocation GUI_TEXTURE = SecurityCraft.resLoc("textures/gui/container/alarm.png");
+	private static final ResourceLocation PLAY_SOUND_SPRITE = SecurityCraft.resLoc("alarm/play_sound");
+	private static final ResourceLocation PLAY_SOUND_HIGHLIGHTED_SPRITE = SecurityCraft.resLoc("alarm/play_sound_highlighted");
 	protected final AlarmBlockEntity be;
 	private final boolean hasSmartModule;
 	private final Component smartModuleTooltip;
 	private final Component currentlySelectedText = Utils.localize("gui.securitycraft:alarm.currently_selected").withStyle(ChatFormatting.UNDERLINE);
-	private final Identifier previousSelectedSoundEvent;
-	private Identifier selectedSoundEvent;
+	private final ResourceLocation previousSelectedSoundEvent;
+	private ResourceLocation selectedSoundEvent;
 	private Component selectedSoundEventText;
 	private int imageWidth = 256, imageHeight = 246, leftPos, topPos;
 	private SoundScrollList soundList;
@@ -58,7 +58,7 @@ public class AlarmScreen extends Screen implements StillValid {
 	protected float previousPitch, pitch;
 	private EditBox searchBar;
 
-	public AlarmScreen(AlarmBlockEntity be, Identifier selectedSoundEvent) {
+	public AlarmScreen(AlarmBlockEntity be, ResourceLocation selectedSoundEvent) {
 		super(be.getDisplayName());
 		this.be = be;
 		this.hasSmartModule = be.isModuleEnabled(ModuleType.SMART);
@@ -102,7 +102,7 @@ public class AlarmScreen extends Screen implements StillValid {
 		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, GUI_TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
 	}
 
-	public void selectSound(Identifier eventId) {
+	public void selectSound(ResourceLocation eventId) {
 		this.selectedSoundEvent = eventId;
 		selectedSoundEventText = Utils.localize(selectedSoundEvent.toLanguageKey());
 	}
@@ -157,9 +157,9 @@ public class AlarmScreen extends Screen implements StillValid {
 
 	public class SoundScrollList extends ScrollPanel {
 		private static final int SLOT_HEIGHT = 12, TEXT_OFFSET = 11;
-		public final List<Identifier> allSoundEvents = minecraft.getSoundManager().getAvailableSounds().stream().sorted(Comparator.comparing(Identifier::toLanguageKey)).toList();
-		private final Map<Identifier, Component> soundEventKeys = new HashMap<>();
-		private List<Identifier> filteredSoundEvents;
+		public final List<ResourceLocation> allSoundEvents = minecraft.getSoundManager().getAvailableSounds().stream().sorted(Comparator.comparing(ResourceLocation::toLanguageKey)).toList();
+		private final Map<ResourceLocation, Component> soundEventKeys = new HashMap<>();
+		private List<ResourceLocation> filteredSoundEvents;
 		private SoundInstance playingSound;
 		private int selectedSoundIndex, contentHeight = 0;
 		private String previousSearchText = "";
@@ -251,7 +251,7 @@ public class AlarmScreen extends Screen implements StillValid {
 				else if (yStart > top + height)
 					break;
 
-				Identifier soundEvent = filteredSoundEvents.get(i);
+				ResourceLocation soundEvent = filteredSoundEvents.get(i);
 				Component name = getSoundEventComponent(soundEvent);
 
 				guiGraphics.drawString(font, name, left + TEXT_OFFSET, yStart, 0xFFC6C6C6, false);
@@ -259,7 +259,7 @@ public class AlarmScreen extends Screen implements StillValid {
 			}
 		}
 
-		private Component getSoundEventComponent(Identifier soundEvent) {
+		private Component getSoundEventComponent(ResourceLocation soundEvent) {
 			return soundEventKeys.computeIfAbsent(soundEvent, t -> Utils.localize(soundEvent.toLanguageKey()));
 		}
 
@@ -276,7 +276,7 @@ public class AlarmScreen extends Screen implements StillValid {
 			AlarmScreen.this.selectSound(filteredSoundEvents.get(slotIndex));
 		}
 
-		public void playSound(Identifier soundEvent) {
+		public void playSound(ResourceLocation soundEvent) {
 			SoundManager soundManager = Minecraft.getInstance().getSoundManager();
 
 			if (playingSound != null)

@@ -4,7 +4,7 @@ import net.geforcemods.securitycraft.SecurityCraft;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
@@ -61,7 +61,7 @@ public class LevelUtils {
 
 	public static void addScheduledTask(LevelAccessor level, Runnable runnable) {
 		if (level.isClientSide())
-			Minecraft.getInstance().execute(runnable);
+		Minecraft.getInstance().execute(runnable);
 		else
 			SCPlatform.getCurrentServer().execute(runnable);
 	}
@@ -85,9 +85,9 @@ public class LevelUtils {
 		int xPos = Integer.parseInt(coordinates[0]);
 		int yPos = Integer.parseInt(coordinates[1]);
 		int zPos = Integer.parseInt(coordinates[2]);
-		Identifier dim = SecurityCraft.mcResLoc(coordinates.length == 4 ? coordinates[3] : "");
+		ResourceLocation dim = SecurityCraft.mcResLoc(coordinates.length == 4 ? coordinates[3] : "");
 
-		return pos.pos().getX() == xPos && pos.pos().getY() == yPos && pos.pos().getZ() == zPos && pos.dimension().identifier().equals(dim);
+		return pos.pos().getX() == xPos && pos.pos().getY() == yPos && pos.pos().getZ() == zPos && pos.dimension().location().equals(dim);
 	}
 
 	/**
@@ -95,7 +95,7 @@ public class LevelUtils {
 	 * @return A formatted string of the GlobalPos' location. Format: "*X* *Y* *Z* *dimension ID*"
 	 */
 	public static String toNBTString(GlobalPos pos) {
-		return pos.pos().getX() + " " + pos.pos().getY() + " " + pos.pos().getZ() + " " + pos.dimension().identifier();
+		return pos.pos().getX() + " " + pos.pos().getY() + " " + pos.pos().getZ() + " " + pos.dimension().location();
 	}
 
 	public static void blockEntityTicker(Level level, BlockPos pos, BlockState state, BlockEntity blockEntity) {

@@ -6,11 +6,11 @@ import com.mojang.math.Axis;
 import net.geforcemods.securitycraft.blockentities.ClaymoreBlockEntity;
 import net.geforcemods.securitycraft.blocks.mines.ClaymoreBlock;
 import net.geforcemods.securitycraft.renderers.state.ClaymoreRenderState;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
@@ -29,7 +29,7 @@ public class ClaymoreRenderer implements BlockEntityRenderer<ClaymoreBlockEntity
 		poseStack.mulPose(state.rotation);
 		poseStack.translate(-0.5D, 0.0D, -0.5D);
 
-		collector.submitCustomGeometry(poseStack, RenderTypes.lines(), (pose, builder) -> {
+		collector.submitCustomGeometry(poseStack, RenderType.lines(), (pose, builder) -> {
 			Vec3i normal = state.normal;
 			float multiplier = 0.0625F;
 			float xzStart = 9.0F * multiplier;
@@ -37,10 +37,10 @@ public class ClaymoreRenderer implements BlockEntityRenderer<ClaymoreBlockEntity
 			int r = state.r;
 			int g = state.g;
 			int b = state.b;
-			builder.addVertex(pose, xzStart, y, xzStart).setColor(r, g, b, 255).setNormal(normal.getX(), normal.getY(), normal.getZ()).setLineWidth(2.0F);
-			builder.addVertex(pose, 11.0F * multiplier, y, 1.0F).setColor(r, g, b, 0).setNormal(normal.getX(), normal.getY(), normal.getZ()).setLineWidth(2.0F);
-			builder.addVertex(pose, 7.0F * multiplier, y, xzStart).setColor(r, g, b, 255).setNormal(normal.getX(), normal.getY(), normal.getZ()).setLineWidth(2.0F);
-			builder.addVertex(pose, 5.0F * multiplier, y, 1.0F).setColor(r, g, b, 0).setNormal(normal.getX(), normal.getY(), normal.getZ()).setLineWidth(2.0F);
+			builder.addVertex(pose, xzStart, y, xzStart).setColor(r, g, b, 255).setNormal(normal.getX(), normal.getY(), normal.getZ());
+			builder.addVertex(pose, 11.0F * multiplier, y, 1.0F).setColor(r, g, b, 0).setNormal(normal.getX(), normal.getY(), normal.getZ());
+			builder.addVertex(pose, 7.0F * multiplier, y, xzStart).setColor(r, g, b, 255).setNormal(normal.getX(), normal.getY(), normal.getZ());
+			builder.addVertex(pose, 5.0F * multiplier, y, 1.0F).setColor(r, g, b, 0).setNormal(normal.getX(), normal.getY(), normal.getZ());
 		});
 		poseStack.popPose();
 	}

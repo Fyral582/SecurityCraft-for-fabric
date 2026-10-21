@@ -6,17 +6,17 @@ import net.geforcemods.securitycraft.ClientHandler;
 import net.geforcemods.securitycraft.SecurityCraft;
 import net.geforcemods.securitycraft.entity.IMSBomb;
 import net.geforcemods.securitycraft.models.IMSBombModel;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 public class IMSBombRenderer extends EntityRenderer<IMSBomb, EntityRenderState> {
-	private static final Identifier TEXTURE = SecurityCraft.resLoc("textures/entity/ims_bomb.png");
+	private static final ResourceLocation TEXTURE = SecurityCraft.resLoc("textures/entity/ims_bomb.png");
 	private final IMSBombModel model;
 
 	public IMSBombRenderer(EntityRendererProvider.Context ctx) {
@@ -29,7 +29,7 @@ public class IMSBombRenderer extends EntityRenderer<IMSBomb, EntityRenderState> 
 	public void submit(EntityRenderState state, PoseStack pose, SubmitNodeCollector collector, CameraRenderState camera) {
 		pose.translate(-0.1D, 0, 0.1D);
 		pose.scale(1.4F, 1.4F, 1.4F);
-		collector.submitModel(model, state, pose, RenderTypes.entitySolid(TEXTURE), state.lightCoords, OverlayTexture.NO_OVERLAY, state.outlineColor, null);
+		collector.submitModel(model, state, pose, RenderType.entitySolid(TEXTURE), state.lightCoords, OverlayTexture.NO_OVERLAY, state.outlineColor, null);
 	}
 
 	@Override

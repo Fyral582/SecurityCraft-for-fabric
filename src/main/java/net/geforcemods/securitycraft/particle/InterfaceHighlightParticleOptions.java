@@ -1,6 +1,6 @@
 package net.geforcemods.securitycraft.particle;
 
-import org.joml.Vector3fc;
+import org.joml.Vector3f;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -26,20 +26,20 @@ public class InterfaceHighlightParticleOptions extends ScalableParticleOptionsBa
 			ByteBufCodecs.FLOAT, ScalableParticleOptionsBase::getScale,
 			InterfaceHighlightParticleOptions::new);
 	//@formatter:on
-	private final Vector3fc color;
-	private final Vector3fc direction;
+	private final Vector3f color;
+	private final Vector3f direction;
 
-	public InterfaceHighlightParticleOptions(Vector3fc color, Vector3fc direction, float scale) {
+	public InterfaceHighlightParticleOptions(Vector3f color, Vector3f direction, float scale) {
 		super(scale);
 		this.color = color;
 		this.direction = direction;
 	}
 
-	public Vector3fc getColor() {
+	public Vector3f getColor() {
 		return color;
 	}
 
-	public Vector3fc getDirection() {
+	public Vector3f getDirection() {
 		return direction;
 	}
 

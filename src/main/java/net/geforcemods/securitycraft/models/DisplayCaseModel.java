@@ -7,13 +7,13 @@ import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.RenderType;
 
 public class DisplayCaseModel extends Model<Float> {
 	private final ModelPart door;
 
 	public DisplayCaseModel(ModelPart root) {
-		super(root, RenderTypes::entityCutout);
+		super(root, RenderType::entityCutout);
 		door = root.getChild("door");
 	}
 

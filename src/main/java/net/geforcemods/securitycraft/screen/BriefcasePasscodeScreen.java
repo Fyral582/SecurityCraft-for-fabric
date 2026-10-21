@@ -16,7 +16,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.CommonColors;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -26,7 +26,7 @@ public class BriefcasePasscodeScreen extends Screen implements StillValid {
 	public static final String UP_ARROW = "\u2191";
 	public static final String RIGHT_ARROW = "\u2192";
 	public static final String DOWN_ARROW = "\u2193";
-	private static final Identifier TEXTURE = SecurityCraft.resLoc("textures/gui/container/blank.png");
+	private static final ResourceLocation TEXTURE = SecurityCraft.resLoc("textures/gui/container/blank.png");
 	private final boolean isSetup;
 	private int imageWidth = 176;
 	private int imageHeight = 166;
@@ -52,15 +52,15 @@ public class BriefcasePasscodeScreen extends Screen implements StillValid {
 		for (int i = 0; i < 4; i++) {
 			final int id = i;
 
-			addRenderableWidget(Button.builder(Component.literal(UP_ARROW), b -> keycodeButtonClicked(id)).pos(width / 2 - 40 + (i * 20), height / 2 - 52).size(20, 20).build());
-			addRenderableWidget(Button.builder(Component.literal(DOWN_ARROW), b -> keycodeButtonClicked(4 + id)).pos(width / 2 - 40 + (i * 20), height / 2).size(20, 20).build());
+			addRenderableWidget(new Button(width / 2 - 40 + (i * 20), height / 2 - 52, 20, 20, Component.literal(UP_ARROW), b -> keycodeButtonClicked(id), Button.DEFAULT_NARRATION));
+			addRenderableWidget(new Button(width / 2 - 40 + (i * 20), height / 2, 20, 20, Component.literal(DOWN_ARROW), b -> keycodeButtonClicked(4 + id), Button.DEFAULT_NARRATION));
 			//text boxes are not added via addRenderableWidget because they should not be accessible by the player
 			keycodeTextboxes[i] = addRenderableOnly(new EditBox(font, (width / 2 - 37) + (i * 20), height / 2 - 22, 14, 12, Component.empty()));
 			keycodeTextboxes[i].setMaxLength(1);
 			keycodeTextboxes[i].setValue("0");
 		}
 
-		addRenderableWidget(Button.builder(Component.literal(RIGHT_ARROW), this::continueButtonClicked).pos((width / 2 + 42), height / 2 - 26).size(20, 20).build());
+		addRenderableWidget(new Button((width / 2 + 42), height / 2 - 26, 20, 20, Component.literal(RIGHT_ARROW), this::continueButtonClicked, Button.DEFAULT_NARRATION));
 	}
 
 	@Override

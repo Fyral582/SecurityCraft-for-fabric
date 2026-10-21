@@ -6,18 +6,17 @@ import net.geforcemods.securitycraft.blockentities.BlockPocketManagerBlockEntity
 import net.geforcemods.securitycraft.blocks.BlockPocketManagerBlock;
 import net.geforcemods.securitycraft.renderers.state.BlockPocketManagerRenderState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.ShapeRenderer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.CameraRenderState;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.util.ARGB;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.Shapes;
 
 public class BlockPocketManagerRenderer implements BlockEntityRenderer<BlockPocketManagerBlockEntity, BlockPocketManagerRenderState> {
 	public static final int RENDER_DISTANCE = 100;
@@ -29,11 +28,8 @@ public class BlockPocketManagerRenderer implements BlockEntityRenderer<BlockPock
 		if (!state.showsOutline || !state.ownedByPlayer)
 			return;
 
-		BlockPos blockPos = state.blockPos;
-		Vec3 cameraPos = camera.pos;
-
-		collector.submitCustomGeometry(poseStack, RenderTypes.lines(), (pose, builder) -> {
-			ShapeRenderer.renderShape(poseStack, builder, state.shape, blockPos.getX() - cameraPos.x, blockPos.getY() - cameraPos.y, blockPos.getZ() - cameraPos.z, state.color, 2.0F);
+		collector.submitCustomGeometry(poseStack, RenderType.lines(), (pose, builder) -> {
+			ShapeRenderer.renderLineBox(pose, builder, state.leftX, 0, state.frontZ, state.rightX, state.size, state.backZ, state.r, state.g, state.b, 1.0F);
 		});
 	}
 
@@ -64,12 +60,16 @@ public class BlockPocketManagerRenderer implements BlockEntityRenderer<BlockPock
 			backZ = half + 1 + offset;
 		}
 
-		AABB aabb = new AABB(leftX, 0, frontZ, rightX, size, backZ);
-
 		state.showsOutline = be.showsOutline();
 		state.ownedByPlayer = be.isOwnedBy(Minecraft.getInstance().player);
-		state.shape = Shapes.create(aabb.minX, aabb.minY, aabb.minZ, aabb.maxX, aabb.maxY, aabb.maxZ);
-		state.color = packedColor;
+		state.size = size;
+		state.leftX = leftX;
+		state.rightX = rightX;
+		state.frontZ = frontZ;
+		state.backZ = backZ;
+		state.r = ARGB.redFloat(packedColor);
+		state.g = ARGB.greenFloat(packedColor);
+		state.b = ARGB.blueFloat(packedColor);
 	}
 
 	@Override

@@ -10,7 +10,7 @@ import net.minecraft.client.input.InputWithModifiers;
 import net.minecraft.client.input.MouseButtonInfo;
 import net.minecraft.network.chat.Component;
 
-public class ToggleComponentButton extends Button.Plain implements IToggleableButton {
+public class ToggleComponentButton extends Button implements IToggleableButton {
 	private final IntFunction<Component> onValueChange;
 	private int currentIndex = 0;
 	private final int toggleCount;

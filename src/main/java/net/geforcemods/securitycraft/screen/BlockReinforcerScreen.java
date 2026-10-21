@@ -21,15 +21,15 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.CommonColors;
 import net.minecraft.world.entity.player.Inventory;
 import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
 public class BlockReinforcerScreen extends AbstractContainerScreen<BlockReinforcerMenu> implements IHasExtraAreas {
-	private static final Identifier TEXTURE = SecurityCraft.resLoc("textures/gui/container/universal_block_reinforcer.png");
-	private static final Identifier SAVE_SPRITE = SecurityCraft.resLoc("widget/save");
-	private static final Identifier SAVE_INACTIVE_SPRITE = SecurityCraft.resLoc("widget/save_inactive");
+	private static final ResourceLocation TEXTURE = SecurityCraft.resLoc("textures/gui/container/universal_block_reinforcer.png");
+	private static final ResourceLocation SAVE_SPRITE = SecurityCraft.resLoc("widget/save");
+	private static final ResourceLocation SAVE_INACTIVE_SPRITE = SecurityCraft.resLoc("widget/save_inactive");
 	private final Component output = Utils.localize("gui.securitycraft:blockReinforcer.output");
 	private final Component mode = Utils.localize("gui.securitycraft:blockReinforcer.mode");
 	private final Component tint = Utils.localize("gui.securitycraft:blockReinforcer.tint");

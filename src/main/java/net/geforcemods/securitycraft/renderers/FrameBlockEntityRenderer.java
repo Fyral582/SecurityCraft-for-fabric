@@ -16,7 +16,6 @@ import com.mojang.blaze3d.platform.DepthTestFunction;
 import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
@@ -36,13 +35,12 @@ import net.geforcemods.securitycraft.entity.camera.FrameFeedHandler;
 import net.geforcemods.securitycraft.renderers.state.FrameRenderState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.SubmitNodeCollector.CustomGeometryRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
-import net.minecraft.client.renderer.rendertype.RenderType;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
@@ -51,7 +49,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ARGB;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -59,12 +57,12 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 public class FrameBlockEntityRenderer implements BlockEntityRenderer<FrameBlockEntity, FrameRenderState> {
-	private static final Identifier CAMERA_NOT_FOUND = SecurityCraft.resLoc("textures/entity/frame/camera_not_found.png");
-	private static final Identifier INACTIVE = SecurityCraft.resLoc("textures/entity/frame/inactive.png");
-	private static final Identifier NO_REDSTONE_SIGNAL = SecurityCraft.resLoc("textures/entity/frame/no_redstone_signal.png");
+	private static final ResourceLocation CAMERA_NOT_FOUND = SecurityCraft.resLoc("textures/entity/frame/camera_not_found.png");
+	private static final ResourceLocation INACTIVE = SecurityCraft.resLoc("textures/entity/frame/inactive.png");
+	private static final ResourceLocation NO_REDSTONE_SIGNAL = SecurityCraft.resLoc("textures/entity/frame/no_redstone_signal.png");
 	private static final Material NOISE_BACKGROUND = new Material(TextureAtlas.LOCATION_BLOCKS, SecurityCraft.resLoc("entity/frame/noise_background"));
-	private static final Identifier SELECT_CAMERA = SecurityCraft.resLoc("textures/entity/frame/select_camera.png");
-	private static final Identifier WHITE = SecurityCraft.resLoc("textures/entity/frame/white.png");
+	private static final ResourceLocation SELECT_CAMERA = SecurityCraft.resLoc("textures/entity/frame/select_camera.png");
+	private static final ResourceLocation WHITE = SecurityCraft.resLoc("textures/entity/frame/white.png");
 	//@formatter:off
 	public static final RenderPipeline FRAME_PIPELINE = RenderPipeline.builder(RenderPipelines.MATRICES_PROJECTION_SNIPPET)
 			.withLocation(SecurityCraft.resLoc("pipeline/frame_draw_fb_in_area"))
@@ -122,7 +120,7 @@ public class FrameBlockEntityRenderer implements BlockEntityRenderer<FrameBlockE
 
 						GpuDevice device = RenderSystem.getDevice();
 						RenderTarget mainRenderTarget = Minecraft.getInstance().getMainRenderTarget();
-						GpuBufferSlice dynamicTransforms = RenderSystem.getDynamicUniforms().writeTransform(RenderSystem.getModelViewMatrix(), new Vector4f(), new Vector3f(), new Matrix4f());
+						GpuBufferSlice dynamicTransforms = RenderSystem.getDynamicUniforms().writeTransform(RenderSystem.getModelViewMatrix(), new Vector4f(), new Vector3f(), new Matrix4f(), 0.0F);
 
 						try (
 								GpuBuffer vertexBuffer = device.createBuffer(() -> "Frame Vertex", GpuBuffer.USAGE_VERTEX, meshData.vertexBuffer());
@@ -130,9 +128,9 @@ public class FrameBlockEntityRenderer implements BlockEntityRenderer<FrameBlockE
 								RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> "SC camera frame at " + state.blockPos, mainRenderTarget.getColorTextureView(), OptionalInt.empty(), mainRenderTarget.getDepthTextureView(), OptionalDouble.empty())
 						) {
 							pass.setPipeline(FRAME_PIPELINE);
-							RenderSystem.bindDefaultUniforms(pass);
 							pass.setUniform("DynamicTransforms", dynamicTransforms);
-							pass.bindTexture("Sampler0", state.renderTargetColorTexture, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
+							pass.setUniform("Projection", RenderSystem.getProjectionMatrixBuffer());
+							pass.bindSampler("Sampler0", state.renderTargetColorTexture);
 							pass.setVertexBuffer(0, vertexBuffer);
 							pass.setIndexBuffer(indexBuffer, meshData.drawState().indexType());
 							pass.drawIndexed(0, 0, 6, 1);
@@ -222,7 +220,7 @@ public class FrameBlockEntityRenderer implements BlockEntityRenderer<FrameBlockE
 		int ny = normal.getY();
 		int nz = normal.getZ();
 
-		collector.submitCustomGeometry(poseStack, RenderTypes.entitySolid(NOISE_BACKGROUND.texture()), new WrappingGeometryRenderer(NOISE_BACKGROUND) {
+		collector.submitCustomGeometry(poseStack, RenderType.entitySolid(NOISE_BACKGROUND.texture()), new WrappingGeometryRenderer(NOISE_BACKGROUND) {
 			@Override
 			public void render(Pose pose, VertexConsumer builder) {
 				//The quad size is 14x14, but the texture size is 16x16
@@ -242,12 +240,12 @@ public class FrameBlockEntityRenderer implements BlockEntityRenderer<FrameBlockE
 		}
 	}
 
-	private void submitSolidTexture(PoseStack pose, SubmitNodeCollector collector, Identifier texture, Vector4f vertices, int packedLight, Vec3i normal) {
-		submitTexture(pose, collector, RenderTypes.entitySolid(texture), vertices, packedLight, normal);
+	private void submitSolidTexture(PoseStack pose, SubmitNodeCollector collector, ResourceLocation texture, Vector4f vertices, int packedLight, Vec3i normal) {
+		submitTexture(pose, collector, RenderType.entitySolid(texture), vertices, packedLight, normal);
 	}
 
-	private void submitCutoutTexture(PoseStack pose, SubmitNodeCollector collector, Identifier texture, Vector4f vertices, int packedLight, Vec3i normal) {
-		submitTexture(pose, collector, RenderTypes.entityCutout(texture), vertices, packedLight, normal);
+	private void submitCutoutTexture(PoseStack pose, SubmitNodeCollector collector, ResourceLocation texture, Vector4f vertices, int packedLight, Vec3i normal) {
+		submitTexture(pose, collector, RenderType.entityCutout(texture), vertices, packedLight, normal);
 	}
 
 	private void submitTexture(PoseStack poseStack, SubmitNodeCollector collector, RenderType renderType, Vector4f vertices, int packedLight, Vec3i normal) {
@@ -268,8 +266,8 @@ public class FrameBlockEntityRenderer implements BlockEntityRenderer<FrameBlockE
 		});
 	}
 
-	private void submitOverlay(PoseStack poseStack, SubmitNodeCollector collector, int color, Vector4f vertices, int packedLight, Vec3i normal) {
-		RenderType renderType = RenderTypes.entityTranslucent(WHITE);
+	private void submitOverlay(PoseStack pose, SubmitNodeCollector collector, int color, Vector4f vertices, int packedLight, Vec3i normal) {
+		RenderType renderType = RenderType.entityTranslucent(WHITE);
 		float xStart = vertices.x;
 		float xEnd = vertices.y;
 		float zStart = vertices.z;
@@ -278,12 +276,11 @@ public class FrameBlockEntityRenderer implements BlockEntityRenderer<FrameBlockE
 		int ny = normal.getY();
 		int nz = normal.getZ();
 
-		collector.submitCustomGeometry(poseStack, renderType, (pose, builder) -> {
-			builder.addVertex(pose, xStart, MARGIN, zStart).setColor(color).setUv(0, 0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setNormal(pose, nx, ny, nz);
-			builder.addVertex(pose, xStart, 1 - MARGIN, zStart).setColor(color).setUv(0, 1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setNormal(pose, nx, ny, nz);
-			builder.addVertex(pose, xEnd, 1 - MARGIN, zEnd).setColor(color).setUv(1, 1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setNormal(pose, nx, ny, nz);
-			builder.addVertex(pose, xEnd, MARGIN, zEnd).setColor(color).setUv(1, 0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setNormal(pose, nx, ny, nz);
+		collector.submitCustomGeometry(pose, renderType, (pose1, builder) -> {
+			builder.addVertex(pose1, xStart, MARGIN, zStart).setColor(color).setUv(0, 0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setNormal(pose1, nx, ny, nz);
+			builder.addVertex(pose1, xStart, 1 - MARGIN, zStart).setColor(color).setUv(0, 1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setNormal(pose1, nx, ny, nz);
+			builder.addVertex(pose1, xEnd, 1 - MARGIN, zEnd).setColor(color).setUv(1, 1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setNormal(pose1, nx, ny, nz);
+			builder.addVertex(pose1, xEnd, MARGIN, zEnd).setColor(color).setUv(1, 0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setNormal(pose1, nx, ny, nz);
 		});
 	}
-
 }

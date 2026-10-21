@@ -5,11 +5,11 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.geforcemods.securitycraft.ClientHandler;
 import net.geforcemods.securitycraft.blockentities.TrophySystemBlockEntity;
 import net.geforcemods.securitycraft.renderers.state.TrophySystemRenderState;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
@@ -34,15 +34,15 @@ public class TrophySystemRenderer implements BlockEntityRenderer<TrophySystemBlo
 		Vec3 target = state.target;
 
 		if (target != null) {
-			collector.submitCustomGeometry(poseStack, RenderTypes.lines(), (pose, builder) -> {
+			collector.submitCustomGeometry(poseStack, RenderType.lines(), (pose, builder) -> {
 				BlockPos pos = state.blockPos;
 				int r = state.r;
 				int g = state.g;
 				int b = state.b;
 
 				//draws a line between the trophy system and the projectile that it's targeting
-				builder.addVertex(pose, 0.5F, 0.75F, 0.5F).setColor(r, g, b, 255).setNormal(1.0F, 1.0F, 1.0F).setLineWidth(2.0F);
-				builder.addVertex(pose, (float) (target.x() - pos.getX()), (float) (target.y() - pos.getY()), (float) (target.z() - pos.getZ())).setColor(r, g, b, 255).setNormal(1.0F, 1.0F, 1.0F).setLineWidth(2.0F);
+				builder.addVertex(pose, 0.5F, 0.75F, 0.5F).setColor(r, g, b, 255).setNormal(1.0F, 1.0F, 1.0F);
+				builder.addVertex(pose, (float) (target.x() - pos.getX()), (float) (target.y() - pos.getY()), (float) (target.z() - pos.getZ())).setColor(r, g, b, 255).setNormal(1.0F, 1.0F, 1.0F);
 			});
 		}
 	}

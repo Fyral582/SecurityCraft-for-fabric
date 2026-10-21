@@ -11,24 +11,23 @@ import net.geforcemods.securitycraft.blocks.DisplayCaseBlock;
 import net.geforcemods.securitycraft.models.DisplayCaseModel;
 import net.geforcemods.securitycraft.renderers.state.DisplayCaseRenderState;
 import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.client.renderer.item.ItemModelResolver;
-import net.minecraft.client.renderer.rendertype.RenderType;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 public class DisplayCaseRenderer implements BlockEntityRenderer<DisplayCaseBlockEntity, DisplayCaseRenderState> {
-	private final Identifier texture = SecurityCraft.resLoc("textures/entity/display_case/normal.png");
-	private final Identifier glowTexture = SecurityCraft.resLoc("textures/entity/display_case/glow.png");
+	private final ResourceLocation texture = SecurityCraft.resLoc("textures/entity/display_case/normal.png");
+	private final ResourceLocation glowTexture = SecurityCraft.resLoc("textures/entity/display_case/glow.png");
 	private final DisplayCaseModel model;
 	private final ItemModelResolver itemModelResolver;
 	private final boolean glowing;
@@ -93,7 +92,7 @@ public class DisplayCaseRenderer implements BlockEntityRenderer<DisplayCaseBlock
 				break;
 		}
 
-		RenderType renderType = RenderTypes.entityCutout(state.isGlowing ? glowTexture : texture);
+		RenderType renderType = RenderType.entityCutout(state.isGlowing ? glowTexture : texture);
 
 		pose.scale(-1.0F, 1.0F, -1.0F);
 		collector.submitModel(model, state.openness, pose, renderType, state.lightCoords, OverlayTexture.NO_OVERLAY, 0, state.breakProgress);

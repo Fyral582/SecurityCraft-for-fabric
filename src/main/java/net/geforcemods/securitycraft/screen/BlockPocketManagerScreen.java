@@ -28,7 +28,7 @@ import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.CommonColors;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ClickType;
@@ -39,8 +39,8 @@ import net.minecraft.world.level.block.Block;
 import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
 public class BlockPocketManagerScreen extends AbstractContainerScreen<BlockPocketManagerMenu> implements IHasExtraAreas {
-	private static final Identifier TEXTURE = SecurityCraft.resLoc("textures/gui/container/block_pocket_manager.png");
-	private static final Identifier TEXTURE_STORAGE = SecurityCraft.resLoc("textures/gui/container/block_pocket_manager_storage.png");
+	private static final ResourceLocation TEXTURE = SecurityCraft.resLoc("textures/gui/container/block_pocket_manager.png");
+	private static final ResourceLocation TEXTURE_STORAGE = SecurityCraft.resLoc("textures/gui/container/block_pocket_manager_storage.png");
 	private static final ItemStack BLOCK_POCKET_WALL = new ItemStack(SCContent.BLOCK_POCKET_WALL.get());
 	private static final ItemStack REINFORCED_CHISELED_CRYSTAL_QUARTZ = new ItemStack(SCContent.REINFORCED_CHISELED_CRYSTAL_QUARTZ.get());
 	private static final ItemStack REINFORCED_CRYSTAL_QUARTZ_PILLAR = new ItemStack(SCContent.REINFORCED_CRYSTAL_QUARTZ_PILLAR.get());
@@ -99,12 +99,11 @@ public class BlockPocketManagerScreen extends AbstractContainerScreen<BlockPocke
 		int colorChooserX = colorChooserButtonX + (hasStorageModule ? -145 : 20);
 		boolean enabled = be.isEnabled();
 		Button toggleButton, sizeButton;
-		Button.Builder manageStructureButtonBuilder = enabled ? Button.builder(Utils.localize("gui.securitycraft:blockPocketManager.disassemble"), b-> ScreenLayers.pushGuiLayer(new BlockPocketManagerConfirmScreen(be))) : Button.builder(Utils.localize("gui.securitycraft:blockPocketManager.assemble"), this::assembleButtonClicked);
 
-		toggleButton = addRenderableWidget(Button.builder(Utils.localize("gui.securitycraft:blockPocketManager." + (!enabled ? "activate" : "deactivate")), this::toggleButtonClicked).pos(leftPos + guiWidth / 2 - widgetOffset, topPos + imageHeight / 2 + yOffset[0]).size(widgetWidth, 20).build());
+		toggleButton = addRenderableWidget(new Button(leftPos + guiWidth / 2 - widgetOffset, topPos + imageHeight / 2 + yOffset[0], widgetWidth, 20, Utils.localize("gui.securitycraft:blockPocketManager." + (!enabled ? "activate" : "deactivate")), this::toggleButtonClicked, Button.DEFAULT_NARRATION));
 		sizeButton = addRenderableWidget(new ToggleComponentButton(leftPos + guiWidth / 2 - widgetOffset, topPos + imageHeight / 2 + yOffset[1], widgetWidth, 20, this::updateSizeButtonText, ArrayUtils.indexOf(allowedSizes, size), allowedSizes.length, this::sizeButtonClicked));
-		outlineButton = addRenderableWidget(Button.builder(Utils.localize("gui.securitycraft:blockPocketManager.outline." + (!be.showsOutline() ? "show" : "hide")), this::outlineButtonClicked).pos(outlineButtonX, outlineY).size(outlineButtonWidth, 20).build());
-		manageStructureButton = addRenderableWidget(manageStructureButtonBuilder.pos(leftPos + guiWidth / 2 - widgetOffset, topPos + imageHeight / 2 + yOffset[3]).size(widgetWidth, 20).build());
+		outlineButton = addRenderableWidget(new Button(outlineButtonX, outlineY, outlineButtonWidth, 20, Utils.localize("gui.securitycraft:blockPocketManager.outline." + (!be.showsOutline() ? "show" : "hide")), this::outlineButtonClicked, Button.DEFAULT_NARRATION));
+		manageStructureButton = addRenderableWidget(new Button(leftPos + guiWidth / 2 - widgetOffset, topPos + imageHeight / 2 + yOffset[3], widgetWidth, 20, enabled ? Utils.localize("gui.securitycraft:blockPocketManager.disassemble") : Utils.localize("gui.securitycraft:blockPocketManager.assemble"), enabled ?  b -> ScreenLayers.pushGuiLayer(new BlockPocketManagerConfirmScreen(be)) : this::assembleButtonClicked, Button.DEFAULT_NARRATION));
 		offsetSlider = addRenderableWidget(new CallbackSlider(leftPos + guiWidth / 2 - widgetOffset, topPos + imageHeight / 2 + yOffset[4], widgetWidth, 20, Utils.localize("gui.securitycraft:projector.offset", ""), Component.empty(), (-size + 2) / 2, (size - 2) / 2, be.getAutoBuildOffset(), true, this::offsetSliderReleased));
 		colorChooser = new ColorChooser(Component.empty(), colorChooserX, outlineY, be.getColor(), be::setColor);
 		colorChooserButton = addRenderableWidget(new ColorChooserButton(colorChooserButtonX, outlineY, 20, 20, colorChooser));

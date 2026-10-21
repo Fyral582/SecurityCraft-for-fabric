@@ -23,10 +23,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.commands.FillCommand;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.players.NameAndId;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 
 public class OwnerCommand {
@@ -38,7 +38,7 @@ public class OwnerCommand {
 	public static ArgumentBuilder<CommandSourceStack, ?> register() {
 		//@formatter:off
 		return Commands.literal("owner")
-                .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                .requires(ctx -> ctx.hasPermission(2))
                 .then(Commands.literal("set")
                 		.then(Commands.argument("pos", BlockPosArgument.blockPos())
                 				.then(Commands.literal("reset")
@@ -123,10 +123,10 @@ public class OwnerCommand {
 		ServerLevel level = source.getLevel();
 		Set<ChunkAccess> modifiedChunks = new HashSet<>();
 		int blockCount = area.getXSpan() * area.getYSpan() * area.getZSpan();
-		int maxBlockModifications = level.getGameRules().get(GameRules.MAX_BLOCK_MODIFICATIONS);
+		int commandModificationBlockLimit = level.getGameRules().getInt(GameRules.RULE_COMMAND_MODIFICATION_BLOCK_LIMIT);
 
-		if (blockCount > maxBlockModifications)
-			throw FillCommand.ERROR_AREA_TOO_LARGE.create(maxBlockModifications, blockCount);
+		if (blockCount > commandModificationBlockLimit)
+			throw FillCommand.ERROR_AREA_TOO_LARGE.create(commandModificationBlockLimit, blockCount);
 		else {
 			int blocksModified = 0;
 

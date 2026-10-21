@@ -63,7 +63,7 @@ public class SCManualItem extends Item {
 				}
 				else if (recipeHolder.value() instanceof ShapelessRecipe shapelessRecipe && safeAssemble(shapelessRecipe, dummyInput, registryAccess).is(item)) {
 					//don't show keycard reset recipes
-					if (recipeHolder.id().identifier().getPath().endsWith("_reset"))
+					if (recipeHolder.id().location().getPath().endsWith("_reset"))
 						continue;
 
 					return Optional.of(shapelessRecipe.display());
@@ -92,7 +92,7 @@ public class SCManualItem extends Item {
 
 					if (!resultItem.isEmpty() && pageItems.contains(resultItem.getItem())) {
 						//don't show keycard reset recipes
-						if (recipeHolder.id().identifier().getPath().endsWith("_reset"))
+						if (recipeHolder.id().location().getPath().endsWith("_reset"))
 							continue;
 
 						displays.addAll(shapelessRecipe.display());

@@ -31,7 +31,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.CommonColors;
 import net.minecraft.world.entity.player.Player;
@@ -42,9 +42,9 @@ import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistrib
 
 public class EditModuleScreen extends Screen implements StillValid {
 	private static ListModuleData savedData;
-	private static final Identifier TEXTURE = SecurityCraft.resLoc("textures/gui/container/edit_module.png");
-	private static final Identifier CONFIRM_SPRITE = SecurityCraft.mcResLoc("container/beacon/confirm");
-	private static final Identifier CANCEL_SPRITE = SecurityCraft.mcResLoc("container/beacon/cancel");
+	private static final ResourceLocation TEXTURE = SecurityCraft.resLoc("textures/gui/container/edit_module.png");
+	private static final ResourceLocation CONFIRM_SPRITE = SecurityCraft.mcResLoc("container/beacon/confirm");
+	private static final ResourceLocation CANCEL_SPRITE = SecurityCraft.mcResLoc("container/beacon/cancel");
 	private final Component editModule = Utils.localize("gui.securitycraft:editModule");
 	private final ItemStack module;
 	private final List<PlayerTeam> availableTeams;
@@ -90,12 +90,12 @@ public class EditModuleScreen extends Screen implements StillValid {
 				return super.keyPressed(event);
 			}
 		});
-		addPlayerButton = addRenderableWidget(Button.builder(Utils.localize("gui.securitycraft:editModule.add_player"), this::addPlayerButtonClicked).pos(controlsStartX, height / 2 - 68).size(controlsWidth, 20).build());
-		removePlayerButton = addRenderableWidget(Button.builder(Utils.localize("gui.securitycraft:editModule.remove_player"), this::removePlayerButtonClicked).pos(controlsStartX, height / 2 - 43).size(controlsWidth, 20).build());
+		addPlayerButton = addRenderableWidget(new Button(controlsStartX, height / 2 - 68, controlsWidth, 20, Utils.localize("gui.securitycraft:editModule.add_player"), this::addPlayerButtonClicked, Button.DEFAULT_NARRATION));
+		removePlayerButton = addRenderableWidget(new Button(controlsStartX, height / 2 - 43, controlsWidth, 20, Utils.localize("gui.securitycraft:editModule.remove_player"), this::removePlayerButtonClicked, Button.DEFAULT_NARRATION));
 		editTeamsButton = addRenderableWidget(new NonScrollableToggleComponentButton(controlsStartX, height / 2 - 18, controlsWidth, 20, i -> Utils.localize("gui.securitycraft:editModule.edit_teams"), 0, 2, this::editTeamsButtonClicked));
-		copyButton = addRenderableWidget(Button.builder(Utils.localize("gui.securitycraft:editModule.copy"), this::copyButtonClicked).pos(controlsStartX, height / 2 + 7).size(controlsWidth, 20).build());
-		pasteButton = addRenderableWidget(Button.builder(Utils.localize("gui.securitycraft:editModule.paste"), this::pasteButtonClicked).pos(controlsStartX, height / 2 + 32).size(controlsWidth, 20).build());
-		clearButton = addRenderableWidget(Button.builder(Utils.localize("gui.securitycraft:editModule.clear"), this::clearButtonClicked).pos(controlsStartX, height / 2 + 57).size(controlsWidth, 20).build());
+		copyButton = addRenderableWidget(new Button(controlsStartX, height / 2 + 7, controlsWidth, 20, Utils.localize("gui.securitycraft:editModule.copy"), this::copyButtonClicked, Button.DEFAULT_NARRATION));
+		pasteButton = addRenderableWidget(new Button(controlsStartX, height / 2 + 32, controlsWidth, 20, Utils.localize("gui.securitycraft:editModule.paste"), this::pasteButtonClicked, Button.DEFAULT_NARRATION));
+		clearButton = addRenderableWidget(new Button(controlsStartX, height / 2 + 57, controlsWidth, 20, Utils.localize("gui.securitycraft:editModule.clear"), this::clearButtonClicked, Button.DEFAULT_NARRATION));
 		playerList = addRenderableWidget(new PlayerList(minecraft, 110, 165, height / 2 - 88, guiLeft + 10));
 		teamList = addRenderableWidget(new TeamList(minecraft, editTeamsButton.getWidth(), 75, editTeamsButton.getY() + editTeamsButton.getHeight(), editTeamsButton.getX()));
 		affectEveryPlayerCheckbox = addRenderableWidget(new CallbackCheckbox(guiLeft + xSize / 2 - length / 2, guiTop + ySize - 25, 20, 20, checkboxText, module.getOrDefault(SCContent.LIST_MODULE_DATA, ListModuleData.EMPTY).affectEveryone(), newState -> module.getOrDefault(SCContent.LIST_MODULE_DATA, ListModuleData.EMPTY).updateAffectEveryone(module, newState), CommonColors.DARK_GRAY));

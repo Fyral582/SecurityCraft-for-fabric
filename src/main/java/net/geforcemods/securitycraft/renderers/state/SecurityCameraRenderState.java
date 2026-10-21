@@ -1,7 +1,7 @@
 package net.geforcemods.securitycraft.renderers.state;
 
 import net.minecraft.core.Direction;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 public class SecurityCameraRenderState extends DisguisableBlockEntityRenderState {
 	public Direction direction;
@@ -12,5 +12,5 @@ public class SecurityCameraRenderState extends DisguisableBlockEntityRenderState
 	public boolean isBeingCaptured;
 	public float cameraYRot;
 	public int lensColor;
-	public Identifier texture;
+	public ResourceLocation texture;
 }

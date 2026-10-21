@@ -20,14 +20,14 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.CommonColors;
 import net.minecraft.world.entity.player.Inventory;
 import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
 public class LaserBlockScreen extends AbstractContainerScreen<LaserBlockMenu> {
-	private static final Identifier TEXTURE = SecurityCraft.resLoc("textures/gui/container/laser_block.png");
-	private static final Identifier LENS_SLOT = SecurityCraft.resLoc("slot/lens");
+	private static final ResourceLocation TEXTURE = SecurityCraft.resLoc("textures/gui/container/laser_block.png");
+	private static final ResourceLocation LENS_SLOT = SecurityCraft.resLoc("slot/lens");
 	private final boolean hasSmartModule;
 	private Component smartModuleTooltip;
 	private final LaserBlockBlockEntity be;

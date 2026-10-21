@@ -8,7 +8,7 @@ import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.TicketType;
@@ -22,12 +22,12 @@ import net.minecraft.world.level.Level;
  * of stale tickets is necessary when the level loads.
  */
 public class ChunkTicketController {
-	private final Identifier id;
+	private final ResourceLocation id;
 	private TicketType loadingTicket;
 	private TicketType tickingTicket;
 	private final Map<ResourceKey<Level>, Map<Long, Set<Object>>> forcedChunks = new HashMap<>();
 
-	public ChunkTicketController(Identifier id) {
+	public ChunkTicketController(ResourceLocation id) {
 		this.id = id;
 	}
 
