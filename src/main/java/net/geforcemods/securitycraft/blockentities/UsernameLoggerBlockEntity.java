@@ -85,7 +85,7 @@ public class UsernameLoggerBlockEntity extends DisguisableBlockEntity implements
 			UsernameLoggerEntry entry = getEntry(i);
 
 			if (entry != null && entry.playerName.equals(nearbyPlayerName)) {
-				getEntries()[i] = new UsernameLoggerEntry(nearbyPlayerName, nearbyPlayer.getGameProfile().id(), timestamp);
+				getEntries()[i] = new UsernameLoggerEntry(nearbyPlayerName, nearbyPlayer.getGameProfile().getId(), timestamp);
 				return true;
 			}
 		}
@@ -98,7 +98,7 @@ public class UsernameLoggerBlockEntity extends DisguisableBlockEntity implements
 
 		//The index is still -1 if the list is full when the index is determined
 		if (nextEmptyIndex >= 0 && nextEmptyIndex < LOGGER_LIST_SIZE) {
-			getEntries()[nextEmptyIndex++] = new UsernameLoggerEntry(nearbyPlayerName, nearbyPlayer.getGameProfile().id(), timestamp);
+			getEntries()[nextEmptyIndex++] = new UsernameLoggerEntry(nearbyPlayerName, nearbyPlayer.getGameProfile().getId(), timestamp);
 			return true;
 		}
 

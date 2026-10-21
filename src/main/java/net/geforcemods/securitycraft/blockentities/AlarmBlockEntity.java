@@ -15,7 +15,7 @@ import net.geforcemods.securitycraft.util.AlarmSoundHandler;
 import net.geforcemods.securitycraft.util.ITickingBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
@@ -87,12 +87,12 @@ public class AlarmBlockEntity extends CustomizableBlockEntity implements ITickin
 
 		cooldown = tag.getIntOr("cooldown", 0);
 		isPowered = tag.getBooleanOr("isPowered", false);
-		setSound(tag.getString("sound").map(Identifier::parse).orElse(SCSounds.ALARM.location));
+		setSound(tag.getString("sound").map(ResourceLocation::parse).orElse(SCSounds.ALARM.location));
 		pitch = tag.getFloatOr("pitch", 1.0F);
 		soundLength = tag.getIntOr("delay", 2);
 	}
 
-	public void setSound(Identifier soundEvent) {
+	public void setSound(ResourceLocation soundEvent) {
 		sound = SoundEvent.createVariableRangeEvent(soundEvent);
 		setChanged();
 	}
@@ -117,7 +117,7 @@ public class AlarmBlockEntity extends CustomizableBlockEntity implements ITickin
 		this.soundLength = Mth.clamp(soundLength, 1, MAXIMUM_ALARM_SOUND_LENGTH);
 		setCooldown(0);
 
-		if (level.isClientSide())
+		if (level.isClientSide)
 			stopPlayingSound();
 	}
 
@@ -165,7 +165,7 @@ public class AlarmBlockEntity extends CustomizableBlockEntity implements ITickin
 	public void setRemoved() {
 		super.setRemoved();
 
-		if (level.isClientSide() && soundPlaying)
+		if (level.isClientSide && soundPlaying)
 			stopPlayingSound();
 	}
 

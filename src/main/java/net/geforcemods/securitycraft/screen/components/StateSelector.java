@@ -7,8 +7,6 @@ import java.util.List;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
-import com.mojang.blaze3d.platform.cursor.CursorTypes;
-
 import net.geforcemods.securitycraft.SecurityCraft;
 import net.geforcemods.securitycraft.inventory.StateSelectorAccessMenu;
 import net.geforcemods.securitycraft.misc.FullbrightBlockAndTintGetter;
@@ -21,14 +19,12 @@ import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.InputWithModifiers;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.CommonColors;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerListener;
@@ -47,7 +43,7 @@ import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.Property;
 
 public class StateSelector extends Screen implements GuiEventListener, NarratableEntry, ContainerListener {
-	private static final Identifier TEXTURE = SecurityCraft.resLoc("textures/gui/container/state_selector.png");
+	private static final ResourceLocation TEXTURE = SecurityCraft.resLoc("textures/gui/container/state_selector.png");
 	private static final int PAGE_LENGTH = 5;
 	private static final float ROTATION_SENSITIVITY = 0.1F;
 	private static final Vector3f Y_DRAG_ROTATION_VECTOR = new Vector3f((float) (1.0D / Math.sqrt(2)), 0, (float) (-1.0D / Math.sqrt(2)));
@@ -135,11 +131,6 @@ public class StateSelector extends Screen implements GuiEventListener, Narratabl
 		}
 
 		guiGraphics.drawString(font, page + "/" + amountOfPages, xStart + 100, yStart + 130, CommonColors.DARK_GRAY, false);
-
-		if (clickedInDragRegion)
-			guiGraphics.requestCursor(CursorTypes.RESIZE_ALL);
-		else if (dragHoverChecker.checkHover(mouseX, mouseY))
-			guiGraphics.requestCursor(CursorTypes.POINTING_HAND);
 	}
 
 	@Override
@@ -255,8 +246,8 @@ public class StateSelector extends Screen implements GuiEventListener, Narratabl
 	}
 
 	@Override
-	public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
-		if (event.button() == 0 && clickedInDragRegion) {
+	public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+		if (button == 0 && clickedInDragRegion) {
 			Quaternionf inverted = new Quaternionf(dragRotation).invert();
 
 			dragRotation.mul(new Quaternionf().fromAxisAngleRad(Y_AXIS.rotate(inverted, xRotationVector), (float) dragX * ROTATION_SENSITIVITY));
@@ -268,19 +259,19 @@ public class StateSelector extends Screen implements GuiEventListener, Narratabl
 	}
 
 	@Override
-	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+	public boolean mouseClicked(double mouseX, double mouseY, int button) {
 		for (int i = 0; i < propertyButtons.size(); i++) {
-			if (propertyButtons.get(i).mouseClicked(event, doubleClick))
+			if (propertyButtons.get(i).mouseClicked(mouseX, mouseY, button))
 				break;
 		}
 
-		previousPageButton.mouseClicked(event, doubleClick);
-		nextPageButton.mouseClicked(event, doubleClick);
+		previousPageButton.mouseClicked(mouseX, mouseY, button);
+		nextPageButton.mouseClicked(mouseX, mouseY, button);
 		return false;
 	}
 
 	@Override
-	public boolean mouseReleased(MouseButtonEvent event) {
+	public boolean mouseReleased(double mouseX, double mouseY, int button) {
 		clickedInDragRegion = false;
 		return false;
 	}
@@ -375,8 +366,8 @@ public class StateSelector extends Screen implements GuiEventListener, Narratabl
 		}
 
 		@Override
-		public void onPress(InputWithModifiers input) {
-			super.onPress(input);
+		public void onPress() {
+			super.onPress();
 
 			if (property == STANDING_OR_WALL_TYPE_PROPERTY) {
 				state = standingOrWallType.getNewState((StandingAndWallBlockItem) blockItem);

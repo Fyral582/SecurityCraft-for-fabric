@@ -1,9 +1,9 @@
 package net.geforcemods.securitycraft.renderers;
 
 import java.util.Optional;
-import java.util.function.Consumer;
+import java.util.Set;
 
-import org.joml.Vector3fc;
+import org.joml.Vector3f;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.serialization.Codec;
@@ -12,33 +12,35 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import net.geforcemods.securitycraft.ClientHandler;
 import net.geforcemods.securitycraft.models.DisplayCaseModel;
-import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.model.geom.EntityModelSet;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.special.NoDataSpecialModelRenderer;
 import net.minecraft.client.renderer.special.SpecialModelRenderer;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
 
-public record DisplayCaseSpecialRenderer(DisplayCaseModel model, Identifier texture, float openness, Optional<Integer> light) implements NoDataSpecialModelRenderer {
+public record DisplayCaseSpecialRenderer(DisplayCaseModel model, ResourceLocation texture, float openness, Optional<Integer> light) implements NoDataSpecialModelRenderer {
 	@Override
-	public void submit(ItemDisplayContext ctx, PoseStack pose, SubmitNodeCollector collector, int packedLight, int packedOverlay, boolean glint, int outlineColor) {
-		collector.submitModel(model, openness, pose, RenderTypes.entityCutout(texture), light.orElse(packedLight), packedOverlay, outlineColor, null);
+	public void render(ItemDisplayContext ctx, PoseStack pose, MultiBufferSource buffer, int packedLight, int packedOverlay, boolean glint) {
+		model.setUpAnim(openness);
+		model.renderToBuffer(pose, buffer.getBuffer(RenderType.entityCutout(texture)), light.orElse(packedLight), packedOverlay);
 	}
 
 	@Override
-	public void getExtents(Consumer<Vector3fc> extents) {
+	public void getExtents(Set<Vector3f> extents) {
 		PoseStack poseStack = new PoseStack();
 
-		model.setupAnim(openness);
+		model.setUpAnim(openness);
 		model.root().getExtentsForGui(poseStack, extents);
 	}
 
-	public static record Unbaked(Identifier texture, float openness, Optional<Integer> light) implements SpecialModelRenderer.Unbaked {
+	public static record Unbaked(ResourceLocation texture, float openness, Optional<Integer> light) implements SpecialModelRenderer.Unbaked {
 
 		//@formatter:off
 		public static final MapCodec<DisplayCaseSpecialRenderer.Unbaked> MAP_CODEC = RecordCodecBuilder.mapCodec(
 				i -> i.group(
-						Identifier.CODEC.fieldOf("texture").forGetter(DisplayCaseSpecialRenderer.Unbaked::texture),
+						ResourceLocation.CODEC.fieldOf("texture").forGetter(DisplayCaseSpecialRenderer.Unbaked::texture),
 						Codec.FLOAT.optionalFieldOf("openness", 0.0F).forGetter(DisplayCaseSpecialRenderer.Unbaked::openness),
 						Codec.INT.optionalFieldOf("light").forGetter(DisplayCaseSpecialRenderer.Unbaked::light))
 				.apply(i, DisplayCaseSpecialRenderer.Unbaked::new));
@@ -50,8 +52,8 @@ public record DisplayCaseSpecialRenderer(DisplayCaseModel model, Identifier text
 		}
 
 		@Override
-		public SpecialModelRenderer<?> bake(BakingContext ctx) {
-			DisplayCaseModel model = new DisplayCaseModel(ctx.entityModelSet().bakeLayer(ClientHandler.DISPLAY_CASE_LOCATION));
+		public SpecialModelRenderer<?> bake(EntityModelSet modelSet) {
+			DisplayCaseModel model = new DisplayCaseModel(modelSet.bakeLayer(ClientHandler.DISPLAY_CASE_LOCATION));
 
 			return new DisplayCaseSpecialRenderer(model, texture.withPrefix("textures/entity/display_case/").withSuffix(".png"), openness, light);
 		}

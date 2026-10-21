@@ -191,7 +191,7 @@ public class ReinforcedDoorBlock extends OwnableBlock {
 			}
 
 			if (drop) {
-				if (!level.isClientSide()) {
+				if (!level.isClientSide) {
 					level.destroyBlock(firstDoorPos, false);
 					Block.popResource(level, firstDoorPos, new ItemStack(SCContent.REINFORCED_DOOR_ITEM.get()));
 				}

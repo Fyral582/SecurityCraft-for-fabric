@@ -8,7 +8,7 @@ import net.geforcemods.securitycraft.compat.IOverlayDisplay;
 import net.geforcemods.securitycraft.entity.AbstractSecuritySeaBoat;
 import net.geforcemods.securitycraft.entity.sentry.Sentry;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -46,7 +46,7 @@ public final class JadeDataProvider extends HudModHandler implements IWailaPlugi
 					BlockPos pos = blockAccessor.getPosition();
 
 					if (!overlayDisplay.shouldShowSCInfo(level, state, pos))
-						return registration.blockAccessor().from(blockAccessor).serversideRep(overlayDisplay.getDisplayStack(level, state, pos)).build();
+						return registration.blockAccessor().from(blockAccessor).fakeBlock(overlayDisplay.getDisplayStack(level, state, pos)).build();
 				}
 				else if (block instanceof FakeWaterBlock)
 					return registration.blockAccessor().from(blockAccessor).blockState(Blocks.WATER.defaultBlockState()).build();
@@ -65,7 +65,7 @@ public final class JadeDataProvider extends HudModHandler implements IWailaPlugi
 		}
 
 		@Override
-		public Identifier getUid() {
+		public ResourceLocation getUid() {
 			return SecurityCraft.resLoc("block_info");
 		}
 	}
@@ -77,7 +77,7 @@ public final class JadeDataProvider extends HudModHandler implements IWailaPlugi
 		}
 
 		@Override
-		public Identifier getUid() {
+		public ResourceLocation getUid() {
 			return SecurityCraft.resLoc("entity_info");
 		}
 	}

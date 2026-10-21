@@ -17,17 +17,16 @@ import net.geforcemods.securitycraft.util.Utils;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.CommonColors;
 import net.minecraft.world.entity.player.Inventory;
 import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
 public class ProjectorScreen extends AbstractContainerScreen<ProjectorMenu> implements IHasExtraAreas {
-	private static final Identifier TEXTURE = SecurityCraft.resLoc("textures/gui/container/projector.png");
+	private static final ResourceLocation TEXTURE = SecurityCraft.resLoc("textures/gui/container/projector.png");
 	private static final Component SLOT_TOOLTIP = Utils.localize("gui.securitycraft:projector.block");
 	private ProjectorBlockEntity be;
 	private TextHoverChecker slotHoverChecker;
@@ -95,7 +94,7 @@ public class ProjectorScreen extends AbstractContainerScreen<ProjectorMenu> impl
 		slotHoverChecker = new TextHoverChecker(topPos + 22, topPos + 39, leftPos + 78, leftPos + 95, SLOT_TOOLTIP);
 
 		stateSelector = addRenderableWidget(new StateSelector(menu, title, leftPos - 190, topPos + 7, 0, 197, 0, 173, -60));
-		stateSelector.init(width, height);
+		stateSelector.init(minecraft, width, height);
 	}
 
 	private void updateHorizontalToggleButtonTooltip() {
@@ -130,27 +129,19 @@ public class ProjectorScreen extends AbstractContainerScreen<ProjectorMenu> impl
 	}
 
 	@Override
-	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+	public boolean mouseClicked(double mouseX, double mouseY, int button) {
 		if (minecraft.player.isSpectator())
 			return false;
 
-		return super.mouseClicked(event, doubleClick);
+		return super.mouseClicked(mouseX, mouseY, button);
 	}
 
 	@Override
-	public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
-		if (stateSelector != null && stateSelector.mouseDragged(event, dragX, dragY))
+	public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+		if (stateSelector != null && stateSelector.mouseDragged(mouseX, mouseY, button, dragX, dragY))
 			return true;
 
-		return (getFocused() != null && isDragging() && event.button() == 0 && getFocused().mouseDragged(event, dragX, dragY)) || super.mouseDragged(event, dragX, dragY);
-	}
-
-	@Override
-	public boolean mouseReleased(MouseButtonEvent event) {
-		if (stateSelector != null && stateSelector.mouseReleased(event))
-			return true;
-
-		return super.mouseReleased(event);
+		return (getFocused() != null && isDragging() && button == 0 && getFocused().mouseDragged(mouseX, mouseY, button, dragX, dragY)) || super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
 	}
 
 	@Override

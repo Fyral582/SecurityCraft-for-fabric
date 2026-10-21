@@ -9,13 +9,12 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.InputWithModifiers;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
 
-public class CollapsibleTextList extends Button.Plain {
+public class CollapsibleTextList extends Button {
 	private static final Component PLUS = Component.literal("+ ");
 	private static final Component MINUS = Component.literal("- ");
 	private final int threeDotsWidth = Minecraft.getInstance().font.width("...");
@@ -60,7 +59,7 @@ public class CollapsibleTextList extends Button.Plain {
 	}
 
 	@Override
-	public void renderContents(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+	public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
 		isHovered &= extraHoverCheck.test(mouseX, mouseY);
 
 		Font font = Minecraft.getInstance().font;
@@ -128,9 +127,9 @@ public class CollapsibleTextList extends Button.Plain {
 	}
 
 	@Override
-	public void onPress(InputWithModifiers input) {
+	public void onPress() {
 		switchOpenStatus();
-		super.onPress(input);
+		super.onPress();
 	}
 
 	@Override

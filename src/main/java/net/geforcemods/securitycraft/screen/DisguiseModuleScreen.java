@@ -13,11 +13,10 @@ import net.geforcemods.securitycraft.util.StandingOrWallType;
 import net.geforcemods.securitycraft.util.Utils;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.CommonColors;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
@@ -26,7 +25,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
 public class DisguiseModuleScreen extends AbstractContainerScreen<DisguiseModuleMenu> implements IHasExtraAreas {
-	private static final Identifier TEXTURE = SecurityCraft.resLoc("textures/gui/container/customize1.png");
+	private static final ResourceLocation TEXTURE = SecurityCraft.resLoc("textures/gui/container/customize1.png");
 	private final Component disguiseModuleName = Utils.localize(SCContent.DISGUISE_MODULE.get().getDescriptionId());
 	private StateSelector stateSelector;
 
@@ -40,7 +39,7 @@ public class DisguiseModuleScreen extends AbstractContainerScreen<DisguiseModule
 
 		leftPos += 90;
 		stateSelector = addRenderableWidget(new StateSelector(menu, title, leftPos - 190, topPos + 7, 0, 200, 15, 176, -45));
-		stateSelector.init(width, height);
+		stateSelector.init(minecraft, width, height);
 	}
 
 	@Override
@@ -63,19 +62,11 @@ public class DisguiseModuleScreen extends AbstractContainerScreen<DisguiseModule
 	}
 
 	@Override
-	public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
-		if (stateSelector != null && stateSelector.mouseDragged(event, dragX, dragY))
+	public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+		if (stateSelector != null && stateSelector.mouseDragged(mouseX, mouseY, button, dragX, dragY))
 			return true;
 
-		return super.mouseDragged(event, dragX, dragY);
-	}
-
-	@Override
-	public boolean mouseReleased(MouseButtonEvent event) {
-		if (stateSelector != null && stateSelector.mouseReleased(event))
-			return true;
-
-		return super.mouseReleased(event);
+		return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
 	}
 
 	@Override

@@ -5,12 +5,12 @@ import java.util.Map;
 import net.geforcemods.securitycraft.blockentities.ElectrifiedFenceAndGateBlockEntity;
 import net.geforcemods.securitycraft.misc.CustomDamageSources;
 import net.geforcemods.securitycraft.util.LevelUtils;
+import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.RandomSource;
-import net.minecraft.util.Util;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.InsideBlockEffectApplier;
@@ -201,7 +201,7 @@ public class ElectrifiedIronFenceBlock extends OwnableBlock {
 	}
 
 	@Override
-	public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity, InsideBlockEffectApplier effectApplier, boolean stillInside) {
+	public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity, InsideBlockEffectApplier effectApplier) {
 		hurtOrConvertEntity(this::getShape, state, level, pos, entity);
 	}
 
@@ -223,7 +223,7 @@ public class ElectrifiedIronFenceBlock extends OwnableBlock {
 			if (be.allowsOwnableEntity(ownableEntity))
 				return;
 		}
-		else if (!level.isClientSide()) {
+		else if (!level.isClientSide) {
 			LightningBolt lightning = LevelUtils.createLightning(level, Vec3.atBottomCenterOf(pos), true);
 
 			entity.thunderHit((ServerLevel) level, lightning);

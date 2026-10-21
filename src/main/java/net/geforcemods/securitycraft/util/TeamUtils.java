@@ -46,7 +46,7 @@ public class TeamUtils {
 		if (server != null)
 			return server.getScoreboard().getPlayersTeam(playerName);
 		else
-			return ClientHandler.getClientLevel().getScoreboard().getPlayersTeam(playerName);
+			return ClientHandler.getClientPlayer().getScoreboard().getPlayersTeam(playerName);
 	}
 
 	/**

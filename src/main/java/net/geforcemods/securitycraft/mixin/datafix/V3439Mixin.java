@@ -26,7 +26,7 @@ public class V3439Mixin extends NamespacedSchema {
 	}
 
 	@Shadow
-	public static TypeTemplate sign(Schema schema) {
+	private static TypeTemplate sign(Schema schema) {
 		throw new UnsupportedOperationException("Shadowing sign method failed!");
 	}
 

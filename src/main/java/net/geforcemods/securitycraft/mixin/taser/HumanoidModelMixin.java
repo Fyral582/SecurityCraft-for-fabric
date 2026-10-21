@@ -24,9 +24,9 @@ public class HumanoidModelMixin {
 	@Final
 	public ModelPart leftArm;
 
-	@Inject(method = "setupAnim(Lnet/minecraft/client/renderer/entity/state/HumanoidRenderState;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/model/HumanoidModel;setupAttackAnimation(Lnet/minecraft/client/renderer/entity/state/HumanoidRenderState;)V"))
+	@Inject(method = "setupAnim(Lnet/minecraft/client/renderer/entity/state/HumanoidRenderState;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/model/HumanoidModel;setupAttackAnimation(Lnet/minecraft/client/renderer/entity/state/HumanoidRenderState;F)V"))
 	private void securitycraft$applyTaserArmPose(HumanoidRenderState state, CallbackInfo ci) {
-		if (Boolean.TRUE.equals(state.getData(TaserRenderData.HOLDS_TASER))) {
+		if (((TaserRenderData) state).securitycraft$holdsTaser()) {
 			leftArm.yRot = 0.5F;
 			rightArm.yRot = -0.5F;
 			leftArm.xRot = rightArm.xRot = -1.5F;

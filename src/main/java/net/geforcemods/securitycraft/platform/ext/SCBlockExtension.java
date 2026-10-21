@@ -61,7 +61,7 @@ public interface SCBlockExtension {
 		return state.isRedstoneConductor(level, pos);
 	}
 
-	default boolean onDestroyedByPlayer(BlockState state, Level level, BlockPos pos, Player player, ItemStack toolStack, boolean willHarvest, FluidState fluid) {
+	default boolean onDestroyedByPlayer(BlockState state, Level level, BlockPos pos, Player player, boolean willHarvest, FluidState fluid) {
 		if (level.isClientSide())
 			return level.setBlock(pos, fluid.createLegacyBlock(), 11);
 		else

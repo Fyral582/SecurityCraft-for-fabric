@@ -9,6 +9,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -74,7 +75,7 @@ public interface IExplosive {
 		if (heldItem.getItem() == SCContent.WIRE_CUTTERS.get() && isActive(level, pos) && isDefusable()) {
 			if (defuseMine(level, pos)) {
 				if (!player.isCreative())
-					player.getItemInHand(hand).hurtAndBreak(1, player, hand.asEquipmentSlot());
+					player.getItemInHand(hand).hurtAndBreak(1, player, LivingEntity.getSlotForHand(hand));
 
 				level.playSound(null, pos, SoundEvents.SHEEP_SHEAR, SoundSource.BLOCKS, 1.0F, 1.0F);
 			}
@@ -84,7 +85,7 @@ public interface IExplosive {
 
 		if (heldItem.is(Items.FLINT_AND_STEEL) && !isActive(level, pos) && activateMine(level, pos)) {
 			if (!player.isCreative())
-				player.getItemInHand(hand).hurtAndBreak(1, player, hand.asEquipmentSlot());
+				player.getItemInHand(hand).hurtAndBreak(1, player, LivingEntity.getSlotForHand(hand));
 
 			level.playSound(null, pos, SoundEvents.TRIPWIRE_CLICK_ON, SoundSource.BLOCKS, 1.0F, 1.0F);
 			return InteractionResult.SUCCESS;

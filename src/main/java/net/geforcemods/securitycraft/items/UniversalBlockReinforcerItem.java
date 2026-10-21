@@ -24,6 +24,7 @@ import net.minecraft.world.Clearable;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -72,7 +73,7 @@ public class UniversalBlockReinforcerItem extends Item {
 	public InteractionResult use(Level level, Player player, InteractionHand hand) {
 		ItemStack heldItem = player.getItemInHand(hand);
 
-		if (!level.isClientSide()) {
+		if (!level.isClientSide) {
 			maybeRemoveMending(level.registryAccess(), heldItem);
 			player.openMenu(new MenuProvider() {
 				@Override
@@ -100,8 +101,8 @@ public class UniversalBlockReinforcerItem extends Item {
 		if (!player.isCreative() && level.mayInteract(player, pos)) {
 			boolean result = convertBlock(state, level, stack, pos, player, new Owner(player));
 
-			if (result && !level.isClientSide())
-				stack.hurtAndBreak(1, player, player.getUsedItemHand().asEquipmentSlot());
+			if (result && !level.isClientSide)
+				stack.hurtAndBreak(1, player, LivingEntity.getSlotForHand(player.getUsedItemHand()));
 
 			return result;
 		}
@@ -124,7 +125,7 @@ public class UniversalBlockReinforcerItem extends Item {
 			if (level.getBlockEntity(pos) instanceof IOwnable ownable && ((player != null && !ownable.isOwnedBy(player)) || !ownable.isOwnedBy(owner)))
 				return false;
 
-			if (!level.isClientSide()) {
+			if (!level.isClientSide) {
 				convertStateWhileRetainingData(level, pos, convertedState);
 
 				if (isReinforcing && level.getBlockEntity(pos) instanceof IOwnable ownable)

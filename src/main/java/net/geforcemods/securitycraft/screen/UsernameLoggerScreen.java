@@ -19,11 +19,9 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.CommonColors;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
@@ -31,7 +29,7 @@ import net.geforcemods.securitycraft.platform.gui.ScrollPanel;
 import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
 public class UsernameLoggerScreen extends Screen implements StillValid {
-	private static final Identifier TEXTURE = SecurityCraft.resLoc("textures/gui/container/blank.png");
+	private static final ResourceLocation TEXTURE = SecurityCraft.resLoc("textures/gui/container/blank.png");
 	private final Component logged = Utils.localize("gui.securitycraft:logger.logged");
 	private int imageWidth = 176;
 	private int imageHeight = 166;
@@ -75,29 +73,29 @@ public class UsernameLoggerScreen extends Screen implements StillValid {
 	}
 
 	@Override
-	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+	public boolean mouseClicked(double mouseX, double mouseY, int button) {
 		if (playerList != null)
-			playerList.mouseClicked(event, doubleClick);
+			playerList.mouseClicked(mouseX, mouseY, button);
 
-		return super.mouseClicked(event, doubleClick);
+		return super.mouseClicked(mouseX, mouseY, button);
 	}
 
 	@Override
-	public boolean mouseReleased(MouseButtonEvent event) {
+	public boolean mouseReleased(double mouseX, double mouseY, int button) {
 		if (playerList != null)
-			playerList.mouseReleased(event);
+			playerList.mouseReleased(mouseX, mouseY, button);
 
-		return super.mouseReleased(event);
+		return super.mouseReleased(mouseX, mouseY, button);
 	}
 
 	@Override
-	public boolean keyPressed(KeyEvent event) {
-		if (minecraft.options.keyInventory.isActiveAndMatches(InputConstants.getKey(event))) {
+	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+		if (minecraft.options.keyInventory.isActiveAndMatches(InputConstants.getKey(keyCode, scanCode))) {
 			onClose();
 			return true;
 		}
 
-		return super.keyPressed(event);
+		return super.keyPressed(keyCode, scanCode, modifiers);
 	}
 
 	@Override

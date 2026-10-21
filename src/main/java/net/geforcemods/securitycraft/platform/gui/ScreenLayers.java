@@ -28,7 +28,7 @@ public final class ScreenLayers {
 
 		LAYERS.push(mc.screen);
 		mc.screen = screen;
-		screen.init(mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight());
+		screen.init(mc, mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight());
 		mc.getNarrator().saySystemNow(screen.getNarrationMessage());
 	}
 
@@ -70,13 +70,13 @@ public final class ScreenLayers {
 		Iterator<Screen> iterator = LAYERS.descendingIterator();
 
 		while (iterator.hasNext()) {
-			iterator.next().renderWithTooltipAndSubtitles(guiGraphics, -1, -1, partialTick);
+			iterator.next().renderWithTooltip(guiGraphics, -1, -1, partialTick);
 		}
 	}
 
 	public static void resize(int width, int height) {
 		for (Screen layer : LAYERS) {
-			layer.resize(width, height);
+			layer.resize(Minecraft.getInstance(), width, height);
 		}
 	}
 }

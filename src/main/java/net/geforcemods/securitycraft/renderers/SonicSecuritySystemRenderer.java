@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.renderers;
 
+import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -10,66 +11,58 @@ import net.geforcemods.securitycraft.SecurityCraft;
 import net.geforcemods.securitycraft.blockentities.SonicSecuritySystemBlockEntity;
 import net.geforcemods.securitycraft.misc.ModuleType;
 import net.geforcemods.securitycraft.models.SonicSecuritySystemModel;
-import net.geforcemods.securitycraft.renderers.state.SonicSecuritySystemRenderState;
 import net.geforcemods.securitycraft.util.Utils;
-import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
-import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
-import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
-public class SonicSecuritySystemRenderer implements BlockEntityRenderer<SonicSecuritySystemBlockEntity, SonicSecuritySystemRenderState> {
+public class SonicSecuritySystemRenderer implements BlockEntityRenderer<SonicSecuritySystemBlockEntity> {
 	private static final Quaternionf POSITIVE_X_180 = Axis.XP.rotationDegrees(180.0F);
-	private static final Identifier TEXTURE = SecurityCraft.resLoc("textures/block/sonic_security_system.png");
+	private static final ResourceLocation TEXTURE = SecurityCraft.resLoc("textures/block/sonic_security_system.png");
 	private static final Component RECORDING_TEXT = Utils.localize("gui.securitycraft:sonic_security_system.recording");
 	private static final Component LISTENING_TEXT = Utils.localize("gui.securitycraft:sonic_security_system.listening");
 	private final SonicSecuritySystemModel model;
-	private final EntityRenderDispatcher entityRenderDispatcher;
 
 	public SonicSecuritySystemRenderer(BlockEntityRendererProvider.Context ctx) {
 		model = new SonicSecuritySystemModel(ctx.bakeLayer(ClientHandler.SONIC_SECURITY_SYSTEM_LOCATION));
-		entityRenderDispatcher = ctx.entityRenderer();
 	}
 
 	@Override
-	public void submit(SonicSecuritySystemRenderState state, PoseStack pose, SubmitNodeCollector collector, CameraRenderState camera) {
-		ClientHandler.DISGUISED_BLOCK_RENDER_DELEGATE.trySubmitDelegate(state.disguiseRenderState, pose, collector, camera);
-		pose.translate(0.5D, 1.0D, 0.5D);
+	public void render(SonicSecuritySystemBlockEntity be, float partialTicks, PoseStack pose, MultiBufferSource buffer, int packedLight, int packedOverlay, Vec3 cameraPos) {
+		boolean recording = be.isRecording();
 
-		if (state.isRecording || state.isListening && !state.isShutDown) {
-			Component text = state.isRecording ? RECORDING_TEXT : LISTENING_TEXT;
+		ClientHandler.DISGUISED_BLOCK_RENDER_DELEGATE.tryRenderDelegate(be, partialTicks, pose, buffer, packedLight, packedOverlay, cameraPos);
+		pose.translate(0.5D, 1.5D, 0.5D);
 
-			collector.submitNameTag(pose, Vec3.ZERO, 0, text, true, state.lightCoords, state.distanceToCameraSqr, camera);
+		if (recording || be.isListening() && !be.isShutDown()) {
+			Minecraft mc = Minecraft.getInstance();
+			Component text = recording ? RECORDING_TEXT : LISTENING_TEXT;
+			float opacity = mc.options.getBackgroundOpacity(0.25F);
+			int backgroundColor = (int) (opacity * 255.0F) << 24;
+			float halfWidth = -mc.font.width(text) / 2;
+			Matrix4f positionMatrix;
+
+			pose.pushPose();
+			pose.mulPose(mc.getEntityRenderDispatcher().cameraOrientation());
+			pose.scale(0.025F, -0.025F, 0.025F);
+			positionMatrix = pose.last().pose();
+			mc.font.drawInBatch(text, halfWidth, 0, 0x20FFFFFF, false, positionMatrix, buffer, Font.DisplayMode.SEE_THROUGH, backgroundColor, packedLight);
+			mc.font.drawInBatch(text, halfWidth, 0, -1, false, positionMatrix, buffer, Font.DisplayMode.NORMAL, 0, packedLight);
+			pose.popPose();
 		}
 
-		if (!state.isDisguised) {
-			pose.translate(0.0D, 0.5D, 0.0D);
+		if (!be.isModuleEnabled(ModuleType.DISGUISE)) {
 			pose.mulPose(POSITIVE_X_180);
-			collector.submitModel(model, state.radarRotation, pose, RenderTypes.entitySolid(TEXTURE), state.lightCoords, OverlayTexture.NO_OVERLAY, 0, state.breakProgress);
+			model.setRadarRotation(Mth.lerp(partialTicks, be.getOriginalRadarRotationDegrees(), be.getRadarRotationDegrees()));
+			model.renderToBuffer(pose, buffer.getBuffer(RenderType.entitySolid(TEXTURE)), packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFFFF);
 		}
-	}
-
-	@Override
-	public SonicSecuritySystemRenderState createRenderState() {
-		return new SonicSecuritySystemRenderState();
-	}
-
-	@Override
-	public void extractRenderState(SonicSecuritySystemBlockEntity be, SonicSecuritySystemRenderState state, float partialTick, Vec3 cameraPos, ModelFeatureRenderer.CrumblingOverlay crumblingOverlay) {
-		BlockEntityRenderer.super.extractRenderState(be, state, partialTick, cameraPos, crumblingOverlay);
-		state.disguiseRenderState = ClientHandler.DISGUISED_BLOCK_RENDER_DELEGATE.tryExtractFromDelegate(be, partialTick, cameraPos, crumblingOverlay);
-		state.isRecording = be.isRecording();
-		state.isListening = be.isListening();
-		state.isShutDown = be.isShutDown();
-		state.isDisguised = be.isModuleEnabled(ModuleType.DISGUISE);
-		state.radarRotation = Mth.lerp(partialTick, be.getOriginalRadarRotationDegrees(), be.getRadarRotationDegrees());
-		state.distanceToCameraSqr = cameraPos.distanceToSqr(Vec3.upFromBottomCenterOf(be.getBlockPos(), 1.5D));
 	}
 }

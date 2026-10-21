@@ -1,91 +1,90 @@
 package net.geforcemods.securitycraft.renderers;
 
+import java.util.List;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.geforcemods.securitycraft.SCContent;
 import net.geforcemods.securitycraft.blockentities.ReinforcedPistonMovingBlockEntity;
-import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.block.BlockRenderDispatcher;
+import net.minecraft.client.renderer.block.ModelBlockRenderer;
+import net.minecraft.client.renderer.block.model.BlockModelPart;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.client.renderer.blockentity.PistonHeadRenderer;
-import net.minecraft.client.renderer.blockentity.state.PistonHeadRenderState;
-import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
-import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.DirectionalBlock;
 import net.minecraft.world.level.block.piston.PistonBaseBlock;
 import net.minecraft.world.level.block.piston.PistonHeadBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.PistonType;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-public class ReinforcedPistonHeadRenderer implements BlockEntityRenderer<ReinforcedPistonMovingBlockEntity, PistonHeadRenderState> {
-	public ReinforcedPistonHeadRenderer(BlockEntityRendererProvider.Context ctx) {}
+public class ReinforcedPistonHeadRenderer implements BlockEntityRenderer<ReinforcedPistonMovingBlockEntity> {
+	private BlockRenderDispatcher blockRenderer;
 
-	@Override
-	public void submit(PistonHeadRenderState state, PoseStack pose, SubmitNodeCollector collector, CameraRenderState camera) {
-		if (state.block != null) {
-			pose.pushPose();
-			pose.translate(state.xOffset, state.yOffset, state.zOffset);
-			collector.submitMovingBlock(pose, state.block);
-			pose.popPose();
-
-			if (state.base != null)
-				collector.submitMovingBlock(pose, state.base);
-		}
+	public ReinforcedPistonHeadRenderer(BlockEntityRendererProvider.Context ctx) {
+		blockRenderer = ctx.getBlockRenderDispatcher();
 	}
 
 	@Override
-	public PistonHeadRenderState createRenderState() {
-		return new PistonHeadRenderState();
-	}
-
-	@Override
-	public void extractRenderState(ReinforcedPistonMovingBlockEntity be, PistonHeadRenderState renderState, float partialTick, Vec3 cameraPos, ModelFeatureRenderer.CrumblingOverlay crumblingOverlay) {
-		BlockEntityRenderer.super.extractRenderState(be, renderState, partialTick, cameraPos, crumblingOverlay);
-		renderState.xOffset = be.getOffsetX(partialTick);
-		renderState.yOffset = be.getOffsetY(partialTick);
-		renderState.zOffset = be.getOffsetZ(partialTick);
-		renderState.block = null;
-		renderState.base = null;
-
-		BlockState state = be.getMovedState();
+	public void render(ReinforcedPistonMovingBlockEntity be, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int combinedLight, int combinedOverlay, Vec3 cameraPos) {
 		Level level = be.getLevel();
 
-		if (level != null && !state.isAir()) {
+		if (level != null) {
 			BlockPos oppositePos = be.getBlockPos().relative(be.getMovementDirection().getOpposite());
-			Holder<Biome> biome = level.getBiome(oppositePos);
+			BlockState state = be.getMovedState();
 
-			if (state.is(SCContent.REINFORCED_PISTON_HEAD.get()) && be.getProgress(partialTick) <= 4.0F) {
-				state = state.setValue(PistonHeadBlock.SHORT, be.getProgress(partialTick) <= 0.5F);
-				renderState.block = PistonHeadRenderer.createMovingBlock(oppositePos, state, biome, level);
-			}
-			else if (be.isSourcePiston() && !be.isExtending()) {
-				PistonType pistonType = state.is(SCContent.REINFORCED_STICKY_PISTON.get()) ? PistonType.STICKY : PistonType.DEFAULT;
-				BlockState headState = SCContent.REINFORCED_PISTON_HEAD.get().defaultBlockState().setValue(PistonHeadBlock.TYPE, pistonType).setValue(DirectionalBlock.FACING, state.getValue(DirectionalBlock.FACING));
-				BlockPos renderPos = oppositePos.relative(be.getMovementDirection());
+			if (!state.isAir()) {
+				ModelBlockRenderer.enableCaching();
+				poseStack.pushPose();
+				poseStack.translate(be.getOffsetX(partialTicks), be.getOffsetY(partialTicks), be.getOffsetZ(partialTicks));
 
-				headState = headState.setValue(PistonHeadBlock.SHORT, be.getProgress(partialTick) >= 0.5F);
-				renderState.block = PistonHeadRenderer.createMovingBlock(oppositePos, headState, biome, level);
-				state = state.setValue(PistonBaseBlock.EXTENDED, true);
-				renderState.base = PistonHeadRenderer.createMovingBlock(renderPos, state, biome, level);
+				if (state.is(SCContent.REINFORCED_PISTON_HEAD.get()) && be.getProgress(partialTicks) <= 4.0F) {
+					state = state.setValue(PistonHeadBlock.SHORT, be.getProgress(partialTicks) <= 0.5F);
+					renderBlocks(oppositePos, state, poseStack, buffer, level, false, combinedOverlay);
+				}
+				else if (be.isSourcePiston() && !be.isExtending()) {
+					PistonType pistonType = state.is(SCContent.REINFORCED_STICKY_PISTON.get()) ? PistonType.STICKY : PistonType.DEFAULT;
+					BlockState headState = SCContent.REINFORCED_PISTON_HEAD.get().defaultBlockState().setValue(PistonHeadBlock.TYPE, pistonType).setValue(DirectionalBlock.FACING, state.getValue(DirectionalBlock.FACING));
+					BlockPos renderPos = oppositePos.relative(be.getMovementDirection());
+
+					headState = headState.setValue(PistonHeadBlock.SHORT, be.getProgress(partialTicks) >= 0.5F);
+					renderBlocks(oppositePos, headState, poseStack, buffer, level, false, combinedOverlay);
+					poseStack.popPose();
+					poseStack.pushPose();
+					state = state.setValue(PistonBaseBlock.EXTENDED, true);
+					renderBlocks(renderPos, state, poseStack, buffer, level, true, combinedOverlay);
+				}
+				else
+					renderBlocks(oppositePos, state, poseStack, buffer, level, false, combinedOverlay);
+
+				poseStack.popPose();
+				ModelBlockRenderer.clearCache();
 			}
-			else
-				renderState.block = PistonHeadRenderer.createMovingBlock(oppositePos, state, biome, level);
 		}
 	}
 
-	@Override
-	public int getViewDistance() {
-		return 68;
+	private void renderBlocks(BlockPos pos, BlockState state, PoseStack poseStack, MultiBufferSource buffer, Level level, boolean extended, int combinedOverlay) {
+		if (blockRenderer == null)
+			blockRenderer = Minecraft.getInstance().getBlockRenderer();
+
+		List<BlockModelPart> list = blockRenderer.getBlockModel(state).collectParts(RandomSource.create(state.getSeed(pos)));
+
+		blockRenderer.getModelRenderer().tesselateBlock(level, list, state, pos, poseStack, buffer.getBuffer(ItemBlockRenderTypes.getMovingBlockRenderType(state)), extended, combinedOverlay);
 	}
 
 	@Override
 	public boolean shouldRenderOffScreen() {
 		return true; //replaces NeoForge's getRenderBoundingBox
+	}
+
+	@Override
+	public int getViewDistance() {
+		return 68;
 	}
 }

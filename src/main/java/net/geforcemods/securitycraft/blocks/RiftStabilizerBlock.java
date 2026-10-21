@@ -68,7 +68,7 @@ public class RiftStabilizerBlock extends DisguisableBlock {
 	@Override
 	public InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
 		if (level.getBlockEntity(pos) instanceof RiftStabilizerBlockEntity be && be.isOwnedBy(player)) {
-			if (!level.isClientSide()) {
+			if (!level.isClientSide) {
 				if (be.isDisabled())
 					player.displayClientMessage(Utils.localize("gui.securitycraft:scManual.disabled"), true);
 				else
@@ -126,7 +126,7 @@ public class RiftStabilizerBlock extends DisguisableBlock {
 
 	@Override
 	public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
-		if (!level.isClientSide() && player.isCreative())
+		if (!level.isClientSide && player.isCreative())
 			DoublePlantBlock.preventDropFromBottomPart(level, pos, state, player);
 
 		return super.playerWillDestroy(level, pos, state, player);
@@ -158,7 +158,7 @@ public class RiftStabilizerBlock extends DisguisableBlock {
 	}
 
 	@Override
-	public int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos, Direction direction) {
+	public int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos) {
 		return state.getValue(HALF) == DoubleBlockHalf.LOWER && level.getBlockEntity(pos) instanceof RiftStabilizerBlockEntity be && be.isModuleEnabled(ModuleType.REDSTONE) && be.getLastTeleportationType() != null ? be.getComparatorOutputFunction().applyAsInt(be.getLastTeleportationType()) : 0;
 	}
 

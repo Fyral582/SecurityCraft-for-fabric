@@ -137,7 +137,7 @@ public class BlockReinforcerMenu extends AbstractContainerMenu {
 		public void onTake(Player player, ItemStack itemsTaken) {
 			super.onTake(player, itemsTaken);
 			inputSlot.getItem().shrink(itemsTaken.getCount());
-			blockReinforcer.hurtAndBreak(itemsTaken.getCount(), player, player.getUsedItemHand().asEquipmentSlot());
+			blockReinforcer.hurtAndBreak(itemsTaken.getCount(), player, player.getUsedItemHand());
 
 			if (blockReinforcer.isEmpty()) //Ran out of durability
 				player.closeContainer();

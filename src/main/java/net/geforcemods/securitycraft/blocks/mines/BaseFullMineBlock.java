@@ -55,7 +55,7 @@ public class BaseFullMineBlock extends ExplosiveBlock implements IOverlayDisplay
 	}
 
 	@Override
-	public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity, InsideBlockEffectApplier effectApplier, boolean stillInside) {
+	public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity, InsideBlockEffectApplier effectApplier) {
 		if (level.getBlockEntity(pos) instanceof IOwnable ownable && !ownable.isOwnedBy(entity))
 			explode(level, pos);
 	}
@@ -69,17 +69,17 @@ public class BaseFullMineBlock extends ExplosiveBlock implements IOverlayDisplay
 	}
 
 	@Override
-	public boolean onDestroyedByPlayer(BlockState state, Level level, BlockPos pos, Player player, ItemStack stack, boolean willHarvest, FluidState fluid) {
-		if (!level.isClientSide()) {
+	public boolean onDestroyedByPlayer(BlockState state, Level level, BlockPos pos, Player player, boolean willHarvest, FluidState fluid) {
+		if (!level.isClientSide) {
 			if (player != null && player.isCreative() && !ConfigHandler.SERVER.mineExplodesWhenInCreative.get())
-				return super.onDestroyedByPlayer(state, level, pos, player, stack, willHarvest, fluid);
+				return super.onDestroyedByPlayer(state, level, pos, player, willHarvest, fluid);
 			else if (!(level.getBlockEntity(pos) instanceof IOwnable ownable && ownable.isOwnedBy(player))) {
 				explode(level, pos);
-				return super.onDestroyedByPlayer(state, level, pos, player, stack, willHarvest, fluid);
+				return super.onDestroyedByPlayer(state, level, pos, player, willHarvest, fluid);
 			}
 		}
 
-		return super.onDestroyedByPlayer(state, level, pos, player, stack, willHarvest, fluid);
+		return super.onDestroyedByPlayer(state, level, pos, player, willHarvest, fluid);
 	}
 
 	@Override
@@ -94,7 +94,7 @@ public class BaseFullMineBlock extends ExplosiveBlock implements IOverlayDisplay
 
 	@Override
 	public void explode(Level level, BlockPos pos) {
-		if (!level.isClientSide()) {
+		if (!level.isClientSide) {
 			level.destroyBlock(pos, false);
 			level.explode(null, pos.getX(), pos.getY() + 0.5D, pos.getZ(), ConfigHandler.SERVER.smallerMineExplosion.get() ? 2.5F : 5.0F, ConfigHandler.SERVER.shouldSpawnFire.get(), BlockUtils.getExplosionInteraction());
 		}

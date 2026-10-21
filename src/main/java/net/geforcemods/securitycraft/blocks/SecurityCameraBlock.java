@@ -77,7 +77,7 @@ public class SecurityCameraBlock extends DisguisableBlock implements SimpleWater
 	@Override
 	public InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
 		if (level.getBlockEntity(pos) instanceof SecurityCameraBlockEntity be && be.isOwnedBy(player)) {
-			if (!level.isClientSide())
+			if (!level.isClientSide)
 				player.openMenu(be);
 
 			return InteractionResult.SUCCESS;
@@ -146,12 +146,12 @@ public class SecurityCameraBlock extends DisguisableBlock implements SimpleWater
 	}
 
 	public void mountCamera(Level level, BlockPos pos, Player player) {
-		if (!level.isClientSide()) {
+		if (!level.isClientSide) {
 			ServerLevel serverLevel = (ServerLevel) level;
 			ServerPlayer serverPlayer = (ServerPlayer) player;
 			SecurityCamera dummyEntity;
 			SectionPos chunkPos = SectionPos.of(pos);
-			int viewDistance = Mth.clamp(serverPlayer.requestedViewDistance(), 2, serverLevel.getServer().getPlayerList().getViewDistance());
+			int viewDistance = Mth.clamp(serverPlayer.requestedViewDistance(), 2, serverPlayer.getServer().getPlayerList().getViewDistance());
 
 			if (serverPlayer.getCamera() instanceof SecurityCamera cam)
 				cam.discard();

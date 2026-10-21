@@ -11,7 +11,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.joml.Matrix3x2f;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import com.mojang.blaze3d.platform.cursor.CursorTypes;
 
 import net.geforcemods.securitycraft.SecurityCraft;
 import net.geforcemods.securitycraft.util.ClientUtils;
@@ -23,22 +22,20 @@ import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.render.TextureSetup;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.CommonColors;
 import net.minecraft.util.Mth;
 import net.geforcemods.securitycraft.platform.gui.ExtendedSlider;
 
 public class ColorChooser extends Screen implements GuiEventListener, NarratableEntry {
-	private static final Identifier TEXTURE = SecurityCraft.resLoc("textures/gui/container/color_chooser.png");
-	private static final Identifier HUE_SLIDER_SPRITE = SecurityCraft.resLoc("widget/color_chooser/hue_slider");
-	private static final Identifier HUE_SLIDER_HIGHLIGHTED_SPRITE = SecurityCraft.resLoc("widget/color_chooser/hue_slider_highlighted");
-	private static final Identifier FIELD_SELECTOR_SPRITE = SecurityCraft.resLoc("widget/color_chooser/field_selector");
-	private static final Identifier FIELD_SELECTOR_HIGHLIGHTED_SPRITE = SecurityCraft.resLoc("widget/color_chooser/field_selector_highlighted");
+	private static final ResourceLocation TEXTURE = SecurityCraft.resLoc("textures/gui/container/color_chooser.png");
+	private static final ResourceLocation HUE_SLIDER_SPRITE = SecurityCraft.resLoc("widget/color_chooser/hue_slider");
+	private static final ResourceLocation HUE_SLIDER_HIGHLIGHTED_SPRITE = SecurityCraft.resLoc("widget/color_chooser/hue_slider_highlighted");
+	private static final ResourceLocation FIELD_SELECTOR_SPRITE = SecurityCraft.resLoc("widget/color_chooser/field_selector");
+	private static final ResourceLocation FIELD_SELECTOR_HIGHLIGHTED_SPRITE = SecurityCraft.resLoc("widget/color_chooser/field_selector_highlighted");
 	private static final int COLOR_FIELD_SIZE = 75;
 	protected boolean disabled = true;
 	private final int xStart, yStart;
@@ -139,19 +136,12 @@ public class ColorChooser extends Screen implements GuiEventListener, Narratable
 
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-		boolean colorFieldHovered = colorFieldHoverChecker.checkHover(mouseX, mouseY);
-
 		super.render(guiGraphics, mouseX, mouseY, partialTick);
-		guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, colorFieldHovered ? FIELD_SELECTOR_HIGHLIGHTED_SPRITE : FIELD_SELECTOR_SPRITE, (int) selectionX - 1, (int) selectionY - 1, 3, 3); //color field indicator
+		guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, colorFieldHoverChecker.checkHover(mouseX, mouseY) ? FIELD_SELECTOR_HIGHLIGHTED_SPRITE : FIELD_SELECTOR_SPRITE, (int) selectionX - 1, (int) selectionY - 1, 3, 3); //color field indicator
 		guiGraphics.drawString(font, rText, colorFieldRight + 5, colorFieldTop + 1, CommonColors.DARK_GRAY, false);
 		guiGraphics.drawString(font, gText, colorFieldRight + 5, colorFieldTop + 16, CommonColors.DARK_GRAY, false);
 		guiGraphics.drawString(font, bText, colorFieldRight + 5, colorFieldTop + 31, CommonColors.DARK_GRAY, false);
 		guiGraphics.drawString(font, rgbHexText, colorFieldRight + 5, colorFieldTop + 46, CommonColors.DARK_GRAY, false);
-
-		if (clickedInDragRegion)
-			guiGraphics.requestCursor(CursorTypes.RESIZE_ALL);
-		else if (colorFieldHovered)
-			guiGraphics.requestCursor(CursorTypes.POINTING_HAND);
 	}
 
 	@Override
@@ -173,11 +163,11 @@ public class ColorChooser extends Screen implements GuiEventListener, Narratable
 	}
 
 	@Override
-	public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
-		super.mouseDragged(event, dragX, dragY);
+	public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+		super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
 
-		if (event.button() == 0 && clickedInDragRegion) {
-			setSelection(event.x(), event.y());
+		if (button == 0 && clickedInDragRegion) {
+			setSelection(mouseX, mouseY);
 			return true;
 		}
 
@@ -185,31 +175,31 @@ public class ColorChooser extends Screen implements GuiEventListener, Narratable
 	}
 
 	@Override
-	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-		super.mouseClicked(event, doubleClick);
-		clickedInDragRegion = colorFieldHoverChecker.checkHover(event.x(), event.y());
+	public boolean mouseClicked(double mouseX, double mouseY, int button) {
+		super.mouseClicked(mouseX, mouseY, button);
+		clickedInDragRegion = colorFieldHoverChecker.checkHover(mouseX, mouseY);
 
 		if (clickedInDragRegion)
-			setSelection(event.x(), event.y());
+			setSelection(mouseX, mouseY);
 
 		return false;
 	}
 
 	@Override
-	public boolean mouseReleased(MouseButtonEvent event) {
-		super.mouseReleased(event);
+	public boolean mouseReleased(double mouseX, double mouseY, int button) {
+		super.mouseReleased(mouseX, mouseY, button);
 		clickedInDragRegion = false;
 		return false;
 	}
 
 	@Override
-	public boolean keyPressed(KeyEvent event) {
-		if (minecraft.options.keyInventory.isActiveAndMatches(InputConstants.getKey(event))) {
+	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+		if (minecraft.options.keyInventory.isActiveAndMatches(InputConstants.getKey(keyCode, scanCode))) {
 			onClose();
 			return true;
 		}
 
-		return super.keyPressed(event);
+		return super.keyPressed(keyCode, scanCode, modifiers);
 	}
 
 	@Override

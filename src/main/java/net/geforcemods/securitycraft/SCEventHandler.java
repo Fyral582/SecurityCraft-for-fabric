@@ -69,9 +69,9 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
@@ -88,7 +88,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.vehicle.boat.Boat;
+import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -153,7 +153,7 @@ public class SCEventHandler {
 
 						if (note != null) {
 							NoteBlockInstrument instrument = NoteBlockInstrument.valueOf(note.instrumentName().toUpperCase());
-							SoundEvent sound = instrument.hasCustomSound() && !note.customSound().isEmpty() ? SoundEvent.createVariableRangeEvent(Identifier.parse(note.customSound())) : instrument.getSoundEvent().value();
+							SoundEvent sound = instrument.hasCustomSound() && !note.customSound().isEmpty() ? SoundEvent.createVariableRangeEvent(ResourceLocation.parse(note.customSound())) : instrument.getSoundEvent().value();
 							float pitch = instrument.isTunable() ? (float) Math.pow(2.0D, (note.id() - 12) / 12.0D) : 1.0F;
 
 							player.level().playSound(null, player.blockPosition(), sound, SoundSource.RECORDS, 3.0F, pitch);
@@ -263,7 +263,7 @@ public class SCEventHandler {
 		if (source.is(CustomDamageSources.ELECTRICITY))
 			level.playSound(null, entity.blockPosition(), SCSounds.ELECTRIFIED.event, SoundSource.BLOCKS, 0.25F, 1.0F);
 
-		if (!level.isClientSide() && entity instanceof ServerPlayer player && PlayerUtils.isPlayerMountedOnCamera(entity))
+		if (!level.isClientSide && entity instanceof ServerPlayer player && PlayerUtils.isPlayerMountedOnCamera(entity))
 			((SecurityCamera) player.getCamera()).stopViewing(player);
 	}
 
@@ -384,7 +384,7 @@ public class SCEventHandler {
 			}
 		}
 
-		if (!level.isClientSide()) {
+		if (!level.isClientSide) {
 			if (event.getItemStack().is(Items.REDSTONE) && be instanceof IEMPAffected empAffected && empAffected.isShutDown()) {
 				empAffected.reactivate();
 
@@ -509,7 +509,7 @@ public class SCEventHandler {
 	public static void onOwnership(OwnershipEvent event) {
 		if (event.getLevel().getBlockEntity(event.getPos()) instanceof IOwnable ownable) {
 			String name = event.getPlayer().getName().getString();
-			String uuid = event.getPlayer().getGameProfile().id().toString();
+			String uuid = event.getPlayer().getGameProfile().getId().toString();
 
 			ownable.setOwner(uuid, name);
 		}
@@ -622,7 +622,7 @@ public class SCEventHandler {
 
 		// If no custom sound id is given, check if a custom sound was played, and if so, store its id
 		if (customSoundId.isEmpty() && instrument.hasCustomSound() && level.getBlockEntity(pos.above()) instanceof SkullBlockEntity be) {
-			Identifier noteBlockSound = be.getNoteBlockSound();
+			ResourceLocation noteBlockSound = be.getNoteBlockSound();
 
 			if (noteBlockSound != null)
 				customSoundId = noteBlockSound.toString();

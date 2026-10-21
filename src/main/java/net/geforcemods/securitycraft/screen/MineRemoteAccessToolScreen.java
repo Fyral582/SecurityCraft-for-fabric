@@ -20,12 +20,11 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.CommonColors;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -35,8 +34,8 @@ import net.minecraft.world.level.block.Block;
 import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
 public class MineRemoteAccessToolScreen extends Screen implements StillValid {
-	private static final Identifier TEXTURE = SecurityCraft.resLoc("textures/gui/container/mrat.png");
-	private static final Identifier EXPLOSIVE_SPRITE = SecurityCraft.resLoc("sc_manual/explosive_highlighted");
+	private static final ResourceLocation TEXTURE = SecurityCraft.resLoc("textures/gui/container/mrat.png");
+	private static final ResourceLocation EXPLOSIVE_SPRITE = SecurityCraft.resLoc("sc_manual/explosive_highlighted");
 	private static final int DEFUSE = 0, ACTIVATE = 1, DETONATE = 2, UNBIND = 3;
 	private ItemStack mrat;
 	private Button[][] guiButtons = new Button[6][4]; //6 mines, 4 actions (defuse, prime, detonate, unbind)
@@ -83,7 +82,7 @@ public class MineRemoteAccessToolScreen extends Screen implements StillValid {
 					case DETONATE ->
 							guiButtons[i][j] = new PictureButton(btnX, btnY, 20, 20, EXPLOSIVE_SPRITE, 0, 1, 18, 18, b -> buttonClicked(mine, action));
 					case UNBIND ->
-							guiButtons[i][j] = Button.builder(Component.literal("X"), b -> buttonClicked(mine, action)).pos(btnX, btnY).size(20, 20).build();
+							guiButtons[i][j] = new Button(btnX, btnY, 20, 20, Component.literal("X"), b -> buttonClicked(mine, action), Button.DEFAULT_NARRATION);
 					default -> throw new IllegalArgumentException("Mine actions can only range from 0-3 (inclusive)");
 				}
 
@@ -220,13 +219,13 @@ public class MineRemoteAccessToolScreen extends Screen implements StillValid {
 	}
 
 	@Override
-	public boolean keyPressed(KeyEvent event) {
-		if (minecraft.options.keyInventory.isActiveAndMatches(InputConstants.getKey(event))) {
+	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+		if (minecraft.options.keyInventory.isActiveAndMatches(InputConstants.getKey(keyCode, scanCode))) {
 			onClose();
 			return true;
 		}
 
-		return super.keyPressed(event);
+		return super.keyPressed(keyCode, scanCode, modifiers);
 	}
 
 	@Override

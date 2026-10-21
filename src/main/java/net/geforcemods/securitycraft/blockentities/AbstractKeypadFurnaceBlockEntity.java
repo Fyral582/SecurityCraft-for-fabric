@@ -41,7 +41,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Container;
 import net.minecraft.world.MenuProvider;
-import net.minecraft.world.entity.ContainerUser;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
@@ -214,15 +213,15 @@ public abstract class AbstractKeypadFurnaceBlockEntity extends AbstractFurnaceBl
 	}
 
 	@Override
-	public void startOpen(ContainerUser player) {
-		if (!remove && !player.getLivingEntity().isSpectator())
-			openersCounter.incrementOpeners(player.getLivingEntity(), getLevel(), getBlockPos(), getBlockState(), player.getContainerInteractionRange());
+	public void startOpen(Player player) {
+		if (!remove && !player.isSpectator())
+			openersCounter.incrementOpeners(player, getLevel(), getBlockPos(), getBlockState());
 	}
 
 	@Override
-	public void stopOpen(ContainerUser player) {
-		if (!remove && !player.getLivingEntity().isSpectator())
-			openersCounter.decrementOpeners(player.getLivingEntity(), getLevel(), getBlockPos(), getBlockState());
+	public void stopOpen(Player player) {
+		if (!remove && !player.isSpectator())
+			openersCounter.decrementOpeners(player, getLevel(), getBlockPos(), getBlockState());
 	}
 
 	public void recheckOpen() {

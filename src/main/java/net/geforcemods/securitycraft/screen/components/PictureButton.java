@@ -6,15 +6,15 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 
-public class PictureButton extends Button.Plain {
+public class PictureButton extends Button {
 	private ItemStack blockToRender = ItemStack.EMPTY;
 	private ItemStack itemToRender = ItemStack.EMPTY;
-	private Identifier sprite;
+	private ResourceLocation sprite;
 	private int drawOffsetX;
 	private int drawOffsetY;
 	private int drawWidth;
@@ -33,7 +33,7 @@ public class PictureButton extends Button.Plain {
 			this.itemToRender = new ItemStack(itemToRender.getItem());
 	}
 
-	public PictureButton(int xPos, int yPos, int width, int height, Identifier sprite, int drawOffsetX, int drawOffsetY, int drawWidth, int drawHeight, OnPress onPress) {
+	public PictureButton(int xPos, int yPos, int width, int height, ResourceLocation sprite, int drawOffsetX, int drawOffsetY, int drawWidth, int drawHeight, OnPress onPress) {
 		super(xPos, yPos, width, height, Component.empty(), onPress, DEFAULT_NARRATION);
 
 		this.sprite = sprite;
@@ -44,25 +44,28 @@ public class PictureButton extends Button.Plain {
 	}
 
 	@Override
-	public void renderContents(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		Minecraft mc = Minecraft.getInstance();
-		Font font = mc.font;
+	public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+		if (visible) {
+			Minecraft mc = Minecraft.getInstance();
+			Font font = mc.font;
 
-		super.renderContents(guiGraphics, mouseX, mouseX, partialTicks);
+			isHovered = mouseX >= getX() && mouseY >= getY() && mouseX < getX() + width && mouseY < getY() + height;
+			guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, SPRITES.get(active, isHoveredOrFocused()), getX(), getY(), getWidth(), getHeight());
 
-		if (!blockToRender.isEmpty()) {
-			guiGraphics.renderItem(blockToRender, getX() + 2, getY() + 3);
-			guiGraphics.renderItemDecorations(font, blockToRender, getX() + 2, getY() + 3, "");
+			if (!blockToRender.isEmpty()) {
+				guiGraphics.renderItem(blockToRender, getX() + 2, getY() + 3);
+				guiGraphics.renderItemDecorations(font, blockToRender, getX() + 2, getY() + 3, "");
+			}
+			else if (!itemToRender.isEmpty()) {
+				guiGraphics.renderItem(itemToRender, getX() + 2, getY() + 2);
+				guiGraphics.renderItemDecorations(font, itemToRender, getX() + 2, getY() + 2, "");
+			}
+			else if (getSpriteLocation() != null)
+				guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, getSpriteLocation(), getX() + drawOffsetX, getY() + drawOffsetY, drawWidth, drawHeight);
 		}
-		else if (!itemToRender.isEmpty()) {
-			guiGraphics.renderItem(itemToRender, getX() + 2, getY() + 2);
-			guiGraphics.renderItemDecorations(font, itemToRender, getX() + 2, getY() + 2, "");
-		}
-		else if (getSpriteLocation() != null)
-			guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, getSpriteLocation(), getX() + drawOffsetX, getY() + drawOffsetY, drawWidth, drawHeight);
 	}
 
-	public Identifier getSpriteLocation() {
+	public ResourceLocation getSpriteLocation() {
 		return sprite;
 	}
 

@@ -27,12 +27,11 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.CommonColors;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -42,11 +41,11 @@ import net.minecraft.world.item.ItemStack;
 import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
 public class CustomizeBlockScreen extends AbstractContainerScreen<CustomizeBlockMenu> implements IHasExtraAreas, ContainerListener {
-	private static final Identifier CONFIRM_SPRITE = SecurityCraft.mcResLoc("container/beacon/confirm");
-	private static final Identifier CANCEL_SPRITE = SecurityCraft.mcResLoc("container/beacon/cancel");
+	private static final ResourceLocation CONFIRM_SPRITE = SecurityCraft.mcResLoc("container/beacon/confirm");
+	private static final ResourceLocation CANCEL_SPRITE = SecurityCraft.mcResLoc("container/beacon/cancel");
 	private final List<Rect2i> extraAreas = new ArrayList<>();
 	private final int maxNumberOfModules;
-	private final Identifier texture;
+	private final ResourceLocation texture;
 	private final PictureButton[] descriptionButtons;
 	private IModuleInventory moduleInv;
 	private AbstractWidget[] optionButtons;
@@ -132,7 +131,7 @@ public class CustomizeBlockScreen extends AbstractContainerScreen<CustomizeBlock
 						optionButtons[i].setFGColor(14737632);
 					}
 					else {
-						optionButtons[i] = Button.builder(getOptionButtonTitle(option), this::optionButtonClicked).pos(leftPos + 178, (topPos + 10) + (i * 25)).size(120, 20).build();
+						optionButtons[i] = new Button(leftPos + 178, (topPos + 10) + (i * 25), 120, 20, getOptionButtonTitle(option), this::optionButtonClicked, Button.DEFAULT_NARRATION);
 						optionButtons[i].setFGColor(option.toString().equals(option.getDefaultValue().toString()) ? 16777120 : 14737632);
 					}
 
@@ -177,8 +176,8 @@ public class CustomizeBlockScreen extends AbstractContainerScreen<CustomizeBlock
 	}
 
 	@Override
-	public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
-		return getFocused() != null && isDragging() && event.button() == 0 && getFocused().mouseDragged(event, dragX, dragY) || super.mouseDragged(event, dragX, dragY);
+	public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+		return getFocused() != null && isDragging() && button == 0 && getFocused().mouseDragged(mouseX, mouseY, button, dragX, dragY) || super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
 	}
 
 	@Override

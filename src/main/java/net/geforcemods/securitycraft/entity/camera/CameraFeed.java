@@ -22,7 +22,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.server.level.ChunkTrackingView;
-import net.minecraft.world.attribute.EnvironmentAttributeProbe;
 import net.minecraft.world.phys.AABB;
 
 public class CameraFeed {
@@ -32,11 +31,8 @@ public class CameraFeed {
 	private final Set<Long> sectionsInRangePositions = new HashSet<>();
 	private final List<RenderSection> visibleSections = new ArrayList<>();
 	private final List<RenderSection> compilingSectionsQueue = new ArrayList<>();
-	private final EnvironmentAttributeProbe frameAttributeProbe = new EnvironmentAttributeProbe();
 	private final RenderTarget renderTarget;
-	private Frustum cameraFrustum;
 	private boolean requiresFrustumUpdate = false;
-	private boolean hasFrameInFrustum = false;
 
 	public CameraFeed(GlobalPos globalPos, RenderSection startingSection) {
 		int resolution = ConfigHandler.CLIENT.frameFeedResolution.get();
@@ -124,19 +120,13 @@ public class CameraFeed {
 		return !visibleSections.isEmpty();
 	}
 
-	public void updateHasFrameInFrustum(Frustum frustum) {
-		hasFrameInFrustum = false;
-
+	public boolean hasFrameInFrustum(Frustum frustum) {
 		for (BlockPos framePos : linkedFrames) {
-			if (frustum.isVisible(new AABB(framePos))) {
-				hasFrameInFrustum = true;
-				break;
-			}
+			if (frustum.isVisible(new AABB(framePos)))
+				return true;
 		}
-	}
 
-	public boolean hasFrameInFrustum() {
-		return hasFrameInFrustum;
+		return false;
 	}
 
 	public void linkFrame(FrameBlockEntity be) {
@@ -163,19 +153,7 @@ public class CameraFeed {
 		return lastActiveTime;
 	}
 
-	public EnvironmentAttributeProbe attributeProbe() {
-		return frameAttributeProbe;
-	}
-
 	public RenderTarget renderTarget() {
 		return renderTarget;
-	}
-
-	public void setCameraFrustum(Frustum cameraFrustum) {
-		this.cameraFrustum = cameraFrustum;
-	}
-
-	public Frustum getCameraFrustum() {
-		return cameraFrustum;
 	}
 }

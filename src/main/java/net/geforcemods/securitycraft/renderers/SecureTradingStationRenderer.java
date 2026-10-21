@@ -8,15 +8,12 @@ import net.geforcemods.securitycraft.ClientHandler;
 import net.geforcemods.securitycraft.blockentities.SecureTradingStationBlockEntity;
 import net.geforcemods.securitycraft.blocks.SecureTradingStationBlock;
 import net.geforcemods.securitycraft.misc.ModuleType;
-import net.geforcemods.securitycraft.renderers.state.SecureTradingStationRenderState;
-import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.entity.state.ItemClusterRenderState;
-import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.client.renderer.item.ItemModelResolver;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
-import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemDisplayContext;
@@ -25,7 +22,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-public class SecureTradingStationRenderer implements BlockEntityRenderer<SecureTradingStationBlockEntity, SecureTradingStationRenderState> {
+public class SecureTradingStationRenderer implements BlockEntityRenderer<SecureTradingStationBlockEntity> {
 	private static final Quaternionf[] ROTATIONS = {
 			new Quaternionf().rotateY((float) Math.PI), //south
 			new Quaternionf().rotateY((float) Math.PI / 2.0F), //west
@@ -33,57 +30,42 @@ public class SecureTradingStationRenderer implements BlockEntityRenderer<SecureT
 			new Quaternionf().rotateY((float) -Math.PI / 2.0F) //east
 	};
 	private final ItemModelResolver itemModelResolver;
+	private final ItemStackRenderState itemStackRenderState = new ItemStackRenderState();
 
 	public SecureTradingStationRenderer(BlockEntityRendererProvider.Context ctx) {
-		itemModelResolver = ctx.itemModelResolver();
+		itemModelResolver = ctx.getItemModelResolver();
 	}
 
 	@Override
-	public void submit(SecureTradingStationRenderState state, PoseStack pose, SubmitNodeCollector collector, CameraRenderState camera) {
-		ClientHandler.DISGUISED_BLOCK_RENDER_DELEGATE.trySubmitDelegate(state.disguiseRenderState, pose, collector, camera);
+	public void render(SecureTradingStationBlockEntity be, float partialTicks, PoseStack pose, MultiBufferSource buffer, int packedLight, int packedOverlay, Vec3 cameraPos) {
+		ClientHandler.DISGUISED_BLOCK_RENDER_DELEGATE.tryRenderDelegate(be, partialTicks, pose, buffer, packedLight, packedOverlay, cameraPos);
 
-		if (!state.isDisguised) {
-			if (!state.payment.isEmpty())
-				submitItem(state, pose, state.payment, 0.225F, collector, camera);
+		if (!be.isModuleEnabled(ModuleType.DISGUISE)) {
+			Level level = be.getLevel();
+			Direction facing = be.getBlockState().getValue(SecureTradingStationBlock.FACING);
+			ItemStack paymentDisplay = be.getPaymentDisplay();
+			ItemStack rewardDisplay = be.getRewardDisplay();
 
-			if (!state.reward.isEmpty())
-				submitItem(state, pose, state.reward, -0.225F, collector, camera);
+			if (!paymentDisplay.isEmpty())
+				renderItem(level, pose, paymentDisplay, facing, 0.225F, buffer, packedLight);
+
+			if (!rewardDisplay.isEmpty())
+				renderItem(level, pose, rewardDisplay, facing, -0.225F, buffer, packedLight);
 		}
 	}
 
-	private void submitItem(SecureTradingStationRenderState state, PoseStack pose, ItemStackRenderState stack, float sideOffset, SubmitNodeCollector collector, CameraRenderState camera) {
-		AABB modelSize = stack.getModelBoundingBox();
+	private void renderItem(Level level, PoseStack pose, ItemStack stack, Direction facing, float sideOffset, MultiBufferSource buffer, int packedLight) {
+		int seed = ItemClusterRenderState.getSeedForItemStack(stack);
+		AABB modelSize;
 
+		itemModelResolver.updateForTopItem(itemStackRenderState, stack, ItemDisplayContext.FIXED, level, null, seed);
+		modelSize = itemStackRenderState.getModelBoundingBox();
 		pose.pushPose();
 		pose.translate(0.5F, 0.4F - 0.3F * modelSize.minY, 0.5F);
-		pose.mulPose(state.rotation);
+		pose.mulPose(ROTATIONS[facing.get2DDataValue()]);
 		pose.translate(sideOffset, 0.0F, modelSize.getZsize() <= 0.0625F ? 0.1F : 0.0F);
 		pose.scale(0.35F, 0.35F, 0.35F);
-		stack.submit(pose, collector, state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
+		itemStackRenderState.render(pose, buffer, packedLight, OverlayTexture.NO_OVERLAY);
 		pose.popPose();
-	}
-
-	@Override
-	public SecureTradingStationRenderState createRenderState() {
-		return new SecureTradingStationRenderState();
-	}
-
-	@Override
-	public void extractRenderState(SecureTradingStationBlockEntity be, SecureTradingStationRenderState state, float partialTick, Vec3 cameraPos, ModelFeatureRenderer.CrumblingOverlay crumblingOverlay) {
-		Level level = be.getLevel();
-		Direction facing = be.getBlockState().getValue(SecureTradingStationBlock.FACING);
-
-		BlockEntityRenderer.super.extractRenderState(be, state, partialTick, cameraPos, crumblingOverlay);
-		state.disguiseRenderState = ClientHandler.DISGUISED_BLOCK_RENDER_DELEGATE.tryExtractFromDelegate(be, partialTick, cameraPos, crumblingOverlay);
-		extractItem(level, state.payment, be.getPaymentDisplay());
-		extractItem(level, state.reward, be.getRewardDisplay());
-		state.rotation = ROTATIONS[facing.get2DDataValue()];
-		state.isDisguised = be.isModuleEnabled(ModuleType.DISGUISE);
-	}
-
-	private void extractItem(Level level, ItemStackRenderState state, ItemStack stack) {
-		int seed = ItemClusterRenderState.getSeedForItemStack(stack);
-
-		itemModelResolver.updateForTopItem(state, stack, ItemDisplayContext.FIXED, level, null, seed);
 	}
 }

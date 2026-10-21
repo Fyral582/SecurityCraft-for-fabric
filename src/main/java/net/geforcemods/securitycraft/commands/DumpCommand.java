@@ -11,13 +11,14 @@ import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import net.geforcemods.securitycraft.SCContent;
 import net.minecraft.ChatFormatting;
+import net.minecraft.Util;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
-import net.minecraft.util.Util;
+import net.minecraft.Util;
 import net.geforcemods.securitycraft.platform.registry.DeferredHolder;
 import net.geforcemods.securitycraft.platform.registry.DeferredRegister;
 

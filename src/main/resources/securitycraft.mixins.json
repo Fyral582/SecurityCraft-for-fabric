@@ -4,7 +4,6 @@
 	"compatibilityLevel": "JAVA_21",
 	"client": [
 		"camera.ClientChunkCacheMixin",
-		"camera.CustomFeatureRendererMixin",
 		"camera.GameRendererMixin",
 		"camera.LevelRendererLocalPlayerMixin",
 		"camera.LevelRendererMixin",
@@ -12,11 +11,11 @@
 		"camera.MinecraftMixin",
 		"camera.ViewAreaMixin",
 		"f3.BetterF3TargetModuleMixin",
-		"f3.DebugEntryLookingAtBlockMixin",
-		"f3.DebugEntryLookingAtFluidMixin",
+		"f3.DebugScreenOverlayMixin",
+		"taser.HumanoidModelMixin",
+		"taser.HumanoidRenderStateMixin",
 		"taser.ItemInHandRendererMixin",
-		"taser.AvatarRendererMixin",
-		"taser.HumanoidModelMixin"
+		"taser.PlayerRendererMixin"
 	],
 	"mixins": [
 		"camera.ChunkMapMixin",
@@ -24,7 +23,6 @@
 		"camera.ServerPlayerMixin",
 		"camera.TrackedEntityMixin",
 		"datafix.BoatSplitFixMixin",
-		"datafix.GameRuleRegistryFixMixin",
 		"datafix.ItemStackComponentizationFixMixin",
 		"datafix.V1460Mixin",
 		"datafix.V3439Mixin",

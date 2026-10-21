@@ -63,7 +63,7 @@ public class MultiPlayerGameModeMixin {
 
 	@WrapOperation(method = "destroyBlock", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;setBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Z"))
 	private boolean securitycraft$onDestroyedByPlayer(Level level, BlockPos pos, BlockState newState, int flags, Operation<Boolean> original, @Local(ordinal = 0) BlockState state, @Local FluidState fluidState) {
-		return state.onDestroyedByPlayer(level, pos, minecraft.player, minecraft.player.getMainHandItem(), false, fluidState);
+		return state.onDestroyedByPlayer(level, pos, minecraft.player, false, fluidState);
 	}
 
 	@WrapOperation(method = "continueDestroyBlock", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/state/BlockState;getSoundType()Lnet/minecraft/world/level/block/SoundType;"))

@@ -11,8 +11,8 @@ import net.geforcemods.securitycraft.SCContent;
 import net.geforcemods.securitycraft.blocks.mines.TrackMineBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.vehicle.minecart.MinecartBehavior;
-import net.minecraft.world.entity.vehicle.minecart.NewMinecartBehavior;
+import net.minecraft.world.entity.vehicle.MinecartBehavior;
+import net.minecraft.world.entity.vehicle.NewMinecartBehavior;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
@@ -21,7 +21,7 @@ import net.minecraft.world.level.block.state.BlockState;
  */
 @Mixin(NewMinecartBehavior.class)
 public class NewMinecartBehaviorMixin {
-	@Inject(method = "moveAlongTrack", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/vehicle/minecart/AbstractMinecart;setOldPosAndRot()V"))
+	@Inject(method = "moveAlongTrack", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/vehicle/AbstractMinecart;setOldPosAndRot()V"))
 	private void securitycraft$makeRailMineWork(ServerLevel level, CallbackInfo ci, @Local BlockPos currentPos, @Local BlockState currentState) {
 		if (currentState.is(SCContent.TRACK_MINE))
 			((TrackMineBlock) currentState.getBlock()).onMinecartPass(level, currentPos, ((MinecartBehavior) (Object) this).minecart);

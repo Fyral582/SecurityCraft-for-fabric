@@ -26,6 +26,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -82,17 +83,17 @@ public class UniversalBlockRemoverItem extends Item {
 							laser.propagate(new ILinkedAction.ModuleRemoved(((ModuleItem) module.getItem()).getModuleType(), false), laser);
 					}
 
-					if (!level.isClientSide()) {
+					if (!level.isClientSide) {
 						level.destroyBlock(pos, true);
 						LaserBlock.destroyAdjacentLasers(level, pos);
-						stack.hurtAndBreak(1, player, ctx.getHand().asEquipmentSlot());
+						stack.hurtAndBreak(1, player, LivingEntity.getSlotForHand(ctx.getHand()));
 					}
 				}
 				else if (block == SCContent.CAGE_TRAP.get()) {
 					if (!level.isClientSide() && be instanceof CageTrapBlockEntity cageTrap) {
 						cageTrap.disassembleIronBars();
 						level.destroyBlock(pos, true);
-						stack.hurtAndBreak(1, player, ctx.getHand().asEquipmentSlot());
+						stack.hurtAndBreak(1, player, LivingEntity.getSlotForHand(ctx.getHand()));
 					}
 				}
 				else {
@@ -106,10 +107,10 @@ public class UniversalBlockRemoverItem extends Item {
 							inventoryScanner.getInventory().clear();
 					}
 
-					if (!level.isClientSide()) {
+					if (!level.isClientSide) {
 						level.destroyBlock(pos, true); //this also removes the BlockEntity
 						block.destroy(level, pos, state);
-						stack.hurtAndBreak(1, player, ctx.getHand().asEquipmentSlot());
+						stack.hurtAndBreak(1, player, LivingEntity.getSlotForHand(ctx.getHand()));
 					}
 				}
 

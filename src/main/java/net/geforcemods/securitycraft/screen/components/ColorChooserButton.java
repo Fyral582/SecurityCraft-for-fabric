@@ -4,10 +4,9 @@ import net.geforcemods.securitycraft.platform.gui.ScreenLayers;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.input.InputWithModifiers;
 import net.minecraft.network.chat.Component;
 
-public class ColorChooserButton extends Button.Plain {
+public class ColorChooserButton extends Button {
 	private final ColorChooser colorChooser;
 
 	public ColorChooserButton(int x, int y, int width, int height, ColorChooser colorChooser) {
@@ -17,15 +16,15 @@ public class ColorChooserButton extends Button.Plain {
 	}
 
 	@Override
-	public void renderContents(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+	public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
 		int color = colorChooser.getARGBColor();
 
-		super.renderContents(guiGraphics, mouseX, mouseY, partialTick);
+		super.renderWidget(guiGraphics, mouseX, mouseY, partialTick);
 		guiGraphics.fillGradient(getX() + 2, getY() + 2, getX() + width - 2, getY() + height - 2, color, color);
 	}
 
 	@Override
-	public void onPress(InputWithModifiers input) {
+	public void onPress() {
 		if (colorChooser.disabled)
 			ScreenLayers.pushGuiLayer(colorChooser);
 		else

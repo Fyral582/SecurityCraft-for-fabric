@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 
@@ -17,7 +18,8 @@ import fuzs.forgeconfigapiport.fabric.api.v5.ConfigRegistry;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.fabric.api.resource.v1.ResourceLoader;
+import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
+import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
 import net.geforcemods.securitycraft.api.IReinforcedBlock;
 import net.geforcemods.securitycraft.api.SecurityCraftAPI;
 import net.geforcemods.securitycraft.blocks.AbstractKeypadFurnaceBlock;
@@ -48,12 +50,13 @@ import net.geforcemods.securitycraft.util.HasManualPage;
 import net.geforcemods.securitycraft.util.Reinforced;
 import net.geforcemods.securitycraft.util.Utils;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.packs.PackType;
-import net.minecraft.server.packs.resources.PreparableReloadListener;
+import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -62,6 +65,8 @@ import net.neoforged.fml.config.ModConfig;
 public class SecurityCraft implements ModInitializer {
 	public static final Logger LOGGER = LogUtils.getLogger();
 	public static final String MODID = "securitycraft";
+	public static final Supplier<GameRules.Key<GameRules.BooleanValue>> RULE_FAKE_WATER_SOURCE_CONVERSION = Suppliers.memoize(() -> GameRules.register("fakeWaterSourceConversion", GameRules.Category.UPDATES, GameRules.BooleanValue.create(true)));
+	public static final Supplier<GameRules.Key<GameRules.BooleanValue>> RULE_FAKE_LAVA_SOURCE_CONVERSION = Suppliers.memoize(() -> GameRules.register("fakeLavaSourceConversion", GameRules.Category.UPDATES, GameRules.BooleanValue.create(false)));
 	public static final Random RANDOM = new Random();
 	//tickets are not persisted, so there is no need to validate them when the level loads
 	public static final ChunkTicketController CAMERA_TICKET_CONTROLLER = new ChunkTicketController(resLoc("camera_chunks"));
@@ -77,7 +82,8 @@ public class SecurityCraft implements ModInitializer {
 		RegistrationHandler.registerSounds();
 		SCContent.DATA_COMPONENTS.register();
 		SCContent.DATA_SERIALIZERS.register();
-		SCContent.GAME_RULES.register();
+		RULE_FAKE_WATER_SOURCE_CONVERSION.get();
+		RULE_FAKE_LAVA_SOURCE_CONVERSION.get();
 		SCContent.PARTICLE_TYPES.register();
 		SCContent.RECIPE_SERIALIZERS.register();
 		SCContent.LOOT_ITEM_CONDITION_TYPES.register();
@@ -93,7 +99,17 @@ public class SecurityCraft implements ModInitializer {
 		RegistrationHandler.init();
 		SCEventHandler.register();
 		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> SCCommand.register(dispatcher));
-		ResourceLoader.get(PackType.SERVER_DATA).registerReloader(resLoc("collect_sc_content_data"), (PreparableReloadListener) (state, e1, barrier, e2) -> CompletableFuture.runAsync(() -> collectSCContentData(true), e1).thenCompose(barrier::wait));
+		ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(new SimpleSynchronousResourceReloadListener() {
+			@Override
+			public ResourceLocation getFabricId() {
+				return resLoc("collect_sc_content_data");
+			}
+
+			@Override
+			public void onResourceManagerReload(ResourceManager resourceManager) {
+				collectSCContentData(true);
+			}
+		});
 		ServerLifecycleEvents.SERVER_STARTED.register(server -> collectSCContentData(server, true));
 		registerApiContent();
 		SecurityCraftAPI.finishRegistration();
@@ -189,11 +205,11 @@ public class SecurityCraft implements ModInitializer {
 		return "v" + SCPlatform.getVersion();
 	}
 
-	public static Identifier resLoc(String path) {
-		return Identifier.fromNamespaceAndPath(MODID, path);
+	public static ResourceLocation resLoc(String path) {
+		return ResourceLocation.fromNamespaceAndPath(MODID, path);
 	}
 
-	public static Identifier mcResLoc(String path) {
-		return Identifier.withDefaultNamespace(path);
+	public static ResourceLocation mcResLoc(String path) {
+		return ResourceLocation.withDefaultNamespace(path);
 	}
 }

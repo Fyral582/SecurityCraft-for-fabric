@@ -38,12 +38,11 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.ContainerHelper;
-import net.minecraft.world.entity.ContainerUser;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -94,7 +93,7 @@ public class KeypadBarrelBlockEntity extends RandomizableContainerBlockEntity im
 	private SmartModuleCooldownOption smartModuleCooldown = new SmartModuleCooldownOption();
 	private long cooldownEnd = 0;
 	private Map<ModuleType, Boolean> moduleStates = new EnumMap<>(ModuleType.class);
-	private Identifier previousBarrel;
+	private ResourceLocation previousBarrel;
 
 	public KeypadBarrelBlockEntity(BlockPos pos, BlockState state) {
 		super(SCContent.KEYPAD_BARREL_BLOCK_ENTITY.get(), pos, state);
@@ -142,7 +141,7 @@ public class KeypadBarrelBlockEntity extends RandomizableContainerBlockEntity im
 		String savedPreviousBarrel = tag.getStringOr("previous_barrel", "");
 
 		if (!savedPreviousBarrel.isBlank()) {
-			Identifier parsedPreviousBarrel = Identifier.parse(savedPreviousBarrel);
+			ResourceLocation parsedPreviousBarrel = ResourceLocation.parse(savedPreviousBarrel);
 
 			if (parsedPreviousBarrel.getPath() != null && !parsedPreviousBarrel.getPath().isBlank())
 				previousBarrel = parsedPreviousBarrel;
@@ -367,15 +366,15 @@ public class KeypadBarrelBlockEntity extends RandomizableContainerBlockEntity im
 	}
 
 	@Override
-	public void startOpen(ContainerUser player) {
-		if (!remove && !player.getLivingEntity().isSpectator())
-			openersCounter.incrementOpeners(player.getLivingEntity(), getLevel(), getBlockPos(), getBlockState(), player.getContainerInteractionRange());
+	public void startOpen(Player player) {
+		if (!remove && !player.isSpectator())
+			openersCounter.incrementOpeners(player, getLevel(), getBlockPos(), getBlockState());
 	}
 
 	@Override
-	public void stopOpen(ContainerUser player) {
-		if (!remove && !player.getLivingEntity().isSpectator())
-			openersCounter.decrementOpeners(player.getLivingEntity(), getLevel(), getBlockPos(), getBlockState());
+	public void stopOpen(Player player) {
+		if (!remove && !player.isSpectator())
+			openersCounter.decrementOpeners(player, getLevel(), getBlockPos(), getBlockState());
 	}
 
 	public void recheckOpen() {
@@ -405,7 +404,7 @@ public class KeypadBarrelBlockEntity extends RandomizableContainerBlockEntity im
 		this.previousBarrel = Utils.getRegistryName(previousBarrel);
 	}
 
-	public Identifier getPreviousBarrel() {
+	public ResourceLocation getPreviousBarrel() {
 		return previousBarrel;
 	}
 

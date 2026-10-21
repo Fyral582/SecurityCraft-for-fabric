@@ -16,6 +16,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.InsideBlockEffectApplier;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -82,7 +83,7 @@ public class CageTrapBlock extends DisguisableBlock {
 	}
 
 	@Override
-	public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity, InsideBlockEffectApplier effectApplier, boolean stillInside) {
+	public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity, InsideBlockEffectApplier effectApplier) {
 		if (!level.isClientSide() && level.getBlockEntity(pos) instanceof CageTrapBlockEntity cageTrap) {
 			if (cageTrap.isDisabled())
 				return;
@@ -115,7 +116,7 @@ public class CageTrapBlock extends DisguisableBlock {
 				level.setBlockAndUpdate(pos, state.setValue(DEACTIVATED, true));
 
 				if (!player.isCreative())
-					stack.hurtAndBreak(1, player, hand.asEquipmentSlot());
+					stack.hurtAndBreak(1, player, LivingEntity.getSlotForHand(hand));
 
 				level.playSound(null, pos, SoundEvents.SHEEP_SHEAR, SoundSource.BLOCKS, 1.0F, 1.0F);
 				return InteractionResult.SUCCESS;
@@ -155,10 +156,10 @@ public class CageTrapBlock extends DisguisableBlock {
 	}
 
 	@Override
-	public boolean onDestroyedByPlayer(BlockState state, Level level, BlockPos pos, Player player, ItemStack stack, boolean willHarvest, FluidState fluid) {
+	public boolean onDestroyedByPlayer(BlockState state, Level level, BlockPos pos, Player player, boolean willHarvest, FluidState fluid) {
 		if (!level.isClientSide() && level.getBlockEntity(pos) instanceof CageTrapBlockEntity be)
 			be.disassembleIronBars();
 
-		return super.onDestroyedByPlayer(state, level, pos, player, stack, willHarvest, fluid);
+		return super.onDestroyedByPlayer(state, level, pos, player, willHarvest, fluid);
 	}
 }

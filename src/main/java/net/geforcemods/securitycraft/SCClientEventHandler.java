@@ -4,8 +4,8 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientChunkEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientWorldEvents;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
-import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import java.util.List;
@@ -41,7 +41,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.CommonColors;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffects;
@@ -60,12 +61,12 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.geforcemods.securitycraft.platform.registry.DeferredHolder;
 
 public class SCClientEventHandler {
-	public static final Identifier BACKGROUND_SPRITE = SecurityCraft.resLoc("hud/camera/background");
-	public static final Identifier LIVE_SPRITE = SecurityCraft.resLoc("hud/camera/live");
-	public static final Identifier NIGHT_VISION_INACTIVE_SPRITE = SecurityCraft.resLoc("hud/camera/night_vision_inactive");
-	public static final Identifier REDSTONE_MODULE_NOT_PRESENT_SPRITE = SecurityCraft.resLoc("hud/camera/redstone_module_not_present");
-	public static final Identifier REDSTONE_MODULE_PRESENT_SPRITE = SecurityCraft.resLoc("hud/camera/redstone_module_present");
-	public static final Identifier NIGHT_VISION = SecurityCraft.mcResLoc("textures/mob_effect/night_vision.png");
+	public static final ResourceLocation BACKGROUND_SPRITE = SecurityCraft.resLoc("hud/camera/background");
+	public static final ResourceLocation LIVE_SPRITE = SecurityCraft.resLoc("hud/camera/live");
+	public static final ResourceLocation NIGHT_VISION_INACTIVE_SPRITE = SecurityCraft.resLoc("hud/camera/night_vision_inactive");
+	public static final ResourceLocation REDSTONE_MODULE_NOT_PRESENT_SPRITE = SecurityCraft.resLoc("hud/camera/redstone_module_not_present");
+	public static final ResourceLocation REDSTONE_MODULE_PRESENT_SPRITE = SecurityCraft.resLoc("hud/camera/redstone_module_present");
+	public static final ResourceLocation NIGHT_VISION = SecurityCraft.mcResLoc("textures/mob_effect/night_vision.png");
 	public static final ItemStack REDSTONE = new ItemStack(Items.REDSTONE);
 	private static final Component REDSTONE_NOTE = Utils.localize("gui.securitycraft:camera.toggleRedstoneNote");
 	private static final Component SMART_MODULE_NOTE = Utils.localize("gui.securitycraft:camera.smartModuleNote");
@@ -73,11 +74,11 @@ public class SCClientEventHandler {
 	private static final CameraKeyInfoEntry[] CAMERA_KEY_INFO_LIST = {
 			new CameraKeyInfoEntry(() -> true, options -> Utils.localize("gui.securitycraft:camera.lookAround", options.keyUp.getTranslatedKeyMessage(), options.keyLeft.getTranslatedKeyMessage(), options.keyDown.getTranslatedKeyMessage(), options.keyRight.getTranslatedKeyMessage()), $ -> true),
 			new CameraKeyInfoEntry(() -> true, options -> Utils.localize("gui.securitycraft:camera.exit", options.keyShift.getTranslatedKeyMessage()), $ -> true),
-			new CameraKeyInfoEntry(() -> true, $ -> Utils.localize("gui.securitycraft:camera.zoom", KeyBindings.cameraZoomIn().getTranslatedKeyMessage(), KeyBindings.cameraZoomOut().getTranslatedKeyMessage()), $ -> true),
-			new CameraKeyInfoEntry(ConfigHandler.SERVER.allowCameraNightVision::get, $ -> Utils.localize("gui.securitycraft:camera.activateNightVision", KeyBindings.cameraActivateNightVision().getTranslatedKeyMessage()), $ -> true),
-			new CameraKeyInfoEntry(() -> true, $ -> Utils.localize("gui.securitycraft:camera.toggleRedstone", KeyBindings.cameraEmitRedstone().getTranslatedKeyMessage()), be -> be.isModuleEnabled(ModuleType.REDSTONE)),
+			new CameraKeyInfoEntry(() -> true, $ -> Utils.localize("gui.securitycraft:camera.zoom", KeyBindings.cameraZoomIn.getTranslatedKeyMessage(), KeyBindings.cameraZoomOut.getTranslatedKeyMessage()), $ -> true),
+			new CameraKeyInfoEntry(ConfigHandler.SERVER.allowCameraNightVision::get, $ -> Utils.localize("gui.securitycraft:camera.activateNightVision", KeyBindings.cameraActivateNightVision.getTranslatedKeyMessage()), $ -> true),
+			new CameraKeyInfoEntry(() -> true, $ -> Utils.localize("gui.securitycraft:camera.toggleRedstone", KeyBindings.cameraEmitRedstone.getTranslatedKeyMessage()), be -> be.isModuleEnabled(ModuleType.REDSTONE)),
 			new CameraKeyInfoEntry(() -> true, $ -> REDSTONE_NOTE, be -> be.isModuleEnabled(ModuleType.REDSTONE)),
-			new CameraKeyInfoEntry(() -> true, $ -> Utils.localize("gui.securitycraft:camera.setDefaultViewingDirection", KeyBindings.setDefaultViewingDirection().getTranslatedKeyMessage()), be -> be.isModuleEnabled(ModuleType.SMART)),
+			new CameraKeyInfoEntry(() -> true, $ -> Utils.localize("gui.securitycraft:camera.setDefaultViewingDirection", KeyBindings.setDefaultViewingDirection.getTranslatedKeyMessage()), be -> be.isModuleEnabled(ModuleType.SMART)),
 			new CameraKeyInfoEntry(() -> true, $ -> SMART_MODULE_NOTE, be -> be.isModuleEnabled(ModuleType.SMART))
 	};
 	//@formatter:on
@@ -88,7 +89,7 @@ public class SCClientEventHandler {
 
 	public static void register() {
 		ClientTickEvents.END_CLIENT_TICK.register(mc -> onClientTickPost());
-		WorldRenderEvents.BEFORE_TRANSLUCENT.register(SCClientEventHandler::onRenderLevelStage);
+		WorldRenderEvents.AFTER_TRANSLUCENT.register(SCClientEventHandler::onRenderLevelStage);
 		ClientChunkEvents.CHUNK_UNLOAD.register((level, chunk) -> onChunkUnload(chunk.getPos()));
 		ClientWorldEvents.AFTER_CLIENT_WORLD_CHANGE.register((mc, level) -> onLevelUnload());
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, mc) -> onLevelUnload());
@@ -106,8 +107,8 @@ public class SCClientEventHandler {
 	}
 
 	public static void onRenderLevelStage(WorldRenderContext context) {
-		Vec3 camPos = context.worldState().cameraRenderState.pos;
-		PoseStack pose = context.matrices();
+		Vec3 camPos = context.camera().getPosition();
+		PoseStack pose = context.matrixStack();
 		Minecraft mc = Minecraft.getInstance();
 		Level level = mc.level;
 		VertexConsumer consumer = mc.renderBuffers().bufferSource().getBuffer(ClientHandler.OVERLAY_LINES);
@@ -117,12 +118,16 @@ public class SCClientEventHandler {
 
 			if (be instanceof BlockChangeDetectorBlockEntity bcd && bcd.isShowingHighlights() && bcd.isOwnedBy(mc.player)) {
 				int packedColor = bcd.getColor();
+				float r = ARGB.red(packedColor) / 255.0F;
+				float g = ARGB.green(packedColor) / 255.0F;
+				float b = ARGB.blue(packedColor) / 255.0F;
 
 				for (ChangeEntry changeEntry : bcd.getFilteredEntries()) {
 					BlockPos pos = changeEntry.pos();
 
 					pose.pushPose();
-					ShapeRenderer.renderShape(pose, consumer, Shapes.block(), pos.getX() - camPos.x, pos.getY() - camPos.y, pos.getZ() - camPos.z, packedColor, 1.0F);
+					pose.translate(pos.getX() - camPos.x, pos.getY() - camPos.y, pos.getZ() - camPos.z);
+					ShapeRenderer.renderLineBox(pose, consumer, 0, 0, 0, 1, 1, 1, r, g, b, 1.0F);
 					pose.popPose();
 				}
 			}
@@ -189,19 +194,18 @@ public class SCClientEventHandler {
 
 	public static void cameraOverlay(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
 		Minecraft mc = Minecraft.getInstance();
-
-		if (mc.options.hideGui)
-			return;
-
 		Level level = mc.level;
-		BlockPos pos = mc.getCameraEntity().blockPosition();
+		BlockPos pos = mc.cameraEntity.blockPosition();
+		Window window = mc.getWindow();
+		int scaledWidth = window.getGuiScaledWidth();
+		int scaledHeight = window.getGuiScaledHeight();
+
+		if (mc.options.hideGui || mc.getDebugOverlay().showDebugScreen())
+			return;
 
 		if (!(level.getBlockEntity(pos) instanceof SecurityCameraBlockEntity be))
 			return;
 
-		Window window = mc.getWindow();
-		int scaledWidth = window.getGuiScaledWidth();
-		int scaledHeight = window.getGuiScaledHeight();
 		Font font = Minecraft.getInstance().font;
 		Options options = Minecraft.getInstance().options;
 		BlockState state = level.getBlockState(pos);

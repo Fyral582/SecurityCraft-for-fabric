@@ -22,8 +22,8 @@ import net.minecraft.data.recipes.ShapelessRecipeBuilder;
 import net.minecraft.data.recipes.SimpleCookingRecipeBuilder;
 import net.minecraft.data.recipes.SingleItemRecipeBuilder;
 import net.minecraft.data.recipes.SpecialRecipeBuilder;
-import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.ARGB;
@@ -959,18 +959,6 @@ public class RecipeGenerator extends RecipeProvider {
 		addSecuritySeaBoatRecipe(SCContent.REINFORCED_CHERRY_PLANKS, SCContent.CHERRY_SECURITY_SEA_BOAT);
 		addSecuritySeaBoatRecipe(SCContent.REINFORCED_PALE_OAK_PLANKS, SCContent.PALE_OAK_SECURITY_SEA_BOAT);
 		addSecuritySeaBoatRecipe(SCContent.REINFORCED_BAMBOO_PLANKS, SCContent.BAMBOO_SECURITY_SEA_RAFT);
-		addShelfRecipe(SCContent.REINFORCED_STRIPPED_ACACIA_LOG, SCContent.REINFORCED_ACACIA_SHELF);
-		addShelfRecipe(SCContent.REINFORCED_STRIPPED_BAMBOO_BLOCK, SCContent.REINFORCED_BAMBOO_SHELF);
-		addShelfRecipe(SCContent.REINFORCED_STRIPPED_BIRCH_LOG, SCContent.REINFORCED_BIRCH_SHELF);
-		addShelfRecipe(SCContent.REINFORCED_STRIPPED_CHERRY_LOG, SCContent.REINFORCED_CHERRY_SHELF);
-		addShelfRecipe(SCContent.REINFORCED_STRIPPED_CRIMSON_STEM, SCContent.REINFORCED_CRIMSON_SHELF);
-		addShelfRecipe(SCContent.REINFORCED_STRIPPED_DARK_OAK_LOG, SCContent.REINFORCED_DARK_OAK_SHELF);
-		addShelfRecipe(SCContent.REINFORCED_STRIPPED_JUNGLE_LOG, SCContent.REINFORCED_JUNGLE_SHELF);
-		addShelfRecipe(SCContent.REINFORCED_STRIPPED_MANGROVE_LOG, SCContent.REINFORCED_MANGROVE_SHELF);
-		addShelfRecipe(SCContent.REINFORCED_STRIPPED_OAK_LOG, SCContent.REINFORCED_OAK_SHELF);
-		addShelfRecipe(SCContent.REINFORCED_STRIPPED_PALE_OAK_LOG, SCContent.REINFORCED_PALE_OAK_SHELF);
-		addShelfRecipe(SCContent.REINFORCED_STRIPPED_SPRUCE_LOG, SCContent.REINFORCED_SPRUCE_SHELF);
-		addShelfRecipe(SCContent.REINFORCED_STRIPPED_WARPED_STEM, SCContent.REINFORCED_WARPED_SHELF);
 		addSlabRecipe(Ingredient.of(SCContent.CRYSTAL_QUARTZ_BLOCK, SCContent.CRYSTAL_QUARTZ_PILLAR, SCContent.CHISELED_CRYSTAL_QUARTZ), SCContent.CRYSTAL_QUARTZ_SLAB);
 		addSlabRecipe(SCContent.REINFORCED_ANDESITE, SCContent.REINFORCED_ANDESITE_SLAB);
 		addSlabRecipe(SCContent.REINFORCED_BAMBOO_MOSAIC, SCContent.REINFORCED_BAMBOO_MOSAIC_SLAB);
@@ -1555,7 +1543,7 @@ public class RecipeGenerator extends RecipeProvider {
 		.requires(dye)
 		.requires(SCTags.Items.REINFORCED_WOOL_CARPETS)
 		.unlockedBy("has_wool_carpet", has(SCTags.Items.REINFORCED_WOOL_CARPETS))
-		.save(output, ResourceKey.create(Registries.RECIPE, Identifier.parse(Utils.getRegistryName(carpet.asItem()).toString() + "_from_dye")));
+		.save(output, ResourceKey.create(Registries.RECIPE, ResourceLocation.parse(Utils.getRegistryName(carpet.asItem()).toString() + "_from_dye")));
 		//@formatter:on
 	}
 
@@ -1787,19 +1775,6 @@ public class RecipeGenerator extends RecipeProvider {
 		.define('P', planks)
 		.define('C', SCContent.KEYPAD_CHEST)
 		.unlockedBy("has_keypad_chest", has(SCContent.KEYPAD_CHEST))
-		.save(output);
-		//@formatter:on
-	}
-
-	protected final void addShelfRecipe(ItemLike log, ItemLike shelf) {
-		//@formatter:off
-		ShapedRecipeBuilder.shaped(items, RecipeCategory.DECORATIONS, shelf, 6)
-		.group("securitycraft:reinforced_shelves")
-		.pattern("LLL")
-		.pattern("   ")
-		.pattern("LLL")
-		.define('L', log)
-		.unlockedBy(getHasName(log), has(log))
 		.save(output);
 		//@formatter:on
 	}

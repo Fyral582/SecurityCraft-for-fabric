@@ -123,6 +123,6 @@ public class SecureTradingStationBlock extends DisguisableBlock {
 
 	@Override
 	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-		return level.isClientSide() ? createTickerHelper(type, SCContent.SECURE_TRADING_STATION_BLOCK_ENTITY.get(), LevelUtils::blockEntityTicker) : null;
+		return level.isClientSide ? createTickerHelper(type, SCContent.SECURE_TRADING_STATION_BLOCK_ENTITY.get(), LevelUtils::blockEntityTicker) : null;
 	}
 }

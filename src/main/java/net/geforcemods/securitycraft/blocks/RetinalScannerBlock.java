@@ -45,7 +45,7 @@ public class RetinalScannerBlock extends DisguisableBlock {
 	public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity entity, ItemStack stack) {
 		if (entity instanceof Player player) {
 			if (level.getBlockEntity(pos) instanceof RetinalScannerBlockEntity be)
-				be.setOwnerProfile(ResolvableProfile.createResolved(player.getGameProfile()));
+				be.setOwnerProfile(new ResolvableProfile(player.getGameProfile()));
 
 			SCEventHandler.onOwnership(new OwnershipEvent(level, pos, player));
 		}
@@ -118,7 +118,7 @@ public class RetinalScannerBlock extends DisguisableBlock {
 
 	@Override
 	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-		return level.isClientSide() ? null : createTickerHelper(type, SCContent.RETINAL_SCANNER_BLOCK_ENTITY.get(), LevelUtils::blockEntityTicker);
+		return level.isClientSide ? null : createTickerHelper(type, SCContent.RETINAL_SCANNER_BLOCK_ENTITY.get(), LevelUtils::blockEntityTicker);
 	}
 
 	@Override

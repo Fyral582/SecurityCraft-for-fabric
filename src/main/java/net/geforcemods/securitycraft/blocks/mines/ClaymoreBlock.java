@@ -14,7 +14,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Explosion;
@@ -61,7 +60,7 @@ public class ClaymoreBlock extends ExplosiveBlock implements SimpleWaterloggedBl
 	@Override
 	public InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
 		if (level.getBlockEntity(pos) instanceof ClaymoreBlockEntity be && be.isOwnedBy(player)) {
-			if (!level.isClientSide())
+			if (!level.isClientSide)
 				player.openMenu(be);
 
 			return InteractionResult.SUCCESS;
@@ -95,13 +94,13 @@ public class ClaymoreBlock extends ExplosiveBlock implements SimpleWaterloggedBl
 	}
 
 	@Override
-	public boolean onDestroyedByPlayer(BlockState state, Level level, BlockPos pos, Player player, ItemStack stack, boolean willHarvest, FluidState fluid) {
-		if (!player.isCreative() && !level.isClientSide() && !level.getBlockState(pos).getValue(ClaymoreBlock.DEACTIVATED)) {
+	public boolean onDestroyedByPlayer(BlockState state, Level level, BlockPos pos, Player player, boolean willHarvest, FluidState fluid) {
+		if (!player.isCreative() && !level.isClientSide && !level.getBlockState(pos).getValue(ClaymoreBlock.DEACTIVATED)) {
 			if (level.getBlockEntity(pos) instanceof ClaymoreBlockEntity claymore && claymore.getTargetingMode().allowsPlayers() && (!claymore.isOwnedBy(player) || !claymore.ignoresOwner()))
 				explode(level, pos);
 		}
 
-		return super.onDestroyedByPlayer(state, level, pos, player, stack, willHarvest, fluid);
+		return super.onDestroyedByPlayer(state, level, pos, player, willHarvest, fluid);
 	}
 
 	@Override
@@ -147,7 +146,7 @@ public class ClaymoreBlock extends ExplosiveBlock implements SimpleWaterloggedBl
 
 	@Override
 	public void explode(Level level, BlockPos pos) {
-		if (!level.isClientSide()) {
+		if (!level.isClientSide) {
 			level.destroyBlock(pos, false);
 			level.explode(null, pos.getX(), pos.getY(), pos.getZ(), ConfigHandler.SERVER.smallerMineExplosion.get() ? 1.5F : 3.5F, ConfigHandler.SERVER.shouldSpawnFire.get(), BlockUtils.getExplosionInteraction());
 		}
@@ -195,7 +194,7 @@ public class ClaymoreBlock extends ExplosiveBlock implements SimpleWaterloggedBl
 
 	@Override
 	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-		return level.isClientSide() ? null : createTickerHelper(type, SCContent.CLAYMORE_BLOCK_ENTITY.get(), LevelUtils::blockEntityTicker);
+		return level.isClientSide ? null : createTickerHelper(type, SCContent.CLAYMORE_BLOCK_ENTITY.get(), LevelUtils::blockEntityTicker);
 	}
 
 	@Override

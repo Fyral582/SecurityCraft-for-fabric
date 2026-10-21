@@ -5,25 +5,24 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import com.llamalad7.mixinextras.sugar.Local;
 
-import net.geforcemods.securitycraft.renderers.state.KeypadChestRenderState;
-import net.minecraft.client.renderer.Sheets;
+import net.geforcemods.securitycraft.renderers.KeypadChestRenderer;
 import net.minecraft.client.renderer.blockentity.ChestRenderer;
-import net.minecraft.client.renderer.blockentity.state.ChestRenderState;
 import net.minecraft.client.resources.model.Material;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.properties.ChestType;
 
 /**
- * Allows the keypad chest to use its own textures. This replaces NeoForge's ChestRenderState#customMaterial.
+ * Allows the keypad chest to use its own textures. This replaces NeoForge's ChestRenderer#getMaterial.
  */
 @Mixin(ChestRenderer.class)
 public class ChestRendererMixin {
-	@WrapOperation(method = "submit", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/Sheets;chooseMaterial(Lnet/minecraft/client/renderer/blockentity/state/ChestRenderState$ChestMaterialType;Lnet/minecraft/world/level/block/state/properties/ChestType;)Lnet/minecraft/client/resources/model/Material;"))
-	private Material securitycraft$useCustomMaterial(ChestRenderState.ChestMaterialType materialType, ChestType chestType, Operation<Material> original, @Local(argsOnly = true) ChestRenderState state) {
-		if (state instanceof KeypadChestRenderState keypadChestState && keypadChestState.customMaterial != null)
-			return keypadChestState.customMaterial;
+	@WrapOperation(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/Sheets;chooseMaterial(Lnet/minecraft/world/level/block/entity/BlockEntity;Lnet/minecraft/world/level/block/state/properties/ChestType;Z)Lnet/minecraft/client/resources/model/Material;"))
+	private Material securitycraft$useCustomMaterial(BlockEntity be, ChestType chestType, boolean holiday, Operation<Material> original) {
+		if ((Object) this instanceof KeypadChestRenderer renderer && be instanceof ChestBlockEntity chest)
+			return renderer.getMaterial(chest, chestType);
 
-		return original.call(materialType, chestType);
+		return original.call(be, chestType, holiday);
 	}
 }

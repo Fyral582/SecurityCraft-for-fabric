@@ -55,7 +55,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.vehicle.boat.AbstractChestBoat;
+import net.minecraft.world.entity.vehicle.AbstractChestBoat;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -340,7 +340,7 @@ public abstract class AbstractSecuritySeaBoat extends AbstractChestBoat implemen
 
 	public void setOwner(Player player) {
 		if (player != null)
-			setOwner(player.getGameProfile().id().toString(), player.getName().getString());
+			setOwner(player.getGameProfile().getId().toString(), player.getName().getString());
 	}
 
 	@Override

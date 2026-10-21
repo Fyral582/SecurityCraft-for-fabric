@@ -1,11 +1,10 @@
 package net.geforcemods.securitycraft.platform.gui;
 
+import org.lwjgl.glfw.GLFW;
 import java.text.DecimalFormat;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractSliderButton;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 
@@ -81,28 +80,30 @@ public class ExtendedSlider extends AbstractSliderButton {
 	}
 
 	@Override
-	public void onClick(MouseButtonEvent event, boolean doubleClick) {
-		setSliderValue(event.x());
+	public void onClick(double mouseX, double mouseY) {
+		setSliderValue(mouseX);
 	}
 
 	@Override
-	protected void onDrag(MouseButtonEvent event, double dragX, double dragY) {
-		super.onDrag(event, dragX, dragY);
-		setSliderValue(event.x());
+	protected void onDrag(double mouseX, double mouseY, double dragX, double dragY) {
+		super.onDrag(mouseX, mouseY, dragX, dragY);
+		setSliderValue(mouseX);
 	}
 
 	@Override
-	public boolean keyPressed(KeyEvent event) {
-		if (event.isLeft() || event.isRight()) {
+	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+		boolean isLeft = keyCode == GLFW.GLFW_KEY_LEFT;
+
+		if (isLeft || keyCode == GLFW.GLFW_KEY_RIGHT) {
 			if (minValue > maxValue)
-				setSliderValueInternal(value + (event.isLeft() ? 1 : -1) * getStepFraction());
+				setSliderValueInternal(value + (isLeft ? 1 : -1) * getStepFraction());
 			else
-				setSliderValueInternal(value + (event.isLeft() ? -1 : 1) * getStepFraction());
+				setSliderValueInternal(value + (isLeft ? -1 : 1) * getStepFraction());
 
 			return true;
 		}
 
-		return super.keyPressed(event);
+		return super.keyPressed(keyCode, scanCode, modifiers);
 	}
 
 	private double getStepFraction() {

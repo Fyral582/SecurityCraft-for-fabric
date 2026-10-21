@@ -14,7 +14,6 @@ import net.geforcemods.securitycraft.blockentities.ReinforcedChiseledBookshelfBl
 import net.geforcemods.securitycraft.blockentities.ReinforcedDispenserBlockEntity;
 import net.geforcemods.securitycraft.blockentities.ReinforcedDropperBlockEntity;
 import net.geforcemods.securitycraft.blockentities.ReinforcedHopperBlockEntity;
-import net.geforcemods.securitycraft.blockentities.ReinforcedShelfBlockEntity;
 import net.geforcemods.securitycraft.blockentities.SecureTradingStationBlockEntity;
 import net.geforcemods.securitycraft.blockentities.SecurityCameraBlockEntity;
 import net.geforcemods.securitycraft.blockentities.TrophySystemBlockEntity;
@@ -137,7 +136,7 @@ public class RegistrationHandler {
 						SCItemGroup group = field.getAnnotation(Reinforced.class).itemGroup();
 						DeferredBlock<Block> deferredBlock = (DeferredBlock<Block>) field.get(null);
 						Block block = deferredBlock.get();
-						Item blockItem = new BlockItem(block, SCContent.setId(deferredBlock.getKey().identifier().getPath(), new Item.Properties().fireResistant(), true));
+						Item blockItem = new BlockItem(block, SCContent.setId(deferredBlock.getKey().location().getPath(), new Item.Properties().fireResistant(), true));
 
 						Registry.register(BuiltInRegistries.ITEM, Utils.getRegistryName(block), blockItem);
 
@@ -148,7 +147,7 @@ public class RegistrationHandler {
 						SCItemGroup group = field.getAnnotation(RegisterItemBlock.class).value();
 						DeferredBlock<Block> deferredBlock = (DeferredBlock<Block>) field.get(null);
 						Block block = deferredBlock.get();
-						Item blockItem = new BlockItem(block, SCContent.setId(deferredBlock.getKey().identifier().getPath(), new Item.Properties(), true));
+						Item blockItem = new BlockItem(block, SCContent.setId(deferredBlock.getKey().location().getPath(), new Item.Properties(), true));
 
 						Registry.register(BuiltInRegistries.ITEM, Utils.getRegistryName(block), blockItem);
 
@@ -186,9 +185,6 @@ public class RegistrationHandler {
 
 	private static void onExtendPoiTypes() {
 		addBlockToPoi(PoiTypes.LIGHTNING_ROD, SCContent.REINFORCED_LIGHTNING_ROD.get());
-		addBlockToPoi(PoiTypes.LIGHTNING_ROD, SCContent.REINFORCED_EXPOSED_LIGHTNING_ROD.get());
-		addBlockToPoi(PoiTypes.LIGHTNING_ROD, SCContent.REINFORCED_WEATHERED_LIGHTNING_ROD.get());
-		addBlockToPoi(PoiTypes.LIGHTNING_ROD, SCContent.REINFORCED_OXIDIZED_LIGHTNING_ROD.get());
 	}
 
 	@SuppressWarnings("unchecked")
@@ -289,7 +285,6 @@ public class RegistrationHandler {
 		registerItemStorage(TrophySystemBlockEntity::getCapability, SCContent.TROPHY_SYSTEM_BLOCK_ENTITY.get());
 		registerItemStorage(ReinforcedChiseledBookshelfBlockEntity::getCapability, SCContent.REINFORCED_CHISELED_BOOKSHELF_BLOCK_ENTITY.get());
 		registerItemStorage(ReinforcedDispenserBlockEntity::getCapability, SCContent.REINFORCED_DISPENSER_BLOCK_ENTITY.get());
-		registerItemStorage(ReinforcedShelfBlockEntity::getCapability, SCContent.REINFORCED_SHELF_BLOCK_ENTITY.get());
 		registerItemStorage(ReinforcedDropperBlockEntity::getCapability, SCContent.REINFORCED_DROPPER_BLOCK_ENTITY.get());
 		registerItemStorage(SecurityCameraBlockEntity::getCapability, SCContent.SECURITY_CAMERA_BLOCK_ENTITY.get());
 		registerItemStorage(SecureTradingStationBlockEntity::getCapability, SCContent.SECURE_TRADING_STATION_BLOCK_ENTITY.get());

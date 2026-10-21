@@ -40,7 +40,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -65,7 +65,7 @@ public class KeypadChestBlockEntity extends ChestBlockEntity implements IPasscod
 	private SmartModuleCooldownOption smartModuleCooldown = new SmartModuleCooldownOption();
 	private long cooldownEnd = 0;
 	private Map<ModuleType, Boolean> moduleStates = new EnumMap<>(ModuleType.class);
-	private Identifier previousChest;
+	private ResourceLocation previousChest;
 	private static final DoubleBlockCombiner.Combiner<ChestBlockEntity, Storage<ItemVariant>> CHEST_COMBINER_HANDLER = new DoubleBlockCombiner.Combiner<>() {
 		@Override
 		public Storage<ItemVariant> acceptDouble(ChestBlockEntity chest1, ChestBlockEntity chest2) {
@@ -120,7 +120,7 @@ public class KeypadChestBlockEntity extends ChestBlockEntity implements IPasscod
 		String savedPreviousChest = tag.getStringOr("previous_chest", "");
 
 		if (!savedPreviousChest.isBlank()) {
-			Identifier parsedPreviousChest = Identifier.parse(savedPreviousChest);
+			ResourceLocation parsedPreviousChest = ResourceLocation.parse(savedPreviousChest);
 
 			if (parsedPreviousChest.getPath() != null && !parsedPreviousChest.getPath().isBlank())
 				previousChest = parsedPreviousChest;
@@ -466,7 +466,7 @@ public class KeypadChestBlockEntity extends ChestBlockEntity implements IPasscod
 		this.previousChest = Utils.getRegistryName(previousChest);
 	}
 
-	public Identifier getPreviousChest() {
+	public ResourceLocation getPreviousChest() {
 		return previousChest;
 	}
 

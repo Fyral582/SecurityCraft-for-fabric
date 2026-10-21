@@ -83,7 +83,7 @@ public class CreakingHeartMineBlock extends CreakingHeartBlock implements IBlock
 	}
 
 	@Override
-	public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity, InsideBlockEffectApplier effectApplier, boolean stillInside) {
+	public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity, InsideBlockEffectApplier effectApplier) {
 		if (level.getBlockEntity(pos) instanceof IOwnable ownable && !ownable.isOwnedBy(entity))
 			explode(level, pos);
 	}
@@ -97,17 +97,17 @@ public class CreakingHeartMineBlock extends CreakingHeartBlock implements IBlock
 	}
 
 	@Override
-	public boolean onDestroyedByPlayer(BlockState state, Level level, BlockPos pos, Player player, ItemStack stack, boolean willHarvest, FluidState fluid) {
-		if (!level.isClientSide()) {
+	public boolean onDestroyedByPlayer(BlockState state, Level level, BlockPos pos, Player player, boolean willHarvest, FluidState fluid) {
+		if (!level.isClientSide) {
 			if (player != null && player.isCreative() && !ConfigHandler.SERVER.mineExplodesWhenInCreative.get())
-				return super.onDestroyedByPlayer(state, level, pos, player, stack, willHarvest, fluid);
+				return super.onDestroyedByPlayer(state, level, pos, player, willHarvest, fluid);
 			else if (!(level.getBlockEntity(pos) instanceof IOwnable ownable && ownable.isOwnedBy(player))) {
 				explode(level, pos);
-				return super.onDestroyedByPlayer(state, level, pos, player, stack, willHarvest, fluid);
+				return super.onDestroyedByPlayer(state, level, pos, player, willHarvest, fluid);
 			}
 		}
 
-		return super.onDestroyedByPlayer(state, level, pos, player, stack, willHarvest, fluid);
+		return super.onDestroyedByPlayer(state, level, pos, player, willHarvest, fluid);
 	}
 
 	@Override
@@ -122,7 +122,7 @@ public class CreakingHeartMineBlock extends CreakingHeartBlock implements IBlock
 
 	@Override
 	public void explode(Level level, BlockPos pos) {
-		if (!level.isClientSide()) {
+		if (!level.isClientSide) {
 			level.destroyBlock(pos, false);
 			level.explode(null, pos.getX(), pos.getY() + 0.5D, pos.getZ(), ConfigHandler.SERVER.smallerMineExplosion.get() ? 2.5F : 5.0F, ConfigHandler.SERVER.shouldSpawnFire.get(), BlockUtils.getExplosionInteraction());
 		}
@@ -150,7 +150,7 @@ public class CreakingHeartMineBlock extends CreakingHeartBlock implements IBlock
 
 	@Override
 	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-		return !level.isClientSide() && state.getValue(STATE) != CreakingHeartState.UPROOTED ? createTickerHelper(type, SCContent.CREAKING_HEART_MINE_BLOCK_ENTITY.get(), CreakingHeartBlockEntity::serverTick) : null;
+		return !level.isClientSide && state.getValue(STATE) != CreakingHeartState.UPROOTED ? createTickerHelper(type, SCContent.CREAKING_HEART_MINE_BLOCK_ENTITY.get(), CreakingHeartBlockEntity::serverTick) : null;
 	}
 
 	@Override

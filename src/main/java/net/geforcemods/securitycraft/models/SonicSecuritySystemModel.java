@@ -1,19 +1,19 @@
 package net.geforcemods.securitycraft.models;
 
-import net.minecraft.client.model.Model;
+import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
 
-public class SonicSecuritySystemModel extends Model<Float> {
+public class SonicSecuritySystemModel extends EntityModel<EntityRenderState> {
 	public final ModelPart dish;
 
 	public SonicSecuritySystemModel(ModelPart modelPart) {
-		super(modelPart, RenderTypes::entitySolid);
+		super(modelPart);
 		dish = modelPart.getChild("dish");
 	}
 
@@ -37,8 +37,7 @@ public class SonicSecuritySystemModel extends Model<Float> {
 		return LayerDefinition.create(meshDefinition, 32, 32);
 	}
 
-	@Override
-	public void setupAnim(Float rotation) {
+	public void setRadarRotation(float rotation) {
 		dish.yRot = rotation;
 	}
 }

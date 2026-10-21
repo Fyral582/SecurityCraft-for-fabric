@@ -52,9 +52,13 @@
 			"net/minecraft/class_339": ["net/geforcemods/securitycraft/platform/ext/SCAbstractWidgetExtension"]
 		}
 	},
+	"jars": [
+		{ "file": "META-INF/jars/forgeconfigapiport-fabric-21.6.4.jar" },
+		{ "file": "META-INF/jars/forgeconfigapiport-fabric-21.7.0.jar" }
+	],
 	"depends": {
 		"fabricloader": ">=0.17.0",
-		"minecraft": "~1.21.11",
+		"minecraft": ">=1.21.6 <1.21.9",
 		"java": ">=21",
 		"fabric-api": "*",
 		"forgeconfigapiport": "*"

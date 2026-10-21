@@ -13,6 +13,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.LightningRodBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -20,12 +21,10 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class ReinforcedLightningRodBlock extends LightningRodBlock implements IReinforcedBlock, EntityBlock {
-	private final Block vanillaBlock;
 	private final float destroyTimeForOwner;
 
-	public ReinforcedLightningRodBlock(BlockBehaviour.Properties properties, Block vanillaBlock) {
+	public ReinforcedLightningRodBlock(BlockBehaviour.Properties properties) {
 		super(OwnableBlock.withReinforcedDestroyTime(properties));
-		this.vanillaBlock = vanillaBlock;
 		destroyTimeForOwner = OwnableBlock.getStoredDestroyTime();
 	}
 
@@ -47,6 +46,6 @@ public class ReinforcedLightningRodBlock extends LightningRodBlock implements IR
 
 	@Override
 	public Block getVanillaBlock() {
-		return vanillaBlock;
+		return Blocks.LIGHTNING_ROD;
 	}
 }

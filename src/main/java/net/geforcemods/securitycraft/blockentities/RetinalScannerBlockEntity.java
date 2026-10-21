@@ -1,5 +1,9 @@
 package net.geforcemods.securitycraft.blockentities;
 
+import java.util.Optional;
+
+import com.mojang.authlib.properties.PropertyMap;
+
 import net.geforcemods.securitycraft.ConfigHandler;
 import net.geforcemods.securitycraft.SCContent;
 import net.geforcemods.securitycraft.api.ILockable;
@@ -28,6 +32,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.SkullBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
@@ -77,9 +82,7 @@ public class RetinalScannerBlockEntity extends DisguisableBlockEntity implements
 						viewingPlayer = isOwnedBy(player, true) ? PlayerUtils.getOwnerFromPlayerOrMask(player) : new Owner(player);
 
 					if (!isOwnedBy(viewingPlayer) && !isAllowed(viewingPlayer.getName())) {
-						if (sendMessage.get())
-							PlayerUtils.sendMessageToPlayer(player, Utils.localize(SCContent.RETINAL_SCANNER.get().getDescriptionId()), Utils.localize("messages.securitycraft:retinalScanner.notOwner", PlayerUtils.getOwnerComponent(getOwner())), ChatFormatting.RED);
-
+						PlayerUtils.sendMessageToPlayer(player, Utils.localize(SCContent.RETINAL_SCANNER.get().getDescriptionId()), Utils.localize("messages.securitycraft:retinalScanner.notOwner", PlayerUtils.getOwnerComponent(getOwner())), ChatFormatting.RED);
 						return true;
 					}
 
@@ -187,12 +190,24 @@ public class RetinalScannerBlockEntity extends DisguisableBlockEntity implements
 
 	@Override
 	public void onOwnerChanged(BlockState state, Level world, BlockPos pos, Player player, Owner oldOwner, Owner newOwner) {
-		setOwnerProfile(ResolvableProfile.createUnresolved(getOwner().getName()));
+		setOwnerProfile(new ResolvableProfile(Optional.of(getOwner().getName()), Optional.empty(), new PropertyMap()));
 		super.onOwnerChanged(state, world, pos, player, oldOwner, newOwner);
 	}
 
 	public void setOwnerProfile(ResolvableProfile ownerProfile) {
 		this.ownerProfile = ownerProfile;
+		updateOwnerProfile();
+	}
+
+	private void updateOwnerProfile() {
+		if (ownerProfile != null && !ownerProfile.isResolved()) {
+			ownerProfile.resolve().thenAcceptAsync(ownerProfile -> {
+				this.ownerProfile = ownerProfile;
+				setChanged();
+			}, SkullBlockEntity.CHECKED_MAIN_THREAD_EXECUTOR);
+		}
+		else
+			setChanged();
 	}
 
 	public ResolvableProfile getPlayerProfile() {

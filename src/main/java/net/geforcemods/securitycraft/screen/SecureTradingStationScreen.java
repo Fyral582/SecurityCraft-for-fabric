@@ -17,16 +17,16 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
 public class SecureTradingStationScreen extends AbstractContainerScreen<SecureTradingStationMenu> {
-	private static final Identifier GUI_TEXTURE = SecurityCraft.resLoc("textures/gui/container/secure_trading_station.png");
-	private static final Identifier GUI_TEXTURE_OWNER = SecurityCraft.resLoc("textures/gui/container/secure_trading_station_owner.png");
-	private static final Identifier GUI_TEXTURE_STORAGE = SecurityCraft.resLoc("textures/gui/container/secure_trading_station_storage.png");
-	private static final Identifier GUI_TEXTURE_OWNER_STORAGE = SecurityCraft.resLoc("textures/gui/container/secure_trading_station_owner_storage.png");
-	private static final Identifier WARNING_HIGHLIGHTED_SPRITE = SecurityCraft.mcResLoc("world_list/warning_highlighted");
+	private static final ResourceLocation GUI_TEXTURE = SecurityCraft.resLoc("textures/gui/container/secure_trading_station.png");
+	private static final ResourceLocation GUI_TEXTURE_OWNER = SecurityCraft.resLoc("textures/gui/container/secure_trading_station_owner.png");
+	private static final ResourceLocation GUI_TEXTURE_STORAGE = SecurityCraft.resLoc("textures/gui/container/secure_trading_station_storage.png");
+	private static final ResourceLocation GUI_TEXTURE_OWNER_STORAGE = SecurityCraft.resLoc("textures/gui/container/secure_trading_station_owner_storage.png");
+	private static final ResourceLocation WARNING_HIGHLIGHTED_SPRITE = SecurityCraft.mcResLoc("world_list/warning_highlighted");
 	private final Component paymentText = Utils.localize("gui.securitycraft:secure_trading_station.payment");
 	private final Component rewardText = Utils.localize("gui.securitycraft:secure_trading_station.reward");
 	private final Component rewardActivateText = Utils.localize("gui.securitycraft:secure_trading_station.reward_activate_redstone");
@@ -60,7 +60,7 @@ public class SecureTradingStationScreen extends AbstractContainerScreen<SecureTr
 	protected void init() {
 		super.init();
 
-		payButton = addRenderableWidget(Button.builder(payButtonText, this::sendTransactionRequest).bounds(leftPos + 112, topPos + 42, 50, 16).build());
+		payButton = addRenderableWidget(new Button(leftPos + 112, topPos + 42, 50, 16, payButtonText, this::sendTransactionRequest, Button.DEFAULT_NARRATION));
 
 		if ((be.hasPaymentReferenceStacks() && !skipPaymentCheck) || (be.getSignalLength() != 0 && be.getBlockState().getValue(SecureTradingStationBlock.POWERED)))
 			payButton.active = false; //Preliminary checks for empty container
@@ -136,7 +136,7 @@ public class SecureTradingStationScreen extends AbstractContainerScreen<SecureTr
 
 	@Override
 	protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
-		Identifier backgroundTexture;
+		ResourceLocation backgroundTexture;
 
 		if (isOwner)
 			backgroundTexture = storageVisible ? GUI_TEXTURE_OWNER_STORAGE : GUI_TEXTURE_OWNER;
