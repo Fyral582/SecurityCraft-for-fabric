@@ -47,8 +47,8 @@ public interface SCBlockStateExtension {
 		return self().getBlock().shouldCheckWeakPower(self(), level, pos, side);
 	}
 
-	default boolean onDestroyedByPlayer(Level level, BlockPos pos, Player player, ItemStack toolStack, boolean willHarvest, FluidState fluid) {
-		return self().getBlock().onDestroyedByPlayer(self(), level, pos, player, toolStack, willHarvest, fluid);
+	default boolean onDestroyedByPlayer(Level level, BlockPos pos, Player player, boolean willHarvest, FluidState fluid) {
+		return self().getBlock().onDestroyedByPlayer(self(), level, pos, player, willHarvest, fluid);
 	}
 
 	default boolean canConnectRedstone(BlockGetter level, BlockPos pos, @Nullable Direction direction) {

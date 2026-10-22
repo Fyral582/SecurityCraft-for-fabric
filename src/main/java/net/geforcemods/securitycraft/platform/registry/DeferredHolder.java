@@ -12,7 +12,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.HolderOwner;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
 
@@ -29,7 +29,7 @@ public class DeferredHolder<R, T extends R> implements Holder<R>, Supplier<T> {
 		this.key = Objects.requireNonNull(key);
 	}
 
-	public static <R, T extends R> DeferredHolder<R, T> create(ResourceKey<? extends Registry<R>> registryKey, Identifier valueName) {
+	public static <R, T extends R> DeferredHolder<R, T> create(ResourceKey<? extends Registry<R>> registryKey, ResourceLocation valueName) {
 		return create(ResourceKey.create(registryKey, valueName));
 	}
 
@@ -83,8 +83,8 @@ public class DeferredHolder<R, T extends R> implements Holder<R>, Supplier<T> {
 		return isBound() ? Optional.of(get()) : Optional.empty();
 	}
 
-	public Identifier getId() {
-		return key.identifier();
+	public ResourceLocation getId() {
+		return key.location();
 	}
 
 	public ResourceKey<R> getKey() {
@@ -101,8 +101,8 @@ public class DeferredHolder<R, T extends R> implements Holder<R>, Supplier<T> {
 	}
 
 	@Override
-	public boolean is(Identifier id) {
-		return id.equals(key.identifier());
+	public boolean is(ResourceLocation id) {
+		return id.equals(key.location());
 	}
 
 	@Override

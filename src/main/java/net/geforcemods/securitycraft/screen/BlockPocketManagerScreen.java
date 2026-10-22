@@ -9,6 +9,7 @@ import net.geforcemods.securitycraft.SCContent;
 import net.geforcemods.securitycraft.SecurityCraft;
 import net.geforcemods.securitycraft.blockentities.BlockPocketManagerBlockEntity;
 import net.geforcemods.securitycraft.inventory.BlockPocketManagerMenu;
+import net.geforcemods.securitycraft.network.server.AssembleBlockPocket;
 import net.geforcemods.securitycraft.network.server.SyncBlockPocketManager;
 import net.geforcemods.securitycraft.network.server.ToggleBlockPocketManager;
 import net.geforcemods.securitycraft.screen.components.CallbackSlider;
@@ -23,13 +24,11 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.Rect2i;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
-import net.minecraft.util.CommonColors;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
@@ -39,8 +38,8 @@ import net.minecraft.world.level.block.Block;
 import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
 public class BlockPocketManagerScreen extends AbstractContainerScreen<BlockPocketManagerMenu> implements IHasExtraAreas {
-	private static final Identifier TEXTURE = SecurityCraft.resLoc("textures/gui/container/block_pocket_manager.png");
-	private static final Identifier TEXTURE_STORAGE = SecurityCraft.resLoc("textures/gui/container/block_pocket_manager_storage.png");
+	private static final ResourceLocation TEXTURE = SecurityCraft.resLoc("textures/gui/container/block_pocket_manager.png");
+	private static final ResourceLocation TEXTURE_STORAGE = SecurityCraft.resLoc("textures/gui/container/block_pocket_manager_storage.png");
 	private static final ItemStack BLOCK_POCKET_WALL = new ItemStack(SCContent.BLOCK_POCKET_WALL.get());
 	private static final ItemStack REINFORCED_CHISELED_CRYSTAL_QUARTZ = new ItemStack(SCContent.REINFORCED_CHISELED_CRYSTAL_QUARTZ.get());
 	private static final ItemStack REINFORCED_CRYSTAL_QUARTZ_PILLAR = new ItemStack(SCContent.REINFORCED_CRYSTAL_QUARTZ_PILLAR.get());
@@ -54,7 +53,7 @@ public class BlockPocketManagerScreen extends AbstractContainerScreen<BlockPocke
 	private final int[] allowedSizes = {
 			5, 9, 13, 17, 21, 25
 	};
-	private Button manageStructureButton;
+	private Button assembleButton;
 	private Button outlineButton;
 	private CallbackSlider offsetSlider;
 	private StackHoverChecker[] hoverCheckers = new StackHoverChecker[3];
@@ -97,23 +96,27 @@ public class BlockPocketManagerScreen extends AbstractContainerScreen<BlockPocke
 		int outlineButtonX = colorChooserButtonX + (hasStorageModule ? 23 : -widgetWidth - 3);
 		int outlineButtonWidth = widgetWidth - (hasStorageModule ? 23 : 0);
 		int colorChooserX = colorChooserButtonX + (hasStorageModule ? -145 : 20);
-		boolean enabled = be.isEnabled();
 		Button toggleButton, sizeButton;
-		Button.Builder manageStructureButtonBuilder = enabled ? Button.builder(Utils.localize("gui.securitycraft:blockPocketManager.disassemble"), b-> ScreenLayers.pushGuiLayer(new BlockPocketManagerConfirmScreen(be))) : Button.builder(Utils.localize("gui.securitycraft:blockPocketManager.assemble"), this::assembleButtonClicked);
 
-		toggleButton = addRenderableWidget(Button.builder(Utils.localize("gui.securitycraft:blockPocketManager." + (!enabled ? "activate" : "deactivate")), this::toggleButtonClicked).pos(leftPos + guiWidth / 2 - widgetOffset, topPos + imageHeight / 2 + yOffset[0]).size(widgetWidth, 20).build());
+		toggleButton = addRenderableWidget(new Button(leftPos + guiWidth / 2 - widgetOffset, topPos + imageHeight / 2 + yOffset[0], widgetWidth, 20, Utils.localize("gui.securitycraft:blockPocketManager." + (!be.isEnabled() ? "activate" : "deactivate")), this::toggleButtonClicked, Button.DEFAULT_NARRATION));
 		sizeButton = addRenderableWidget(new ToggleComponentButton(leftPos + guiWidth / 2 - widgetOffset, topPos + imageHeight / 2 + yOffset[1], widgetWidth, 20, this::updateSizeButtonText, ArrayUtils.indexOf(allowedSizes, size), allowedSizes.length, this::sizeButtonClicked));
-		outlineButton = addRenderableWidget(Button.builder(Utils.localize("gui.securitycraft:blockPocketManager.outline." + (!be.showsOutline() ? "show" : "hide")), this::outlineButtonClicked).pos(outlineButtonX, outlineY).size(outlineButtonWidth, 20).build());
-		manageStructureButton = addRenderableWidget(manageStructureButtonBuilder.pos(leftPos + guiWidth / 2 - widgetOffset, topPos + imageHeight / 2 + yOffset[3]).size(widgetWidth, 20).build());
+		outlineButton = addRenderableWidget(new Button(outlineButtonX, outlineY, outlineButtonWidth, 20, Utils.localize("gui.securitycraft:blockPocketManager.outline." + (!be.showsOutline() ? "show" : "hide")), this::outlineButtonClicked, Button.DEFAULT_NARRATION));
+		assembleButton = addRenderableWidget(new Button(leftPos + guiWidth / 2 - widgetOffset, topPos + imageHeight / 2 + yOffset[3], widgetWidth, 20, Utils.localize("gui.securitycraft:blockPocketManager.assemble"), this::assembleButtonClicked, Button.DEFAULT_NARRATION));
 		offsetSlider = addRenderableWidget(new CallbackSlider(leftPos + guiWidth / 2 - widgetOffset, topPos + imageHeight / 2 + yOffset[4], widgetWidth, 20, Utils.localize("gui.securitycraft:projector.offset", ""), Component.empty(), (-size + 2) / 2, (size - 2) / 2, be.getAutoBuildOffset(), true, this::offsetSliderReleased));
-		colorChooser = new ColorChooser(Component.empty(), colorChooserX, outlineY, be.getColor(), be::setColor);
+		colorChooser = addRenderableWidget(new ColorChooser(Component.empty(), colorChooserX, outlineY, be.getColor()) {
+			@Override
+			public void onColorChange() {
+				be.setColor(getRGBColor());
+			}
+		});
+		colorChooser.init(minecraft, width, height);
 		colorChooserButton = addRenderableWidget(new ColorChooserButton(colorChooserButtonX, outlineY, 20, 20, colorChooser));
 
 		if (!be.isOwnedBy(Minecraft.getInstance().player))
-			sizeButton.active = toggleButton.active = manageStructureButton.active = outlineButton.active = offsetSlider.active = colorChooserButton.active = false;
+			sizeButton.active = toggleButton.active = assembleButton.active = outlineButton.active = offsetSlider.active = colorChooserButton.active = false;
 		else {
 			updateMaterialInformation(true);
-			sizeButton.active = offsetSlider.active = !enabled;
+			sizeButton.active = offsetSlider.active = !be.isEnabled();
 		}
 
 		if (!hasStorageModule) {
@@ -127,40 +130,40 @@ public class BlockPocketManagerScreen extends AbstractContainerScreen<BlockPocke
 			hoverCheckers[2] = new StackHoverChecker(REINFORCED_CHISELED_CRYSTAL_QUARTZ, topPos + imageHeight - 27, topPos + imageHeight - 9, leftPos + 174, leftPos + 191);
 		}
 
-		updateStructureButtonTooltip();
+		updateAssembleButtonTooltip();
 		colorChooserButton.setTooltip(Tooltip.create(Utils.localize("gui.securitycraft:choose_outline_color_tooltip")));
 	}
 
 	@Override
 	protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-		guiGraphics.drawString(font, title, (hasStorageModule ? 123 : imageWidth) / 2 - font.width(title) / 2, 6, CommonColors.DARK_GRAY, false);
+		guiGraphics.drawString(font, title, (hasStorageModule ? 123 : imageWidth) / 2 - font.width(title) / 2, 6, 4210752, false);
 
 		if (hasStorageModule)
-			guiGraphics.drawString(font, playerInventoryTitle, 8, imageHeight - 94, CommonColors.DARK_GRAY, false);
+			guiGraphics.drawString(font, playerInventoryTitle, 8, imageHeight - 94, 4210752, false);
 
 		if (!be.isEnabled() && isOwner) {
 			if (!hasStorageModule) {
-				guiGraphics.drawString(font, youNeed, imageWidth / 2 - font.width(youNeed) / 2, 83, CommonColors.DARK_GRAY, false);
+				guiGraphics.drawString(font, youNeed, imageWidth / 2 - font.width(youNeed) / 2, 83, 4210752, false);
 
-				guiGraphics.drawString(font, wallsNeededOverall + "", 42, 100, CommonColors.DARK_GRAY, false);
+				guiGraphics.drawString(font, wallsNeededOverall + "", 42, 100, 4210752, false);
 				guiGraphics.renderItem(BLOCK_POCKET_WALL, 25, 96);
 
-				guiGraphics.drawString(font, pillarsNeededOverall + "", 94, 100, CommonColors.DARK_GRAY, false);
+				guiGraphics.drawString(font, pillarsNeededOverall + "", 94, 100, 4210752, false);
 				guiGraphics.renderItem(REINFORCED_CRYSTAL_QUARTZ_PILLAR, 77, 96);
 
-				guiGraphics.drawString(font, CHISELED_NEEDED_OVERALL + "", 147, 100, CommonColors.DARK_GRAY, false);
+				guiGraphics.drawString(font, CHISELED_NEEDED_OVERALL + "", 147, 100, 4210752, false);
 				guiGraphics.renderItem(REINFORCED_CHISELED_CRYSTAL_QUARTZ, 130, 96);
 			}
 			else {
-				guiGraphics.drawString(font, youNeed, 169 + 87 / 2 - font.width(youNeed) / 2, imageHeight - 83, CommonColors.DARK_GRAY, false);
+				guiGraphics.drawString(font, youNeed, 169 + 87 / 2 - font.width(youNeed) / 2, imageHeight - 83, 4210752, false);
 
-				guiGraphics.drawString(font, Math.max(0, wallsStillNeeded) + "", 192, imageHeight - 66, CommonColors.DARK_GRAY, false);
+				guiGraphics.drawString(font, Math.max(0, wallsStillNeeded) + "", 192, imageHeight - 66, 4210752, false);
 				guiGraphics.renderItem(BLOCK_POCKET_WALL, 175, imageHeight - 70);
 
-				guiGraphics.drawString(font, Math.max(0, pillarsStillNeeded) + "", 192, imageHeight - 44, CommonColors.DARK_GRAY, false);
+				guiGraphics.drawString(font, Math.max(0, pillarsStillNeeded) + "", 192, imageHeight - 44, 4210752, false);
 				guiGraphics.renderItem(REINFORCED_CRYSTAL_QUARTZ_PILLAR, 175, imageHeight - 48);
 
-				guiGraphics.drawString(font, Math.max(0, chiseledStillNeeded) + "", 192, imageHeight - 22, CommonColors.DARK_GRAY, false);
+				guiGraphics.drawString(font, Math.max(0, chiseledStillNeeded) + "", 192, imageHeight - 22, 4210752, false);
 				guiGraphics.renderItem(REINFORCED_CHISELED_CRYSTAL_QUARTZ, 175, imageHeight - 26);
 			}
 		}
@@ -176,7 +179,7 @@ public class BlockPocketManagerScreen extends AbstractContainerScreen<BlockPocke
 		if (!be.isEnabled() && isOwner) {
 			for (StackHoverChecker shc : hoverCheckers) {
 				if (shc.checkHover(mouseX, mouseY)) {
-					guiGraphics.setTooltipForNextFrame(font, shc.getStack(), mouseX, mouseY);
+					guiGraphics.renderTooltip(font, shc.getStack(), mouseX, mouseY);
 					break;
 				}
 			}
@@ -185,20 +188,57 @@ public class BlockPocketManagerScreen extends AbstractContainerScreen<BlockPocke
 
 	@Override
 	protected void renderBg(GuiGraphics guiGraphics, float partialTicks, int mouseX, int mouseY) {
-		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, hasStorageModule ? TEXTURE_STORAGE : TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
+		guiGraphics.blit(RenderType::guiTextured, hasStorageModule ? TEXTURE_STORAGE : TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
 	}
 
 	@Override
-	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+	protected void containerTick() {
+		if (colorChooser != null)
+			colorChooser.tick();
+	}
+
+	@Override
+	public boolean mouseClicked(double mouseX, double mouseY, int button) {
 		if (minecraft.player.isSpectator())
 			return false;
 
-		return super.mouseClicked(event, doubleClick);
+		return super.mouseClicked(mouseX, mouseY, button);
 	}
 
 	@Override
-	public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
-		return getFocused() != null && isDragging() && event.button() == 0 && getFocused().mouseDragged(event, dragX, dragY) || super.mouseDragged(event, dragX, dragY);
+	public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+		if (colorChooser != null)
+			colorChooser.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+
+		return getFocused() != null && isDragging() && button == 0 && getFocused().mouseDragged(mouseX, mouseY, button, dragX, dragY) || super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+	}
+
+	@Override
+	public boolean mouseReleased(double mouseX, double mouseY, int button) {
+		if (colorChooser != null)
+			colorChooser.mouseReleased(mouseX, mouseY, button);
+
+		return super.mouseReleased(mouseX, mouseY, button);
+	}
+
+	@Override
+	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+		if (colorChooser != null) {
+			colorChooser.keyPressed(keyCode, scanCode, modifiers);
+
+			if (!colorChooser.getRgbHexBox().isFocused())
+				return super.keyPressed(keyCode, scanCode, modifiers);
+		}
+
+		return true;
+	}
+
+	@Override
+	public boolean charTyped(char codePoint, int modifiers) {
+		if (colorChooser != null && colorChooser.charTyped(codePoint, modifiers))
+			return true;
+
+		return super.charTyped(codePoint, modifiers);
 	}
 
 	@Override
@@ -253,13 +293,13 @@ public class BlockPocketManagerScreen extends AbstractContainerScreen<BlockPocke
 		wallsStillNeeded = wallsNeededOverall - materialCounts[0];
 		pillarsStillNeeded = pillarsNeededOverall - materialCounts[1];
 		chiseledStillNeeded = CHISELED_NEEDED_OVERALL - materialCounts[2];
-		//the structure button should always be active when the player is in creative mode
-		manageStructureButton.active = isOwner && (minecraft.player.isCreative() || be.isEnabled() || (!be.isEnabled() && hasStorageModule && wallsStillNeeded <= 0 && pillarsStillNeeded <= 0 && chiseledStillNeeded <= 0));
-		updateStructureButtonTooltip();
+		//the assemble button should always be active when the player is in creative mode
+		assembleButton.active = isOwner && (minecraft.player.isCreative() || (!be.isEnabled() && hasStorageModule && wallsStillNeeded <= 0 && pillarsStillNeeded <= 0 && chiseledStillNeeded <= 0));
+		updateAssembleButtonTooltip();
 	}
 
 	public void toggleButtonClicked(Button button) {
-		ClientPacketDistributor.sendToServer(new ToggleBlockPocketManager(be.getBlockPos(), be.getSize(), be.isEnabled() ? ToggleBlockPocketManager.Action.DISABLE : ToggleBlockPocketManager.Action.ENABLE));
+		ClientPacketDistributor.sendToServer(new ToggleBlockPocketManager(be.getBlockPos(), be.getSize(), !be.isEnabled()));
 		Minecraft.getInstance().player.closeContainer();
 	}
 
@@ -293,15 +333,15 @@ public class BlockPocketManagerScreen extends AbstractContainerScreen<BlockPocke
 
 	public void assembleButtonClicked(Button button) {
 		be.setSize(size);
-		ClientPacketDistributor.sendToServer(new ToggleBlockPocketManager(be.getBlockPos(), be.getSize(), ToggleBlockPocketManager.Action.ASSEMBLE));
+		ClientPacketDistributor.sendToServer(new AssembleBlockPocket(be.getBlockPos(), be.getSize()));
 		Minecraft.getInstance().player.closeContainer();
 	}
 
-	public void updateStructureButtonTooltip() {
-		if (!be.isEnabled() && !manageStructureButton.isActive())
-			manageStructureButton.setTooltip(Tooltip.create(!hasStorageModule ? Utils.localize("gui.securitycraft:blockPocketManager.needStorageModule") : Utils.localize("messages.securitycraft:blockpocket.notEnoughItems")));
+	public void updateAssembleButtonTooltip() {
+		if (!assembleButton.isActive())
+			assembleButton.setTooltip(Tooltip.create(!hasStorageModule ? Utils.localize("gui.securitycraft:blockPocketManager.needStorageModule") : Utils.localize("messages.securitycraft:blockpocket.notEnoughItems")));
 		else
-			manageStructureButton.setTooltip(null);
+			assembleButton.setTooltip(null);
 	}
 
 	public void outlineButtonClicked(Button button) {

@@ -12,17 +12,16 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
-import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.geforcemods.securitycraft.platform.gui.ScrollPanel;
 
 public class ToggleScrollList<T> extends ScrollPanel {
-	private static final Identifier CONFIRM_SPRITE = SecurityCraft.mcResLoc("container/beacon/confirm");
-	private static final Identifier CANCEL_SPRITE = SecurityCraft.mcResLoc("container/beacon/cancel");
+	private static final ResourceLocation CONFIRM_SPRITE = SecurityCraft.mcResLoc("container/beacon/confirm");
+	private static final ResourceLocation CANCEL_SPRITE = SecurityCraft.mcResLoc("container/beacon/cancel");
 	private static final int SLOT_HEIGHT = 12;
 	private final int listLength;
 	private final List<T> orderedFilterList;
@@ -62,7 +61,7 @@ public class ToggleScrollList<T> extends ScrollPanel {
 	}
 
 	@Override
-	protected boolean clickPanel(double mouseX, double mouseY, MouseButtonEvent event) {
+	protected boolean clickPanel(double mouseX, double mouseY, int button) {
 		if (hasSmartModule) {
 			int slotIndex = (int) (mouseY + (border / 2)) / SLOT_HEIGHT;
 
@@ -87,6 +86,7 @@ public class ToggleScrollList<T> extends ScrollPanel {
 
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+		guiGraphics.flush();
 		super.render(guiGraphics, mouseX, mouseY, partialTick);
 
 		int baseY = top + border - (int) scrollDistance;
@@ -98,7 +98,7 @@ public class ToggleScrollList<T> extends ScrollPanel {
 			int comparatorOutput = be.getComparatorOutputFunction().applyAsInt(orderedFilterList.get(slotIndex));
 
 			if (comparatorOutput > 0)
-				guiGraphics.setTooltipForNextFrame(mc.font, Component.translatable("gui.securitycraft:toggleList.comparatorOutput", comparatorOutput), right - 8, slotBottom);
+				guiGraphics.renderTooltip(mc.font, Component.translatable("gui.securitycraft:toggleList.comparatorOutput", comparatorOutput), right - 8, slotBottom);
 		}
 	}
 
@@ -127,10 +127,12 @@ public class ToggleScrollList<T> extends ScrollPanel {
 			Component name = typeNames.computeIfAbsent(type, t -> Utils.localize(t == be.getDefaultType() ? be.getDefaultTypeName() : t.toString()));
 			int yStart = relativeY + (SLOT_HEIGHT * i);
 
-			guiGraphics.drawString(font, name, left + width / 2 - font.width(name) / 2, yStart, 0xFFC6C6C6, false);
-			guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, be.getFilter(type) ? CONFIRM_SPRITE : CANCEL_SPRITE, left + 1, yStart - 3, 12, 12);
+			guiGraphics.drawString(font, name, left + width / 2 - font.width(name) / 2, yStart, 0xC6C6C6, false);
+			guiGraphics.blitSprite(RenderType::guiTextured, be.getFilter(type) ? CONFIRM_SPRITE : CANCEL_SPRITE, left + 1, yStart - 3, 12, 12);
 			i++;
 		}
+
+		guiGraphics.flush();
 	}
 
 	@Override

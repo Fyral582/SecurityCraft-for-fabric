@@ -15,7 +15,7 @@ import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.syncher.EntityDataSerializer;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.BlockItem;
@@ -31,7 +31,7 @@ public class DeferredRegister<T> {
 	/**
 	 * Entity data serializers don't have a vanilla registry, so Fabric's tracked data registry is used for them
 	 */
-	public static final ResourceKey<Registry<EntityDataSerializer<?>>> ENTITY_DATA_SERIALIZERS = ResourceKey.createRegistryKey(Identifier.fromNamespaceAndPath("securitycraft", "entity_data_serializers"));
+	public static final ResourceKey<Registry<EntityDataSerializer<?>>> ENTITY_DATA_SERIALIZERS = ResourceKey.createRegistryKey(ResourceLocation.fromNamespaceAndPath("securitycraft", "entity_data_serializers"));
 	private final ResourceKey<? extends Registry<T>> registryKey;
 	private final String namespace;
 	private final Map<DeferredHolder<T, ? extends T>, Supplier<? extends T>> entries = new LinkedHashMap<>();
@@ -64,11 +64,11 @@ public class DeferredRegister<T> {
 	}
 
 	@SuppressWarnings("unchecked")
-	public <I extends T> DeferredHolder<T, I> register(String name, Function<Identifier, ? extends I> func) {
+	public <I extends T> DeferredHolder<T, I> register(String name, Function<ResourceLocation, ? extends I> func) {
 		if (registered)
 			throw new IllegalStateException("Cannot register new entries to DeferredRegister after it has been registered");
 
-		Identifier id = Identifier.fromNamespaceAndPath(namespace, name);
+		ResourceLocation id = ResourceLocation.fromNamespaceAndPath(namespace, name);
 		DeferredHolder<T, I> holder = createHolder(registryKey, id);
 
 		if (entries.putIfAbsent(holder, () -> func.apply(id)) != null)
@@ -78,12 +78,12 @@ public class DeferredRegister<T> {
 	}
 
 	@SuppressWarnings("unchecked")
-	protected <I extends T> DeferredHolder<T, I> createHolder(ResourceKey<? extends Registry<T>> registryKey, Identifier id) {
+	protected <I extends T> DeferredHolder<T, I> createHolder(ResourceKey<? extends Registry<T>> registryKey, ResourceLocation id) {
 		return DeferredHolder.create(ResourceKey.create((ResourceKey<? extends Registry<T>>) registryKey, id));
 	}
 
 	public TagKey<T> createTagKey(String path) {
-		return TagKey.create(registryKey, Identifier.fromNamespaceAndPath(namespace, path));
+		return TagKey.create(registryKey, ResourceLocation.fromNamespaceAndPath(namespace, path));
 	}
 
 	/**
@@ -107,7 +107,7 @@ public class DeferredRegister<T> {
 			return;
 		}
 
-		Registry<T> registry = (Registry<T>) BuiltInRegistries.REGISTRY.getValue(registryKey.identifier());
+		Registry<T> registry = (Registry<T>) BuiltInRegistries.REGISTRY.getValue(registryKey.location());
 
 		if (registry == null)
 			throw new IllegalStateException("Unknown registry " + registryKey);
@@ -152,7 +152,7 @@ public class DeferredRegister<T> {
 		}
 
 		@Override
-		public <B extends Block> DeferredBlock<B> register(String name, Function<Identifier, ? extends B> func) {
+		public <B extends Block> DeferredBlock<B> register(String name, Function<ResourceLocation, ? extends B> func) {
 			return (DeferredBlock<B>) super.register(name, func);
 		}
 
@@ -195,7 +195,7 @@ public class DeferredRegister<T> {
 
 		@SuppressWarnings("unchecked")
 		@Override
-		protected <I extends Block> DeferredHolder<Block, I> createHolder(ResourceKey<? extends Registry<Block>> registryKey, Identifier id) {
+		protected <I extends Block> DeferredHolder<Block, I> createHolder(ResourceKey<? extends Registry<Block>> registryKey, ResourceLocation id) {
 			return (DeferredHolder<Block, I>) DeferredBlock.createBlock(ResourceKey.create(Registries.BLOCK, id));
 		}
 	}
@@ -206,7 +206,7 @@ public class DeferredRegister<T> {
 		}
 
 		@Override
-		public <I extends Item> DeferredItem<I> register(String name, Function<Identifier, ? extends I> func) {
+		public <I extends Item> DeferredItem<I> register(String name, Function<ResourceLocation, ? extends I> func) {
 			return (DeferredItem<I>) super.register(name, func);
 		}
 
@@ -269,7 +269,7 @@ public class DeferredRegister<T> {
 
 		@SuppressWarnings("unchecked")
 		@Override
-		protected <I extends Item> DeferredHolder<Item, I> createHolder(ResourceKey<? extends Registry<Item>> registryKey, Identifier id) {
+		protected <I extends Item> DeferredHolder<Item, I> createHolder(ResourceKey<? extends Registry<Item>> registryKey, ResourceLocation id) {
 			return (DeferredHolder<Item, I>) DeferredItem.createItem(ResourceKey.create(Registries.ITEM, id));
 		}
 	}

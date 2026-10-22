@@ -3,9 +3,9 @@ package net.geforcemods.securitycraft.blockentities;
 import net.geforcemods.securitycraft.SCContent;
 import net.geforcemods.securitycraft.api.OwnableBlockEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 
 public class ReinforcedIronBarsBlockEntity extends OwnableBlockEntity {
 	private boolean canDrop = true;
@@ -15,14 +15,14 @@ public class ReinforcedIronBarsBlockEntity extends OwnableBlockEntity {
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
+	public void saveAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
 		tag.putBoolean("canDrop", canDrop);
-		super.saveAdditional(tag);
+		super.saveAdditional(tag, lookupProvider);
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
+	public void loadAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.loadAdditional(tag, lookupProvider);
 		canDrop = tag.getBooleanOr("canDrop", true);
 	}
 

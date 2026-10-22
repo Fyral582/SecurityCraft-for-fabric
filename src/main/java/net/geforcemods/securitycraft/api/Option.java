@@ -5,13 +5,12 @@ import java.util.function.Supplier;
 import net.geforcemods.securitycraft.misc.TargetingMode;
 import net.geforcemods.securitycraft.screen.CustomizeBlockScreen;
 import net.minecraft.ChatFormatting;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 
 /**
  * A class that allows blocks that have {@link ICustomizable} block entities to have custom, per-block options that are
@@ -48,11 +47,11 @@ public abstract class Option<T> {
 	 */
 	public abstract void toggle();
 
-	public abstract void load(ValueInput tag);
+	public abstract void load(CompoundTag tag);
 
-	public abstract void save(ValueOutput tag, T value);
+	public abstract void save(CompoundTag tag, T value);
 
-	public void save(ValueOutput tag) {
+	public void save(CompoundTag tag) {
 		save(tag, value);
 	}
 
@@ -172,12 +171,12 @@ public abstract class Option<T> {
 		}
 
 		@Override
-		public void load(ValueInput tag) {
+		public void load(CompoundTag tag) {
 			value = tag.getBooleanOr(getName(), getDefaultValue());
 		}
 
 		@Override
-		public void save(ValueOutput tag, Boolean value) {
+		public void save(CompoundTag tag, Boolean value) {
 			tag.putBoolean(getName(), value);
 		}
 
@@ -267,12 +266,12 @@ public abstract class Option<T> {
 		public void toggle() {}
 
 		@Override
-		public void load(ValueInput tag) {
+		public void load(CompoundTag tag) {
 			value = tag.getIntOr(getName(), getDefaultValue());
 		}
 
 		@Override
-		public void save(ValueOutput tag, Integer value) {
+		public void save(CompoundTag tag, Integer value) {
 			tag.putInt(getName(), value);
 		}
 
@@ -316,12 +315,12 @@ public abstract class Option<T> {
 		public void toggle() {}
 
 		@Override
-		public void load(ValueInput tag) {
+		public void load(CompoundTag tag) {
 			value = tag.getDoubleOr(getName(), getDefaultValue());
 		}
 
 		@Override
-		public void save(ValueOutput tag, Double value) {
+		public void save(CompoundTag tag, Double value) {
 			tag.putDouble(getName(), value);
 		}
 
@@ -353,7 +352,7 @@ public abstract class Option<T> {
 		}
 
 		@Override
-		public void load(ValueInput tag) {
+		public void load(CompoundTag tag) {
 			T[] enumConstants = enumClass.getEnumConstants();
 			int ordinal = tag.getIntOr(getName(), 0);
 
@@ -364,7 +363,7 @@ public abstract class Option<T> {
 		}
 
 		@Override
-		public void save(ValueOutput tag, T value) {
+		public void save(CompoundTag tag, T value) {
 			tag.putInt(getName(), value.ordinal());
 		}
 
@@ -413,18 +412,18 @@ public abstract class Option<T> {
 		}
 
 		@Override
-		public void load(ValueInput tag) {
+		public void load(CompoundTag tag) {
 			wrapped.load(tag);
 			entityData.get().set(entityDataKey, wrapped.get());
 		}
 
 		@Override
-		public void save(ValueOutput tag, T value) {
+		public void save(CompoundTag tag, T value) {
 			wrapped.save(tag, value);
 		}
 
 		@Override
-		public void save(ValueOutput tag) {
+		public void save(CompoundTag tag) {
 			wrapped.save(tag, entityData.get().get(entityDataKey));
 		}
 

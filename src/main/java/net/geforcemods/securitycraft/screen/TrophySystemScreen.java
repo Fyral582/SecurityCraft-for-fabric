@@ -11,22 +11,18 @@ import net.geforcemods.securitycraft.util.ClientUtils;
 import net.geforcemods.securitycraft.util.Utils;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
-import net.minecraft.util.CommonColors;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Inventory;
 
 public class TrophySystemScreen extends AbstractContainerScreen<TrophySystemMenu> {
-	private static final Identifier GUI_TEXTURE = SecurityCraft.resLoc("textures/gui/container/trophy_system.png");
-	private static final Identifier LENS_SLOT = SecurityCraft.resLoc("slot/lens");
+	private static final ResourceLocation GUI_TEXTURE = SecurityCraft.resLoc("textures/gui/container/trophy_system.png");
 	public final Component scrollListTitle, smartModuleTooltip;
-	private final boolean hasSmartModule;
-	private final boolean hasRedstoneModule;
-	private final TrophySystemBlockEntity be;
+	private boolean hasSmartModule;
+	private boolean hasRedstoneModule;
+	private TrophySystemBlockEntity be;
 	private ToggleScrollList<EntityType<?>> scrollList;
 
 	public TrophySystemScreen(TrophySystemMenu menu, Inventory playerInventory, Component title) {
@@ -49,19 +45,19 @@ public class TrophySystemScreen extends AbstractContainerScreen<TrophySystemMenu
 	}
 
 	@Override
-	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+	public boolean mouseClicked(double mouseX, double mouseY, int button) {
 		if (minecraft.player.isSpectator())
 			return false;
 
-		return super.mouseClicked(event, doubleClick);
+		return super.mouseClicked(mouseX, mouseY, button);
 	}
 
 	@Override
-	public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
-		if (scrollList != null && scrollList.mouseDragged(event, dragX, dragY))
+	public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+		if (scrollList != null && scrollList.mouseDragged(mouseX, mouseY, button, dragX, dragY))
 			return true;
 		else
-			return super.mouseDragged(event, dragX, dragY);
+			return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
 	}
 
 	@Override
@@ -74,10 +70,7 @@ public class TrophySystemScreen extends AbstractContainerScreen<TrophySystemMenu
 
 	@Override
 	protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
-		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, GUI_TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
-
-		if (be.getLensContainer().getItem(0).isEmpty())
-			guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, LENS_SLOT, leftPos + 154, topPos + 6, 16, 16);
+		guiGraphics.blit(RenderType::guiTextured, GUI_TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
 	}
 
 	@Override
@@ -90,17 +83,17 @@ public class TrophySystemScreen extends AbstractContainerScreen<TrophySystemMenu
 	@Override
 	public void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
 		super.renderLabels(guiGraphics, mouseX, mouseY);
-		guiGraphics.drawString(font, scrollListTitle, imageWidth / 2 - font.width(scrollListTitle) / 2, 31, CommonColors.DARK_GRAY, false);
+		guiGraphics.drawString(font, scrollListTitle, imageWidth / 2 - font.width(scrollListTitle) / 2, 31, 4210752, false);
 	}
 
 	@Override
-	public boolean keyPressed(KeyEvent event) {
-		if (minecraft.options.keyInventory.isActiveAndMatches(InputConstants.getKey(event))) {
+	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+		if (minecraft.options.keyInventory.isActiveAndMatches(InputConstants.getKey(keyCode, scanCode))) {
 			onClose();
 			return true;
 		}
 
-		return super.keyPressed(event);
+		return super.keyPressed(keyCode, scanCode, modifiers);
 	}
 
 	@Override

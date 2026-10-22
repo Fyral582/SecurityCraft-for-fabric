@@ -41,7 +41,11 @@ import net.geforcemods.securitycraft.blocks.RiftStabilizerBlock;
 import net.geforcemods.securitycraft.blocks.SecurityCameraBlock;
 import net.geforcemods.securitycraft.blocks.reinforced.ReinforcedCarpetBlock;
 import net.geforcemods.securitycraft.components.Notes.NoteWrapper;
+import net.geforcemods.securitycraft.entity.AbstractSecuritySeaBoat;
+import net.geforcemods.securitycraft.entity.camera.CameraClientChunkCacheExtension;
 import net.geforcemods.securitycraft.entity.camera.CameraNightVisionEffectInstance;
+import net.geforcemods.securitycraft.entity.camera.CameraViewAreaExtension;
+import net.geforcemods.securitycraft.entity.camera.FrameFeedHandler;
 import net.geforcemods.securitycraft.entity.camera.SecurityCamera;
 import net.geforcemods.securitycraft.entity.sentry.Sentry;
 import net.geforcemods.securitycraft.items.ModuleItem;
@@ -69,9 +73,9 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
@@ -88,7 +92,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.vehicle.boat.Boat;
+import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -103,7 +107,6 @@ import net.minecraft.world.level.block.entity.FuelValues;
 import net.minecraft.world.level.block.entity.SkullBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
-import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -115,7 +118,6 @@ import net.minecraft.world.phys.Vec3;
 public class SCEventHandler {
 	private static final Integer NOTE_DELAY = 9;
 	public static final Map<Player, MutablePair<Integer, List<NoteWrapper>>> PLAYING_TUNES = new HashMap<>();
-	public static final Map<ResourceKey<Level>, List<ChunkAccess>> TINT_UPDATE_QUEUE = new HashMap<>();
 
 	private SCEventHandler() {}
 
@@ -153,7 +155,7 @@ public class SCEventHandler {
 
 						if (note != null) {
 							NoteBlockInstrument instrument = NoteBlockInstrument.valueOf(note.instrumentName().toUpperCase());
-							SoundEvent sound = instrument.hasCustomSound() && !note.customSound().isEmpty() ? SoundEvent.createVariableRangeEvent(Identifier.parse(note.customSound())) : instrument.getSoundEvent().value();
+							SoundEvent sound = instrument.hasCustomSound() && !note.customSound().isEmpty() ? SoundEvent.createVariableRangeEvent(ResourceLocation.parse(note.customSound())) : instrument.getSoundEvent().value();
 							float pitch = instrument.isTunable() ? (float) Math.pow(2.0D, (note.id() - 12) / 12.0D) : 1.0F;
 
 							player.level().playSound(null, player.blockPosition(), sound, SoundSource.RECORDS, 3.0F, pitch);
@@ -177,15 +179,6 @@ public class SCEventHandler {
 				while (entries.hasNext()) {
 					if (entries.next().getValue().left == -1)
 						entries.remove();
-				}
-			}
-
-			for (ResourceKey<Level> levelResourceKey : TINT_UPDATE_QUEUE.keySet()) {
-				List<ChunkAccess> chunksToRecompile = TINT_UPDATE_QUEUE.get(levelResourceKey);
-
-				if (!chunksToRecompile.isEmpty()) {
-					server.getLevel(levelResourceKey).getChunkSource().chunkMap.resendBiomesForChunks(chunksToRecompile); //Tells the client to mark all modified sections as dirty, to properly update block tints. /fillbiome uses this too
-					chunksToRecompile.clear();
 				}
 			}
 		}
@@ -231,6 +224,11 @@ public class SCEventHandler {
 			SaltData.invalidate();
 			BlockEntityTracker.FRAME_VIEWED_SECURITY_CAMERAS.clear();
 		}
+		else if (level.isClientSide()) {
+			FrameFeedHandler.removeAllFeeds();
+			CameraClientChunkCacheExtension.clear();
+			CameraViewAreaExtension.clear();
+		}
 	}
 
 	public static void onServerStop(MinecraftServer server) {
@@ -242,7 +240,7 @@ public class SCEventHandler {
 	 */
 	public static boolean onLivingAttacked(LivingEntity entity, DamageSource damageSource) {
 		if (entity instanceof ServerPlayer player) {
-			ServerLevel level = player.level();
+			ServerLevel level = player.serverLevel();
 
 			if (!player.isCreative() && damageSource.equals(level.damageSources().inWall()) && !player.isInvulnerableTo(level, damageSource) && BlockUtils.isInsideUnownedReinforcedBlocks(level, player, player.getEyePosition(), player.getBbWidth())) {
 				int reinforcedSuffocationDamage = ConfigHandler.SERVER.reinforcedSuffocationDamage.get();
@@ -263,7 +261,7 @@ public class SCEventHandler {
 		if (source.is(CustomDamageSources.ELECTRICITY))
 			level.playSound(null, entity.blockPosition(), SCSounds.ELECTRIFIED.event, SoundSource.BLOCKS, 0.25F, 1.0F);
 
-		if (!level.isClientSide() && entity instanceof ServerPlayer player && PlayerUtils.isPlayerMountedOnCamera(entity))
+		if (!level.isClientSide && entity instanceof ServerPlayer player && PlayerUtils.isPlayerMountedOnCamera(entity))
 			((SecurityCamera) player.getCamera()).stopViewing(player);
 	}
 
@@ -355,7 +353,7 @@ public class SCEventHandler {
 		BlockState state = level.getBlockState(pos);
 		Block block = state.getBlock();
 
-		if (be instanceof ILockable lockable && lockable.isLockedBySSS() && lockable.disableInteractionWhenLocked(level, pos, player) && !player.isShiftKeyDown()) {
+		if (be instanceof ILockable lockable && lockable.isLocked() && lockable.disableInteractionWhenLocked(level, pos, player) && !player.isShiftKeyDown()) {
 			if (event.getHand() == InteractionHand.MAIN_HAND) {
 				MutableComponent blockName = Utils.localize(block.getDescriptionId());
 
@@ -384,7 +382,7 @@ public class SCEventHandler {
 			}
 		}
 
-		if (!level.isClientSide()) {
+		if (!level.isClientSide) {
 			if (event.getItemStack().is(Items.REDSTONE) && be instanceof IEMPAffected empAffected && empAffected.isShutDown()) {
 				empAffected.reactivate();
 
@@ -509,7 +507,7 @@ public class SCEventHandler {
 	public static void onOwnership(OwnershipEvent event) {
 		if (event.getLevel().getBlockEntity(event.getPos()) instanceof IOwnable ownable) {
 			String name = event.getPlayer().getName().getString();
-			String uuid = event.getPlayer().getGameProfile().id().toString();
+			String uuid = event.getPlayer().getGameProfile().getId().toString();
 
 			ownable.setOwner(uuid, name);
 		}
@@ -622,7 +620,7 @@ public class SCEventHandler {
 
 		// If no custom sound id is given, check if a custom sound was played, and if so, store its id
 		if (customSoundId.isEmpty() && instrument.hasCustomSound() && level.getBlockEntity(pos.above()) instanceof SkullBlockEntity be) {
-			Identifier noteBlockSound = be.getNoteBlockSound();
+			ResourceLocation noteBlockSound = be.getNoteBlockSound();
 
 			if (noteBlockSound != null)
 				customSoundId = noteBlockSound.toString();

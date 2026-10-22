@@ -7,7 +7,6 @@ import java.util.function.Predicate;
 import com.mojang.serialization.MapCodec;
 
 import net.geforcemods.securitycraft.SCContent;
-import net.geforcemods.securitycraft.SecurityCraft;
 import net.geforcemods.securitycraft.api.IReinforcedBlock;
 import net.geforcemods.securitycraft.blockentities.ReinforcedCauldronBlockEntity;
 import net.geforcemods.securitycraft.blocks.OwnableBlock;
@@ -23,7 +22,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
 import net.minecraft.tags.ItemTags;
-import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
@@ -52,7 +50,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
-import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.EntityCollisionContext;
@@ -191,13 +188,8 @@ public class ReinforcedCauldronBlock extends AbstractCauldronBlock implements IR
 
 		level.setBlockAndUpdate(pos, newState);
 
-		if (tag != null) {
-			be = level.getBlockEntity(pos);
-
-			try (ProblemReporter.ScopedCollector problemReporter = new ProblemReporter.ScopedCollector(be.problemPath(), SecurityCraft.LOGGER)) {
-				be.loadCustomOnly(TagValueInput.create(problemReporter, level.registryAccess(), tag));
-			}
-		}
+		if (tag != null)
+			level.getBlockEntity(pos).loadCustomOnly(tag, lookupProvider);
 	}
 
 	public interface IReinforcedCauldronInteraction extends CauldronInteraction {
@@ -224,7 +216,7 @@ public class ReinforcedCauldronBlock extends AbstractCauldronBlock implements IR
 			if (!(block instanceof ShulkerBoxBlock))
 				return InteractionResult.TRY_WITH_EMPTY_HAND;
 			else {
-				if (!level.isClientSide()) {
+				if (!level.isClientSide) {
 					player.setItemInHand(hand, ItemUtils.createFilledResult(stack, player, stack.transmuteCopy(Blocks.SHULKER_BOX, 1), false));
 					player.awardStat(Stats.CLEAN_SHULKER_BOX);
 					ReinforcedLayeredCauldronBlock.lowerFillLevel(state, level, pos);
@@ -239,7 +231,7 @@ public class ReinforcedCauldronBlock extends AbstractCauldronBlock implements IR
 			if (layers.layers().isEmpty())
 				return InteractionResult.TRY_WITH_EMPTY_HAND;
 			else {
-				if (!level.isClientSide()) {
+				if (!level.isClientSide) {
 					ItemStack stackCopy = stack.copyWithCount(1);
 
 					stackCopy.set(DataComponents.BANNER_PATTERNS, layers.removeLast());
@@ -258,7 +250,7 @@ public class ReinforcedCauldronBlock extends AbstractCauldronBlock implements IR
 			else if (!stack.has(DataComponents.DYED_COLOR))
 				return InteractionResult.TRY_WITH_EMPTY_HAND;
 			else {
-				if (!level.isClientSide()) {
+				if (!level.isClientSide) {
 					stack.remove(DataComponents.DYED_COLOR);
 					player.awardStat(Stats.CLEAN_ARMOR);
 					ReinforcedLayeredCauldronBlock.lowerFillLevel(state, level, pos);
@@ -280,7 +272,7 @@ public class ReinforcedCauldronBlock extends AbstractCauldronBlock implements IR
 				PotionContents potionContents = stack.get(DataComponents.POTION_CONTENTS);
 
 				if (potionContents != null && potionContents.is(Potions.WATER)) {
-					if (!level.isClientSide()) {
+					if (!level.isClientSide) {
 						Item item = stack.getItem();
 
 						player.setItemInHand(hand, ItemUtils.createFilledResult(stack, player, new ItemStack(Items.GLASS_BOTTLE)));
@@ -299,7 +291,7 @@ public class ReinforcedCauldronBlock extends AbstractCauldronBlock implements IR
 			addDefaultInteractions(waterMap);
 			waterMap.put(Items.BUCKET, (state, level, pos, player, hand, stack) -> fillBucket(state, level, pos, player, hand, stack, new ItemStack(Items.WATER_BUCKET), s -> s.getValue(LayeredCauldronBlock.LEVEL) == 3, SoundEvents.BUCKET_FILL));
 			waterMap.put(Items.GLASS_BOTTLE, (state, level, pos, player, hand, stack) -> {
-				if (!level.isClientSide()) {
+				if (!level.isClientSide) {
 					Item item = stack.getItem();
 
 					player.setItemInHand(hand, ItemUtils.createFilledResult(stack, player, PotionContents.createItemStack(Items.POTION, Potions.WATER)));
@@ -317,7 +309,7 @@ public class ReinforcedCauldronBlock extends AbstractCauldronBlock implements IR
 					PotionContents potionContents = stack.get(DataComponents.POTION_CONTENTS);
 
 					if (potionContents != null && potionContents.is(Potions.WATER)) {
-						if (!level.isClientSide()) {
+						if (!level.isClientSide) {
 							player.setItemInHand(hand, ItemUtils.createFilledResult(stack, player, new ItemStack(Items.GLASS_BOTTLE)));
 							player.awardStat(Stats.USE_CAULDRON);
 							player.awardStat(Stats.ITEM_USED.get(stack.getItem()));
@@ -393,7 +385,7 @@ public class ReinforcedCauldronBlock extends AbstractCauldronBlock implements IR
 			if (!fillPredicate.test(state))
 				return InteractionResult.TRY_WITH_EMPTY_HAND;
 			else {
-				if (!level.isClientSide()) {
+				if (!level.isClientSide) {
 					Item item = stack.getItem();
 
 					player.setItemInHand(hand, ItemUtils.createFilledResult(stack, player, bucket));
@@ -409,7 +401,7 @@ public class ReinforcedCauldronBlock extends AbstractCauldronBlock implements IR
 		}
 
 		static InteractionResult emptyBucket(Level level, BlockPos pos, Player player, InteractionHand hand, ItemStack stack, BlockState state, SoundEvent sound) {
-			if (!level.isClientSide()) {
+			if (!level.isClientSide) {
 				Item item = stack.getItem();
 
 				player.setItemInHand(hand, ItemUtils.createFilledResult(stack, player, new ItemStack(Items.BUCKET)));

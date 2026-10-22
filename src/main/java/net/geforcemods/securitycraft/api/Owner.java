@@ -2,11 +2,7 @@ package net.geforcemods.securitycraft.api;
 
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
-
 import net.geforcemods.securitycraft.SCContent;
-import net.geforcemods.securitycraft.util.TeamUtils;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -14,8 +10,6 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 
 /**
  * This class is used with {@link IOwnable} to get the player of the block. Allows for easy access to the player's IGN and
@@ -25,11 +19,6 @@ import net.minecraft.world.level.storage.ValueOutput;
  */
 public class Owner {
 	//@formatter:off
-	public static final Codec<Owner> CODEC = RecordCodecBuilder.create(i -> i.group(
-					Codec.STRING.fieldOf("owner").forGetter(Owner::getName),
-					Codec.STRING.fieldOf("ownerUUID").forGetter(Owner::getUUID),
-					Codec.BOOL.optionalFieldOf("ownerValidated", true).forGetter(Owner::isValidated))
-			.apply(i, Owner::new));
 	public static final StreamCodec<RegistryFriendlyByteBuf, Owner> STREAM_CODEC = StreamCodec.composite(
 			ByteBufCodecs.STRING_UTF8, Owner::getName,
 			ByteBufCodecs.STRING_UTF8, Owner::getUUID,
@@ -44,14 +33,14 @@ public class Owner {
 	public Owner(Entity entity) {
 		if (entity instanceof Player player) {
 			ownerName = player.getName().getString();
-			ownerUUID = player.getGameProfile().id().toString();
+			ownerUUID = player.getGameProfile().getId().toString();
 		}
 	}
 
 	public Owner(Player player) {
 		if (player != null) {
 			ownerName = player.getName().getString();
-			ownerUUID = player.getGameProfile().id().toString();
+			ownerUUID = player.getGameProfile().getId().toString();
 		}
 	}
 
@@ -69,22 +58,19 @@ public class Owner {
 	public static Owner fromCompound(CompoundTag tag) {
 		Owner owner = new Owner();
 
-		if (tag != null) {
-			owner.ownerName = tag.getStringOr("owner", owner.ownerName);
-			owner.ownerUUID = tag.getStringOr("ownerUUID", owner.ownerUUID);
-			owner.validated = tag.getBooleanOr("ownerValidated", owner.validated);
-		}
+		if (tag != null)
+			owner.load(tag);
 
 		return owner;
 	}
 
-	public void load(ValueInput tag) {
+	public void load(CompoundTag tag) {
 		ownerName = tag.getStringOr("owner", ownerName);
 		ownerUUID = tag.getStringOr("ownerUUID", ownerUUID);
 		validated = tag.getBooleanOr("ownerValidated", validated);
 	}
 
-	public void save(ValueOutput tag, boolean saveValidationStatus) {
+	public void save(CompoundTag tag, boolean saveValidationStatus) {
 		tag.putString("owner", ownerName);
 		tag.putString("ownerUUID", ownerUUID);
 
@@ -102,25 +88,6 @@ public class Owner {
 		}
 
 		return true;
-	}
-
-	/**
-	 * @return Whether everything owned by this owner is also owned by the other owner
-	 */
-	public boolean isTreatedTheSameAs(Owner otherOwner) {
-		if (TeamUtils.areOnSameTeam(this, otherOwner))
-			return true;
-
-		String selfUUID = getUUID();
-		String otherUUID = otherOwner.getUUID();
-		String otherName = otherOwner.getName();
-
-		// Compare the UUIDs of the owners first.
-		if (otherUUID != null && otherUUID.equals(selfUUID))
-			return true;
-
-		// If either owner doesn't have a UUID saved, compare names instead.
-		return otherName != null && (selfUUID.equals("ownerUUID") || otherUUID.equals("ownerUUID")) && otherName.equals(getName());
 	}
 
 	/**

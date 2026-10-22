@@ -19,14 +19,15 @@ import net.geforcemods.securitycraft.util.BlockUtils;
 import net.geforcemods.securitycraft.util.ITickingBlockEntity;
 import net.geforcemods.securitycraft.util.TeamUtils;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 import net.geforcemods.securitycraft.platform.model.ModelData;
 
@@ -37,7 +38,7 @@ public class SecureRedstoneInterfaceBlockEntity extends DisguisableBlockEntity i
 	public static final Vector3f RECEIVER_PROTECTED_PARTICLE_COLOR = new Vector3f(1.0F, 0.0F, 0.0F);
 	public static final Vector3f RECEIVER_PROTECTED_PARTICLE_COLOR_NO_SIGNAL = new Vector3f(0.0F, 0.0F, 0.0F);
 	public final DisabledOption disabled = new DisabledOption(false);
-	private boolean tracked = false;
+	private boolean tracked = false, refreshed = false;
 	private boolean sender = true;
 	private int power = 0;
 	private int frequency = 0;
@@ -57,16 +58,20 @@ public class SecureRedstoneInterfaceBlockEntity extends DisguisableBlockEntity i
 
 	@Override
 	public void tick(Level level, BlockPos pos, BlockState state) {
-		if (!level.isClientSide()) {
+		if (!level.isClientSide) {
 			if (!tracked) {
-				level.setBlockAndUpdate(pos, state.setValue(SecureRedstoneInterfaceBlock.SENDER, isSender()));
+				if (!isSender())
+					level.setBlockAndUpdate(pos, state.setValue(SecureRedstoneInterfaceBlock.SENDER, false));
+
 				refreshPower();
-				getTracker().track(this);
+				BlockEntityTracker.SECURE_REDSTONE_INTERFACE.track(this);
+				tracked = true;
+			}
+			else if (!refreshed) {
+				refreshed = true;
 
 				if (isSender())
 					tellSimilarReceiversToRefresh();
-
-				tracked = true;
 			}
 
 			if (changed) {
@@ -141,8 +146,8 @@ public class SecureRedstoneInterfaceBlockEntity extends DisguisableBlockEntity i
 	public void setRemoved() {
 		super.setRemoved();
 
-		if (!level.isClientSide())
-			getTracker().stopTracking(this);
+		if (!level.isClientSide)
+			BlockEntityTracker.SECURE_REDSTONE_INTERFACE.stopTracking(this);
 	}
 
 	@Override
@@ -180,8 +185,8 @@ public class SecureRedstoneInterfaceBlockEntity extends DisguisableBlockEntity i
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
+	public void loadAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.loadAdditional(tag, lookupProvider);
 		sender = tag.getBooleanOr("sender", true);
 		power = tag.getIntOr("power", 0);
 		frequency = tag.getIntOr("frequency", 0);
@@ -193,8 +198,8 @@ public class SecureRedstoneInterfaceBlockEntity extends DisguisableBlockEntity i
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
-		super.saveAdditional(tag);
+	public void saveAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.saveAdditional(tag, lookupProvider);
 		tag.putBoolean("sender", sender);
 		tag.putInt("power", power);
 		tag.putInt("frequency", frequency);
@@ -220,13 +225,9 @@ public class SecureRedstoneInterfaceBlockEntity extends DisguisableBlockEntity i
 	}
 
 	@Override
-	public void onDataPacket(Connection net, ValueInput tag) {
-		super.onDataPacket(net, tag);
+	public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt, HolderLookup.Provider lookupProvider) {
+		super.onDataPacket(net, pkt, lookupProvider);
 		ClientHandler.refreshModelData(this);
-	}
-
-	public final BlockEntityTracker<SecureRedstoneInterfaceBlockEntity> getTracker() {
-		return isSender() ? BlockEntityTracker.SECURE_REDSTONE_INTERFACE_SENDER : BlockEntityTracker.SECURE_REDSTONE_INTERFACE_RECEIVER;
 	}
 
 	public boolean isSender() {
@@ -237,15 +238,11 @@ public class SecureRedstoneInterfaceBlockEntity extends DisguisableBlockEntity i
 		if (isSender() == sender || !getOwner().isValidated())
 			return;
 
-		if (!level.isClientSide())
-			getTracker().stopTracking(this);
-
 		this.sender = sender;
 
-		if (!level.isClientSide()) {
+		if (!level.isClientSide) {
 			level.setBlockAndUpdate(worldPosition, getBlockState().setValue(SecureRedstoneInterfaceBlock.SENDER, sender));
 			setChanged();
-			getTracker().track(this);
 
 			if (!isDisabled())
 				tellSimilarReceiversToRefresh();
@@ -263,7 +260,7 @@ public class SecureRedstoneInterfaceBlockEntity extends DisguisableBlockEntity i
 	}
 
 	public void refreshPower(int frequency) {
-		if (level.isClientSide() || isDisabled() || !getOwner().isValidated())
+		if (level.isClientSide || isDisabled() || !getOwner().isValidated())
 			return;
 
 		if (isSender()) {
@@ -322,7 +319,7 @@ public class SecureRedstoneInterfaceBlockEntity extends DisguisableBlockEntity i
 
 		this.power = power;
 
-		if (!level.isClientSide()) {
+		if (!level.isClientSide) {
 			if (isSender())
 				tellSimilarReceiversToRefresh();
 
@@ -348,7 +345,7 @@ public class SecureRedstoneInterfaceBlockEntity extends DisguisableBlockEntity i
 
 		this.protectedSignal = protectedSignal;
 
-		if (!level.isClientSide()) {
+		if (!level.isClientSide) {
 			refreshPower();
 
 			if (isSender())
@@ -370,7 +367,7 @@ public class SecureRedstoneInterfaceBlockEntity extends DisguisableBlockEntity i
 
 		this.sendExactPower = sendExactPower;
 
-		if (!level.isClientSide() && isSender()) {
+		if (!level.isClientSide && isSender()) {
 			refreshPower();
 			setChanged();
 			updateNeighbors();
@@ -387,7 +384,7 @@ public class SecureRedstoneInterfaceBlockEntity extends DisguisableBlockEntity i
 
 		this.receiveInvertedPower = receiveInvertedPower;
 
-		if (!level.isClientSide() && !isSender()) {
+		if (!level.isClientSide && !isSender()) {
 			refreshPower();
 			setChanged();
 			updateNeighbors();
@@ -409,7 +406,7 @@ public class SecureRedstoneInterfaceBlockEntity extends DisguisableBlockEntity i
 	 * @param range The range around this block entity's position in which to update the receivers
 	 */
 	public void tellSimilarReceiversToRefresh(Owner owner, int frequency, int range) {
-		if (!level.isClientSide() && getOwner().isValidated()) {
+		if (!level.isClientSide && getOwner().isValidated()) {
 			for (SecureRedstoneInterfaceBlockEntity be : getReceiversToSendTo(owner, frequency, range)) {
 				be.refreshPower(frequency);
 			}
@@ -424,7 +421,7 @@ public class SecureRedstoneInterfaceBlockEntity extends DisguisableBlockEntity i
 
 		this.frequency = frequency;
 
-		if (!level.isClientSide()) {
+		if (!level.isClientSide) {
 			Owner owner = getOwner();
 			int range = getSenderRange();
 
@@ -457,7 +454,7 @@ public class SecureRedstoneInterfaceBlockEntity extends DisguisableBlockEntity i
 
 		this.senderRange = senderRange;
 
-		if (!level.isClientSide() && !isDisabled() && isSender()) {
+		if (!level.isClientSide && !isDisabled() && isSender()) {
 			Owner owner = getOwner();
 			int frequency = getFrequency();
 
@@ -471,7 +468,7 @@ public class SecureRedstoneInterfaceBlockEntity extends DisguisableBlockEntity i
 	}
 
 	public List<SecureRedstoneInterfaceBlockEntity> getReceiversToSendTo(Owner owner, int frequency, int range) {
-		List<SecureRedstoneInterfaceBlockEntity> all = BlockEntityTracker.SECURE_REDSTONE_INTERFACE_RECEIVER.getBlockEntitiesAround(level, worldPosition, range);
+		List<SecureRedstoneInterfaceBlockEntity> all = BlockEntityTracker.SECURE_REDSTONE_INTERFACE.getBlockEntitiesAround(level, worldPosition, range);
 
 		all.removeIf(be -> be.isSender() || !be.isOwnedBy(owner) || !be.isSameFrequency(frequency));
 		return all;
@@ -482,7 +479,7 @@ public class SecureRedstoneInterfaceBlockEntity extends DisguisableBlockEntity i
 	}
 
 	public List<SecureRedstoneInterfaceBlockEntity> getSendersThatSendToMe(int frequency) {
-		List<SecureRedstoneInterfaceBlockEntity> all = BlockEntityTracker.SECURE_REDSTONE_INTERFACE_SENDER.getBlockEntitiesInRange(level, worldPosition);
+		List<SecureRedstoneInterfaceBlockEntity> all = BlockEntityTracker.SECURE_REDSTONE_INTERFACE.getBlockEntitiesInRange(level, worldPosition);
 
 		all.removeIf(be -> be.isDisabled() || !be.isSender() || !be.isOwnedBy(getOwner()) || !be.isSameFrequency(frequency));
 		return all;

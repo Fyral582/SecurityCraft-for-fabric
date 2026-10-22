@@ -33,7 +33,9 @@ import net.geforcemods.securitycraft.util.InventoryUtils.ItemAccess;
 import net.geforcemods.securitycraft.util.Utils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.Container;
@@ -50,8 +52,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 
 public class InventoryScannerBlockEntity extends DisguisableBlockEntity implements MenuProvider, ITickingBlockEntity, ILockable, ContainerListener, ItemAccess {
 	private BooleanOption horizontal = new BooleanOption("horizontal", false);
@@ -96,24 +96,24 @@ public class InventoryScannerBlockEntity extends DisguisableBlockEntity implemen
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
+	public void loadAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.loadAdditional(tag, lookupProvider);
 
-		ContainerHelper.loadAllItems(tag, inventoryContents);
+		ContainerHelper.loadAllItems(tag, inventoryContents, lookupProvider);
 		signalCooldown = tag.getIntOr("cooldown", 0);
 		providePower = tag.getBooleanOr("is_providing_power", false);
-		lens.fromItemList(tag.listOrEmpty("lens", ItemStack.CODEC));
+		lens.fromTag(tag.getListOrEmpty("lens"), lookupProvider);
 		lens.setChanged();
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
-		super.saveAdditional(tag);
+	public void saveAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.saveAdditional(tag, lookupProvider);
 
-		ContainerHelper.saveAllItems(tag, inventoryContents);
+		ContainerHelper.saveAllItems(tag, inventoryContents, lookupProvider);
 		tag.putInt("cooldown", signalCooldown);
 		tag.putBoolean("is_providing_power", providePower);
-		lens.storeAsItemList(tag.list("lens", ItemStack.CODEC));
+		tag.put("lens", lens.createTag(lookupProvider));
 	}
 
 	@Override
@@ -145,6 +145,59 @@ public class InventoryScannerBlockEntity extends DisguisableBlockEntity implemen
 		}
 
 		return stacks;
+	}
+
+	public void setContainerItem(int index, ItemStack stack) {
+		inventoryContents.set(index, stack);
+
+		if (!stack.isEmpty() && stack.getCount() > stack.getMaxStackSize())
+			stack.setCount(stack.getMaxStackSize());
+
+		setChanged();
+	}
+
+	public ItemStack addItemToStorage(ItemStack stack) {
+		ItemStack remainder = stack;
+
+		for (int i = 10; i < getContents().size(); i++) {
+			remainder = insertItem(i, remainder);
+
+			if (remainder.isEmpty())
+				break;
+		}
+
+		return remainder;
+	}
+
+	public ItemStack insertItem(int slot, ItemStack stackToInsert) {
+		if (stackToInsert.isEmpty() || slot < 0 || slot >= getContents().size())
+			return stackToInsert;
+
+		ItemStack slotStack = getContents().get(slot);
+		int limit = stackToInsert.getMaxStackSize();
+
+		if (slotStack.isEmpty()) {
+			setContainerItem(slot, stackToInsert);
+			setChanged();
+			return ItemStack.EMPTY;
+		}
+		else if (InventoryScannerFieldBlock.areItemStacksEqual(slotStack, stackToInsert) && slotStack.getCount() < limit) {
+			if (limit - slotStack.getCount() >= stackToInsert.getCount()) {
+				slotStack.setCount(slotStack.getCount() + stackToInsert.getCount());
+				setChanged();
+				return ItemStack.EMPTY;
+			}
+			else {
+				ItemStack toInsert = stackToInsert.copy();
+				ItemStack toReturn = toInsert.split((slotStack.getCount() + stackToInsert.getCount()) - limit); //this is the remaining stack that could not be inserted
+
+				slotStack.setCount(slotStack.getCount() + toInsert.getCount());
+				setChanged();
+				return toReturn;
+			}
+		}
+
+		return stackToInsert;
 	}
 
 	public LensContainer getLensContainer() {
@@ -315,8 +368,7 @@ public class InventoryScannerBlockEntity extends DisguisableBlockEntity implemen
 				if (connectedScanner != null)
 					connectedScanner.setSignalLength(io.get());
 			}
-			default ->
-					throw new UnsupportedOperationException("Unhandled option synchronization in inventory scanner! " + option.getName());
+			default -> throw new UnsupportedOperationException("Unhandled option synchronization in inventory scanner! " + option.getName());
 		}
 
 		super.onOptionChanged(option);
@@ -400,10 +452,6 @@ public class InventoryScannerBlockEntity extends DisguisableBlockEntity implemen
 		providePower = false;
 		level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3); //sync option change to client
 		setChanged();
-	}
-
-	public int getSignalLength() {
-		return signalLength.get();
 	}
 
 	public boolean isConsideredInvisible(LivingEntity entity) {

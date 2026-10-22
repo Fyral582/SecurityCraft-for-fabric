@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.screen;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
@@ -27,29 +28,26 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
-import net.minecraft.util.CommonColors;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
 public class KeycardReaderScreen extends AbstractContainerScreen<KeycardReaderMenu> {
-	private static final Identifier TEXTURE = SecurityCraft.resLoc("textures/gui/container/keycard_reader.png");
-	private static final Identifier CONFIRM_SPRITE = SecurityCraft.mcResLoc("container/beacon/confirm");
-	private static final Identifier CANCEL_SPRITE = SecurityCraft.mcResLoc("container/beacon/cancel");
-	private static final Identifier RANDOM_SPRITE = SecurityCraft.resLoc("widget/random");
-	private static final Identifier RANDOM_INACTIVE_SPRITE = SecurityCraft.resLoc("widget/random_inactive");
-	private static final Identifier RESET_SPRITE = SecurityCraft.resLoc("widget/reset");
-	private static final Identifier RESET_INACTIVE_SPRITE = SecurityCraft.resLoc("widget/reset_inactive");
-	private static final Identifier RETURN_SPRITE = SecurityCraft.resLoc("widget/return");
-	private static final Identifier RETURN_INACTIVE_SPRITE = SecurityCraft.resLoc("widget/return_inactive");
-	private static final Identifier WARNING_HIGHLIGHTED_SPRITE = SecurityCraft.mcResLoc("world_list/warning_highlighted");
+	private static final ResourceLocation TEXTURE = SecurityCraft.resLoc("textures/gui/container/keycard_reader.png");
+	private static final ResourceLocation CONFIRM_SPRITE = SecurityCraft.mcResLoc("container/beacon/confirm");
+	private static final ResourceLocation CANCEL_SPRITE = SecurityCraft.mcResLoc("container/beacon/cancel");
+	private static final ResourceLocation RANDOM_SPRITE = SecurityCraft.resLoc("widget/random");
+	private static final ResourceLocation RANDOM_INACTIVE_SPRITE = SecurityCraft.resLoc("widget/random_inactive");
+	private static final ResourceLocation RESET_SPRITE = SecurityCraft.resLoc("widget/reset");
+	private static final ResourceLocation RESET_INACTIVE_SPRITE = SecurityCraft.resLoc("widget/reset_inactive");
+	private static final ResourceLocation RETURN_SPRITE = SecurityCraft.resLoc("widget/return");
+	private static final ResourceLocation RETURN_INACTIVE_SPRITE = SecurityCraft.resLoc("widget/return_inactive");
+	private static final ResourceLocation WARNING_HIGHLIGHTED_SPRITE = SecurityCraft.mcResLoc("world_list/warning_highlighted");
 	private static final Component EQUALS = Component.literal("=");
 	private static final Component GREATER_THAN_EQUALS = Component.literal(">=");
 	private static final int MAX_SIGNATURE = 99999;
@@ -144,27 +142,27 @@ public class KeycardReaderScreen extends AbstractContainerScreen<KeycardReaderMe
 		signatureTextField.setFilter(s -> s.matches("\\d*"));
 		signatureTextField.setMaxLength(5);
 		signatureTextField.setResponder(this::changeSignature);
-		minusThree = addRenderableWidget(Button.builder(Component.literal("---"), b -> changeSignature(signature - 100)).pos(leftPos + 22, buttonY).size(24, buttonHeight).build());
-		minusTwo = addRenderableWidget(Button.builder(Component.literal("--"), b -> changeSignature(signature - 10)).pos(leftPos + 48, buttonY).size(18, buttonHeight).build());
-		minusOne = addRenderableWidget(Button.builder(Component.literal("-"), b -> changeSignature(signature - 1)).pos(leftPos + 68, buttonY).size(12, buttonHeight).build());
+		minusThree = addRenderableWidget(new Button(leftPos + 22, buttonY, 24, buttonHeight, Component.literal("---"), b -> changeSignature(signature - 100), Button.DEFAULT_NARRATION));
+		minusTwo = addRenderableWidget(new Button(leftPos + 48, buttonY, 18, buttonHeight, Component.literal("--"), b -> changeSignature(signature - 10), Button.DEFAULT_NARRATION));
+		minusOne = addRenderableWidget(new Button(leftPos + 68, buttonY, 12, buttonHeight, Component.literal("-"), b -> changeSignature(signature - 1), Button.DEFAULT_NARRATION));
 		reset = addRenderableWidget(new ActiveBasedTextureButton(leftPos + 82, buttonY, 12, buttonHeight, RESET_SPRITE, RESET_INACTIVE_SPRITE, 1, 2, 10, 10, b -> changeSignature(previousSignature)));
-		plusOne = addRenderableWidget(Button.builder(Component.literal("+"), b -> changeSignature(signature + 1)).pos(leftPos + 96, buttonY).size(12, buttonHeight).build());
-		plusTwo = addRenderableWidget(Button.builder(Component.literal("++"), b -> changeSignature(signature + 10)).pos(leftPos + 110, buttonY).size(18, buttonHeight).build());
-		plusThree = addRenderableWidget(Button.builder(Component.literal("+++"), b -> changeSignature(signature + 100)).pos(leftPos + 130, buttonY).size(24, buttonHeight).build());
+		plusOne = addRenderableWidget(new Button(leftPos + 96, buttonY, 12, buttonHeight, Component.literal("+"), b -> changeSignature(signature + 1), Button.DEFAULT_NARRATION));
+		plusTwo = addRenderableWidget(new Button(leftPos + 110, buttonY, 18, buttonHeight, Component.literal("++"), b -> changeSignature(signature + 10), Button.DEFAULT_NARRATION));
+		plusThree = addRenderableWidget(new Button(leftPos + 130, buttonY, 24, buttonHeight, Component.literal("+++"), b -> changeSignature(signature + 100), Button.DEFAULT_NARRATION));
 		randomizeButton = addRenderableWidget(new ActiveBasedTextureButton(leftPos + 156, buttonY, 12, buttonHeight, RANDOM_SPRITE, RANDOM_INACTIVE_SPRITE, 1, 2, 10, 10, b -> changeSignature(SecurityCraft.RANDOM.nextInt(MAX_SIGNATURE))));
 		randomizeButton.setTooltip(Tooltip.create(Utils.localize("gui.securitycraft:keycard_reader.randomize_signature")));
 		randomizeButton.active = isOwner;
 		//set correct signature
 		changeSignature(signature);
 		//link button
-		linkButton = addRenderableWidget(Button.builder(linkText, b -> {
+		linkButton = addRenderableWidget(new Button(leftPos + 8, topPos + 126, 70, 20, linkText, b -> {
 			previousSignature = signature;
 			changeSignature(signature);
 			ClientPacketDistributor.sendToServer(new SyncKeycardSettings(be.getBlockPos(), acceptedLevels, signature, true, getUsableBy()));
 
 			if (menu.keycardSlot.getItem().getHoverName().getString().equalsIgnoreCase("Zelda"))
 				minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SCSounds.GET_ITEM.event, 1.0F, 1.25F));
-		}).pos(leftPos + 8, topPos + 126).size(70, 20).build());
+		}, Button.DEFAULT_NARRATION));
 		linkButton.active = false;
 		//text field for setting the player the keycard can be used by
 		usableByTextField = addRenderableWidget(new EditBox(font, leftPos + 8, topPos + 66, 70, 15, Component.empty()));
@@ -203,7 +201,7 @@ public class KeycardReaderScreen extends AbstractContainerScreen<KeycardReaderMe
 				}
 			}
 
-			addRenderableWidget(Button.builder(isExactLevel ? EQUALS : GREATER_THAN_EQUALS, b -> {
+			addRenderableWidget(new Button(leftPos + 135, topPos + 67, 18, 18, isExactLevel ? EQUALS : GREATER_THAN_EQUALS, b -> {
 				boolean change = false;
 
 				isExactLevel = !isExactLevel;
@@ -217,22 +215,22 @@ public class KeycardReaderScreen extends AbstractContainerScreen<KeycardReaderMe
 				}
 
 				b.setMessage(isExactLevel ? EQUALS : GREATER_THAN_EQUALS);
-			}).pos(leftPos + 135, topPos + 67).size(18, 18).build()).active = isOwner;
+			}, Button.DEFAULT_NARRATION)).active = isOwner;
 		}
 	}
 
 	@Override
 	protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-		guiGraphics.drawString(font, title, imageWidth / 2 - font.width(title) / 2, 6, CommonColors.DARK_GRAY, false);
-		guiGraphics.drawString(font, signatureText, signatureTextStartX, 23, CommonColors.DARK_GRAY, false);
-		guiGraphics.drawString(font, keycardLevelsText, 170 - font.width(keycardLevelsText), 56, CommonColors.DARK_GRAY, false);
+		guiGraphics.drawString(font, title, imageWidth / 2 - font.width(title) / 2, 6, 4210752, false);
+		guiGraphics.drawString(font, signatureText, signatureTextStartX, 23, 4210752, false);
+		guiGraphics.drawString(font, keycardLevelsText, 170 - font.width(keycardLevelsText), 56, 4210752, false);
 
 		//numbers infront of keycard levels buttons
 		for (int i = 1; i <= 5; i++) {
-			guiGraphics.drawString(font, "" + i, 91, 55 + 17 * i, CommonColors.DARK_GRAY, false);
+			guiGraphics.drawString(font, "" + i, 91, 55 + 17 * i, 4210752, false);
 		}
 
-		guiGraphics.drawString(font, Utils.INVENTORY_TEXT, 8, imageHeight - 93, CommonColors.DARK_GRAY, false);
+		guiGraphics.drawString(font, Utils.INVENTORY_TEXT, 8, imageHeight - 93, 4210752, false);
 	}
 
 	@Override
@@ -280,14 +278,14 @@ public class KeycardReaderScreen extends AbstractContainerScreen<KeycardReaderMe
 			int left = leftPos + 18;
 			int top = topPos + 82;
 
-			guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, WARNING_HIGHLIGHTED_SPRITE, left, top, 24, 24);
+			guiGraphics.blitSprite(RenderType::guiTextured, WARNING_HIGHLIGHTED_SPRITE, left, top, 24, 24);
 
 			if (mouseX >= left && mouseX <= left + 12 && mouseY >= top && mouseY <= top + 22)
-				guiGraphics.setTooltipForNextFrame(font, levelMismatchInfo, mouseX, mouseY);
+				guiGraphics.renderComponentTooltip(font, Arrays.asList(levelMismatchInfo), mouseX, mouseY);
 		}
 
 		if (!usesTextField.active && !stack.isEmpty() && usesHoverChecker.checkHover(mouseX, mouseY))
-			guiGraphics.setComponentTooltipForNextFrame(font, usesHoverChecker.getLines(), mouseX, mouseY);
+			guiGraphics.renderComponentTooltip(font, usesHoverChecker.getLines(), mouseX, mouseY);
 
 		renderTooltip(guiGraphics, mouseX, mouseY);
 		ClientUtils.renderModuleInfo(guiGraphics, font, ModuleType.SMART, smartModuleTooltip, hasSmartModule, leftPos + 5, topPos + 5, mouseX, mouseY);
@@ -295,15 +293,15 @@ public class KeycardReaderScreen extends AbstractContainerScreen<KeycardReaderMe
 
 	@Override
 	protected void renderBg(GuiGraphics guiGraphics, float partialTicks, int mouseX, int mouseY) {
-		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
+		guiGraphics.blit(RenderType::guiTextured, TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
 	}
 
 	@Override
-	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+	public boolean mouseClicked(double mouseX, double mouseY, int button) {
 		if (minecraft.player.isSpectator())
 			return false;
 
-		return super.mouseClicked(event, doubleClick);
+		return super.mouseClicked(mouseX, mouseY, button);
 	}
 
 	@Override
@@ -315,15 +313,15 @@ public class KeycardReaderScreen extends AbstractContainerScreen<KeycardReaderMe
 	}
 
 	@Override
-	public boolean keyPressed(KeyEvent event) {
+	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
 		if (usableByTextField.isFocused()) {
-			Key key = InputConstants.getKey(event);
+			Key key = InputConstants.getKey(keyCode, scanCode);
 
 			if (minecraft.options.keyInventory.isActiveAndMatches(key) || minecraft.options.keySwapOffhand.isActiveAndMatches(key) || minecraft.options.keyPickItem.isActiveAndMatches(key))
 				return false;
 		}
 
-		return super.keyPressed(event);
+		return super.keyPressed(keyCode, scanCode, modifiers);
 	}
 
 	@Override

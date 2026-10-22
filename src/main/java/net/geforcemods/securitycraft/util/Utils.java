@@ -3,19 +3,21 @@ package net.geforcemods.securitycraft.util;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.contents.TranslatableContents;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -49,6 +51,10 @@ public class Utils {
 		return Component.translatable(key, params);
 	}
 
+	public static ItemStack parseOptional(HolderLookup.Provider provider, CompoundTag tag) {
+		return !tag.contains("id") || tag.getStringOr("id", "minecraft:air").equals(Items.AIR.toString()) ? ItemStack.EMPTY : ItemStack.parse(provider, tag).orElse(ItemStack.EMPTY);
+	}
+
 	public static BlockPos readBlockPos(CompoundTag tag) {
 		return new BlockPos(tag.getIntOr("X", 0), tag.getIntOr("Y", 0), tag.getIntOr("Z", 0));
 	}
@@ -62,19 +68,19 @@ public class Utils {
 		return tag;
 	}
 
-	public static Identifier getRegistryName(Block block) {
+	public static ResourceLocation getRegistryName(Block block) {
 		return BuiltInRegistries.BLOCK.getKey(block);
 	}
 
-	public static Identifier getRegistryName(EntityType<?> entityType) {
+	public static ResourceLocation getRegistryName(EntityType<?> entityType) {
 		return BuiltInRegistries.ENTITY_TYPE.getKey(entityType);
 	}
 
-	public static Identifier getRegistryName(Item item) {
+	public static ResourceLocation getRegistryName(Item item) {
 		return BuiltInRegistries.ITEM.getKey(item);
 	}
 
-	public static Identifier getRegistryName(Potion potion) {
+	public static ResourceLocation getRegistryName(Potion potion) {
 		return BuiltInRegistries.POTION.getKey(potion);
 	}
 

@@ -9,9 +9,13 @@ import net.geforcemods.securitycraft.entity.sentry.Sentry.SentryMode;
 import net.geforcemods.securitycraft.util.Utils;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.FlyingMob;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
-import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.monster.Shulker;
+import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.world.entity.player.Player;
 
 /**
@@ -91,7 +95,12 @@ public class TargetNearestPlayerOrMobGoal extends NearestAttackableTargetGoal<Li
 		//@formatter:off
 		return potentialTarget.deathTime == 0 &&
 				!ConfigHandler.SERVER.sentryAttackableEntitiesDenylist.get().contains(Utils.getRegistryName(potentialTarget.getType()).toString()) &&
-				(potentialTarget instanceof Enemy || SecurityCraftAPI.getRegisteredSentryAttackTargetChecks().stream().anyMatch(check -> check.canAttack(potentialTarget)));
+				(potentialTarget instanceof Monster ||
+						potentialTarget instanceof FlyingMob ||
+						potentialTarget instanceof Slime ||
+						potentialTarget instanceof Shulker ||
+						potentialTarget instanceof EnderDragon ||
+						SecurityCraftAPI.getRegisteredSentryAttackTargetChecks().stream().anyMatch(check -> check.canAttack(potentialTarget)));
 		//@formatter:on
 	}
 

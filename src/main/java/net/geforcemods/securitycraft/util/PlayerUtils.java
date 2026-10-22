@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import net.geforcemods.securitycraft.ClientHandler;
@@ -80,7 +81,7 @@ public class PlayerUtils {
 	}
 
 	public static void sendMessageToPlayer(Player player, MutableComponent prefix, MutableComponent text, ChatFormatting color, boolean shouldSendFromClient) {
-		if (player != null && player.level().isClientSide() == shouldSendFromClient) {
+		if (player != null && player.level().isClientSide == shouldSendFromClient) {
 			//@formatter:off
 			player.displayClientMessage(Component.literal("[")
 					.append(prefix.setStyle(Style.EMPTY.withColor(color)))
@@ -114,7 +115,7 @@ public class PlayerUtils {
 		if (!(entity instanceof Player player))
 			return false;
 
-		if (player.level().isClientSide())
+		if (player.level().isClientSide)
 			return ClientHandler.isPlayerMountedOnCamera();
 		else if (player instanceof ServerPlayer serverPlayer)
 			return serverPlayer.getCamera() instanceof SecurityCamera;
@@ -173,9 +174,13 @@ public class PlayerUtils {
 			ResolvableProfile profile = stack.get(DataComponents.PROFILE);
 
 			if (profile != null) {
-				UUID profileUUID = profile.partialProfile().id();
+				Optional<UUID> profileUUID = profile.id();
+				String uuid = "ownerUUID";
 
-				return new Owner(profile.name().orElse("ownerName"), profileUUID.toString());
+				if (profileUUID.isPresent())
+					uuid = profileUUID.get().toString();
+
+				return new Owner(profile.name().orElse("ownerName"), uuid);
 			}
 		}
 

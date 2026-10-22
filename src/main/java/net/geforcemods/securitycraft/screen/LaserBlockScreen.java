@@ -14,24 +14,19 @@ import net.geforcemods.securitycraft.util.ClientUtils;
 import net.geforcemods.securitycraft.util.Utils;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.input.InputWithModifiers;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
-import net.minecraft.util.CommonColors;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
 public class LaserBlockScreen extends AbstractContainerScreen<LaserBlockMenu> {
-	private static final Identifier TEXTURE = SecurityCraft.resLoc("textures/gui/container/laser_block.png");
-	private static final Identifier LENS_SLOT = SecurityCraft.resLoc("slot/lens");
+	private static final ResourceLocation TEXTURE = SecurityCraft.resLoc("textures/gui/container/laser_block.png");
 	private final boolean hasSmartModule;
 	private Component smartModuleTooltip;
-	private final LaserBlockBlockEntity be;
-	private final Map<Direction, Boolean> sideConfig;
+	private LaserBlockBlockEntity be;
+	private Map<Direction, Boolean> sideConfig;
 
 	public LaserBlockScreen(LaserBlockMenu menu, Inventory playerInventory, Component title) {
 		super(menu, playerInventory, title);
@@ -48,11 +43,11 @@ public class LaserBlockScreen extends AbstractContainerScreen<LaserBlockMenu> {
 		titleLabelX = imageWidth / 2 - font.width(title) / 2;
 		inventoryLabelY = imageHeight - 94;
 		sideConfig.forEach((dir, enabled) -> {
-			CallbackCheckbox checkbox = new CallbackCheckbox(leftPos + 40, topPos + dir.get3DDataValue() * 22 + 25, 20, 20, Utils.localize("gui.securitycraft:laser." + dir.getName() + "Enabled"), enabled, newValue -> onChangeValue(dir, newValue), CommonColors.DARK_GRAY) {
+			CallbackCheckbox checkbox = new CallbackCheckbox(leftPos + 40, topPos + dir.get3DDataValue() * 22 + 25, 20, 20, Utils.localize("gui.securitycraft:laser." + dir.getName() + "Enabled"), enabled, newValue -> onChangeValue(dir, newValue), 0x404040) {
 				@Override
-				public void onPress(InputWithModifiers input) {
+				public void onPress() {
 					if (hasSmartModule)
-						super.onPress(input);
+						super.onPress();
 				}
 			};
 
@@ -68,12 +63,7 @@ public class LaserBlockScreen extends AbstractContainerScreen<LaserBlockMenu> {
 
 	@Override
 	protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
-		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
-
-		for (int i = 0; i < 6; i++) {
-			if (be.getLensContainer().getItem(i).isEmpty())
-				guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, LENS_SLOT, leftPos + 15, topPos + i * 22 + 27, 16, 16);
-		}
+		guiGraphics.blit(RenderType::guiTextured, TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
 	}
 
 	@Override
@@ -84,16 +74,16 @@ public class LaserBlockScreen extends AbstractContainerScreen<LaserBlockMenu> {
 	}
 
 	@Override
-	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+	public boolean mouseClicked(double mouseX, double mouseY, int button) {
 		if (minecraft.player.isSpectator())
 			return false;
 
-		return super.mouseClicked(event, doubleClick);
+		return super.mouseClicked(mouseX, mouseY, button);
 	}
 
 	public void onChangeValue(Direction dir, boolean newValue) {
 		sideConfig.put(dir, newValue);
-		ClientPacketDistributor.sendToServer(new SyncLaserSideConfig(be.getBlockPos(), LaserBlockBlockEntity.saveSideConfigToTag(sideConfig)));
+		ClientPacketDistributor.sendToServer(new SyncLaserSideConfig(be.getBlockPos(), LaserBlockBlockEntity.saveSideConfig(sideConfig)));
 	}
 
 	@Override
@@ -102,12 +92,12 @@ public class LaserBlockScreen extends AbstractContainerScreen<LaserBlockMenu> {
 	}
 
 	@Override
-	public boolean keyPressed(KeyEvent event) {
-		if (minecraft.options.keyInventory.isActiveAndMatches(InputConstants.getKey(event))) {
+	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+		if (minecraft.options.keyInventory.isActiveAndMatches(InputConstants.getKey(keyCode, scanCode))) {
 			onClose();
 			return true;
 		}
 
-		return super.keyPressed(event);
+		return super.keyPressed(keyCode, scanCode, modifiers);
 	}
 }

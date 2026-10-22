@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import net.geforcemods.securitycraft.SCContent;
+import net.geforcemods.securitycraft.SecurityCraft;
 import net.geforcemods.securitycraft.api.IEMPAffectedBE;
 import net.geforcemods.securitycraft.api.ILockable;
 import net.geforcemods.securitycraft.api.Option;
@@ -19,20 +21,24 @@ import net.geforcemods.securitycraft.misc.ModuleType;
 import net.geforcemods.securitycraft.misc.SCSounds;
 import net.geforcemods.securitycraft.util.BlockUtils;
 import net.geforcemods.securitycraft.util.ITickingBlockEntity;
+import net.geforcemods.securitycraft.util.Utils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.GlobalPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.core.component.DataComponentMap.Builder;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueInput.TypedInputList;
-import net.minecraft.world.level.storage.ValueOutput;
-import net.minecraft.world.level.storage.ValueOutput.TypedOutputList;
 
 public class SonicSecuritySystemBlockEntity extends DisguisableBlockEntity implements ITickingBlockEntity, IEMPAffectedBE {
 	/** The delay between each ping sound in ticks */
@@ -87,7 +93,7 @@ public class SonicSecuritySystemBlockEntity extends DisguisableBlockEntity imple
 			tracked = true;
 		}
 
-		if (!level.isClientSide()) {
+		if (!level.isClientSide) {
 			if (!isActive())
 				return;
 
@@ -174,19 +180,20 @@ public class SonicSecuritySystemBlockEntity extends DisguisableBlockEntity imple
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
-		super.saveAdditional(tag);
+	public void saveAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.saveAdditional(tag, lookupProvider);
 
-		TypedOutputList<GlobalPos> linkedBlocksList = tag.list("linked_blocks", GlobalPos.CODEC.orElse(GlobalPositions.DUMMY_GLOBAL_POS));
-		TypedOutputList<NoteWrapper> notesList = tag.list("notes", NoteWrapper.CODEC);
+		ListTag list = new ListTag();
 
-		linkedBlocks.forEach(entry -> {
-			if (entry == null)
-				linkedBlocksList.add(GlobalPositions.DUMMY_GLOBAL_POS);
+		for (GlobalPos blockToSave : linkedBlocks) {
+			if (blockToSave == null)
+				list.add(new CompoundTag());
 			else
-				linkedBlocksList.add(entry);
-		});
-		recordedNotes.forEach(notesList::add);
+				list.add(GlobalPos.CODEC.encodeStart(lookupProvider.createSerializationContext(NbtOps.INSTANCE), blockToSave).getOrThrow());
+		}
+
+		tag.put("linked_blocks", list);
+		saveNotes(tag, lookupProvider);
 		tag.putBoolean("emitsPings", emitsPings);
 		tag.putBoolean("isActive", isActive);
 		tag.putBoolean("isRecording", isRecording);
@@ -199,22 +206,37 @@ public class SonicSecuritySystemBlockEntity extends DisguisableBlockEntity imple
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
-
-		//what happens when this tries to load old BE data that has an empty compound tag?
-		TypedInputList<GlobalPos> linkedBlocksList = tag.listOrEmpty("linked_blocks", GlobalPos.CODEC.orElse(GlobalPositions.DUMMY_GLOBAL_POS));
-		TypedInputList<NoteWrapper> notesList = tag.listOrEmpty("notes", NoteWrapper.CODEC);
+	public void loadAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.loadAdditional(tag, lookupProvider);
 
 		linkedBlocks = new ArrayList<>();
+
+		if (tag.contains("linked_blocks")) {
+			ListTag list = tag.getListOrEmpty("linked_blocks");
+
+			for (Tag entry : list) {
+				try {
+					GlobalPos.CODEC.decode(NbtOps.INSTANCE, entry).result().ifPresentOrElse(pair -> linkedBlocks.add(pair.getFirst()), () -> linkedBlocks.add(null));
+				}
+				catch (Exception exception) {
+					SecurityCraft.LOGGER.error("Failed to load global pos in Sonic Security System at position {}: {}", worldPosition, entry, exception);
+				}
+			}
+		}
+		else if (tag.contains("LinkedBlocks")) {
+			ListTag list = tag.getListOrEmpty("LinkedBlocks");
+
+			for (int i = 0; i < list.size(); i++) {
+				CompoundTag linkedBlock = list.getCompoundOrEmpty(i);
+				BlockPos linkedBlockPos = Utils.readBlockPos(linkedBlock);
+
+				linkedBlocks.add(new GlobalPos(level != null ? level.dimension() : ResourceKey.create(Registries.DIMENSION, SecurityCraft.mcResLoc("overworld")), linkedBlockPos));
+			}
+		}
+
 		recordedNotes.clear();
-		linkedBlocksList.forEach(entry -> {
-			if (entry.equals(GlobalPositions.DUMMY_GLOBAL_POS))
-				linkedBlocks.add(null);
-			else
-				linkedBlocks.add(entry);
-		});
-		notesList.forEach(recordedNotes::add);
+		loadNotes(tag);
+
 		emitsPings = tag.getBooleanOr("emitsPings", emitsPings);
 		isActive = tag.getBooleanOr("isActive", isActive);
 		isRecording = tag.getBooleanOr("isRecording", false);
@@ -224,6 +246,43 @@ public class SonicSecuritySystemBlockEntity extends DisguisableBlockEntity imple
 		powerCooldown = tag.getIntOr("powerCooldown", 0);
 		shutDown = tag.getBooleanOr("shutDown", false);
 		disableBlocksWhenTuneIsPlayed = tag.getBooleanOr("disableBlocksWhenTuneIsPlayed", false);
+	}
+
+	/**
+	 * Saves this block entity's notes to a tag
+	 *
+	 * @param tag The tag to save the notes to
+	 * @param lookupProvider lookup for registry entries
+	 */
+	public void saveNotes(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		ListTag list = new ListTag();
+
+		for (NoteWrapper note : recordedNotes) {
+			list.add(NoteWrapper.CODEC.encodeStart(lookupProvider.createSerializationContext(NbtOps.INSTANCE), note).getOrThrow());
+		}
+
+		tag.put("notes", list);
+	}
+
+	/**
+	 * Loads notes saved on tag to a collection
+	 *
+	 * @param tag The tag containing the notes
+	 */
+	public void loadNotes(CompoundTag tag) {
+		recordedNotes = new ArrayList<>();
+
+		if (tag.contains("notes"))
+			recordedNotes.addAll(Notes.CODEC.decode(NbtOps.INSTANCE, tag).result().get().getFirst().notes());
+		else if (tag.contains("Notes")) {
+			ListTag list = tag.getListOrEmpty("Notes");
+
+			for (int i = 0; i < list.size(); i++) {
+				CompoundTag note = list.getCompoundOrEmpty(i);
+
+				recordedNotes.add(new NoteWrapper(note.getIntOr("noteID", 0), note.getStringOr("instrument", ""), note.getStringOr("customSoundId", "")));
+			}
+		}
 	}
 
 	/**
@@ -325,7 +384,7 @@ public class SonicSecuritySystemBlockEntity extends DisguisableBlockEntity imple
 		isListening = false;
 		level.updateNeighborsAt(worldPosition, SCContent.SONIC_SECURITY_SYSTEM.get());
 
-		if (!level.isClientSide())
+		if (!level.isClientSide)
 			sync();
 	}
 
@@ -346,7 +405,7 @@ public class SonicSecuritySystemBlockEntity extends DisguisableBlockEntity imple
 	public void recordNote(int noteID, NoteBlockInstrument instrument, String customSoundId) {
 		recordedNotes.add(new NoteWrapper(noteID, instrument.getSerializedName(), customSoundId));
 
-		if (!level.isClientSide())
+		if (!level.isClientSide)
 			sync();
 	}
 
@@ -458,11 +517,10 @@ public class SonicSecuritySystemBlockEntity extends DisguisableBlockEntity imple
 		GlobalPositions sssLinkedBlocks = input.get(SCContent.SSS_LINKED_BLOCKS.get());
 
 		if (sssLinkedBlocks != null)
-			linkedBlocks = new ArrayList<>(sssLinkedBlocks.positions()); //needs to be modifiable
+			linkedBlocks = sssLinkedBlocks.positions().stream().collect(Collectors.toList()); //needs to be modifiable
 		else
 			linkedBlocks = new ArrayList<>();
 
-		linkedBlocks.removeIf(Objects::isNull);
 		recordedNotes = new ArrayList<>(input.getOrDefault(SCContent.NOTES.get(), Notes.EMPTY).notes());
 	}
 
@@ -486,10 +544,10 @@ public class SonicSecuritySystemBlockEntity extends DisguisableBlockEntity imple
 	}
 
 	@Override
-	public void removeComponentsFromTag(ValueOutput tag) {
+	public void removeComponentsFromTag(CompoundTag tag) {
 		super.removeComponentsFromTag(tag);
-		tag.discard("linked_blocks");
-		tag.discard("notes");
+		tag.remove("linked_blocks");
+		tag.remove("notes");
 	}
 
 	public boolean wasCorrectTunePlayed() {

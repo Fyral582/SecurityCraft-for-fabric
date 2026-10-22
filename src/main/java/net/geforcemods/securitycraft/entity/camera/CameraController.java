@@ -38,7 +38,7 @@ public class CameraController {
 	public static CameraType previousCameraType;
 	public static boolean resetOverlaysAfterDismount = false;
 	private static final ViewMovementKeyHandler[] MOVE_KEY_HANDLERS = new ViewMovementKeyHandler[] {
-			//@formatter:off
+		//@formatter:off
 		new ViewMovementKeyHandler(options -> options.keyUp, CameraController::moveViewUp),
 		new ViewMovementKeyHandler(options -> options.keyDown, CameraController::moveViewDown),
 		new ViewMovementKeyHandler(options -> options.keyLeft, cam -> moveViewHorizontally(cam, cam.getYRot() - getMovementSpeed(cam) * cam.getZoomAmount())),
@@ -57,7 +57,7 @@ public class CameraController {
 
 	public static void onClientTickPre() {
 		//up/down/left/right handling is split to prevent players who are viewing a camera from moving around in a boat or on a horse
-		Entity cameraEntity = Minecraft.getInstance().getCameraEntity();
+		Entity cameraEntity = Minecraft.getInstance().cameraEntity;
 
 		if (cameraEntity instanceof SecurityCamera) {
 			Options options = Minecraft.getInstance().options;
@@ -83,14 +83,16 @@ public class CameraController {
 				handler.tickEnd(cam, options);
 			}
 
-			if (KeyBindings.cameraZoomIn().isDown())
+			if (KeyBindings.cameraZoomIn.isDown())
 				zoomIn(cam);
-			else if (KeyBindings.cameraZoomOut().isDown())
+			else if (KeyBindings.cameraZoomOut.isDown())
 				zoomOut(cam);
 			else
 				cam.zooming = false;
 
-			KeyBindings.tick(cam);
+			KeyBindings.cameraEmitRedstone.tick(cam);
+			KeyBindings.cameraActivateNightVision.tick(cam);
+			KeyBindings.setDefaultViewingDirection.tick(cam);
 			screenshotSoundCooldown--;
 
 			//update other players with the head rotation
@@ -105,10 +107,9 @@ public class CameraController {
 		if (resetOverlaysAfterDismount) {
 			resetOverlaysAfterDismount = false;
 			LayerToggleHandler.disable(ClientHandler.CAMERA_LAYER);
-			LayerToggleHandler.enable(VanillaGuiLayers.CONTEXTUAL_INFO_BAR);
-			LayerToggleHandler.enable(VanillaGuiLayers.CONTEXTUAL_INFO_BAR_BACKGROUND);
+			LayerToggleHandler.enable(VanillaGuiLayers.JUMP_METER);
+			LayerToggleHandler.enable(VanillaGuiLayers.EXPERIENCE_BAR);
 			LayerToggleHandler.enable(VanillaGuiLayers.EFFECTS);
-			LayerToggleHandler.enable(VanillaGuiLayers.EXPERIENCE_LEVEL);
 		}
 	}
 

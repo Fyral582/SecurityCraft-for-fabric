@@ -18,7 +18,7 @@ import net.minecraft.world.level.Level;
 public class LaserBlockMenu extends AbstractContainerMenu {
 	public final LaserBlockBlockEntity be;
 	public final Map<Direction, Boolean> sideConfig;
-	private final ContainerLevelAccess containerLevelAccess;
+	private ContainerLevelAccess containerLevelAccess;
 
 	public LaserBlockMenu(int windowId, Level level, BlockPos pos, Map<Direction, Boolean> sideConfig, Inventory inventory) {
 		super(SCContent.LASER_BLOCK_MENU.get(), windowId);

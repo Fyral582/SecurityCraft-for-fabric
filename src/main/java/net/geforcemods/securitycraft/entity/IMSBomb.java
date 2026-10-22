@@ -7,6 +7,7 @@ import net.geforcemods.securitycraft.blockentities.IMSBlockEntity;
 import net.geforcemods.securitycraft.misc.ModuleType;
 import net.geforcemods.securitycraft.util.BlockUtils;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
@@ -16,11 +17,9 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerEntity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MoverType;
-import net.minecraft.world.entity.projectile.hurtingprojectile.Fireball;
+import net.minecraft.world.entity.projectile.Fireball;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.HitResult.Type;
@@ -68,7 +67,7 @@ public class IMSBomb extends Fireball {
 
 	@Override
 	protected void onHit(HitResult result) {
-		if (!level().isClientSide() && result.getType() == Type.BLOCK && level().getBlockState(((BlockHitResult) result).getBlockPos()).getBlock() != SCContent.IMS.get()) {
+		if (!level().isClientSide && result.getType() == Type.BLOCK && level().getBlockState(((BlockHitResult) result).getBlockPos()).getBlock() != SCContent.IMS.get()) {
 			BlockPos impactPos = ((BlockHitResult) result).getBlockPos();
 
 			level().explode(this, impactPos.getX(), impactPos.getY() + 1D, impactPos.getZ(), ConfigHandler.SERVER.smallerMineExplosion.get() ? 3.5F : 7F, ConfigHandler.SERVER.shouldSpawnFire.get(), BlockUtils.getExplosionInteraction());
@@ -77,7 +76,7 @@ public class IMSBomb extends Fireball {
 	}
 
 	@Override
-	public void addAdditionalSaveData(ValueOutput tag) {
+	public void addAdditionalSaveData(CompoundTag tag) {
 		super.addAdditionalSaveData(tag);
 		tag.putInt("ticksFlying", ticksFlying);
 		tag.putBoolean("launching", launching);
@@ -85,7 +84,7 @@ public class IMSBomb extends Fireball {
 	}
 
 	@Override
-	public void readAdditionalSaveData(ValueInput tag) {
+	public void readAdditionalSaveData(CompoundTag tag) {
 		super.readAdditionalSaveData(tag);
 		ticksFlying = tag.getIntOr("ticksFlying", 0);
 		launching = tag.getBooleanOr("launching", false);

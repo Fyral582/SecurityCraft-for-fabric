@@ -28,8 +28,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.entity.LecternBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 
 public class ReinforcedLecternBlockEntity extends LecternBlockEntity implements IOwnable, IModuleInventory, ICustomizable, IPistonMoveListener {
 	private Owner owner = new Owner();
@@ -42,22 +40,22 @@ public class ReinforcedLecternBlockEntity extends LecternBlockEntity implements 
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
+	public void loadAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.loadAdditional(tag, lookupProvider);
 		owner.load(tag);
-		readModuleInventory(modules, tag);
+		modules = readModuleInventory(tag, lookupProvider);
 		moduleStates = readModuleStates(tag);
 		readOptions(tag);
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
-		super.saveAdditional(tag);
+	public void saveAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.saveAdditional(tag, lookupProvider);
 
 		if (owner != null)
 			owner.save(tag, needsValidation());
 
-		writeModuleInventory(tag);
+		writeModuleInventory(tag, lookupProvider);
 		writeModuleStates(tag);
 		writeOptions(tag);
 	}
@@ -69,7 +67,7 @@ public class ReinforcedLecternBlockEntity extends LecternBlockEntity implements 
 	}
 
 	@Override
-	public void prePistonPushSideEffects(BlockPos pos) {
+	public void prePistonPushSideEffects(BlockPos pos, BlockState state) {
 		clearContent(); //Clear the items from the block before it is moved by a piston to prevent duplication
 	}
 

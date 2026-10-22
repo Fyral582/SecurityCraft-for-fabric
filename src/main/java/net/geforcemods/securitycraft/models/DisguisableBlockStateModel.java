@@ -5,14 +5,16 @@ import java.util.function.Predicate;
 
 import org.jetbrains.annotations.Nullable;
 
+import net.fabricmc.fabric.api.renderer.v1.Renderer;
+import net.fabricmc.fabric.api.renderer.v1.material.BlendMode;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.geforcemods.securitycraft.platform.model.ModelData;
 import net.geforcemods.securitycraft.platform.model.ModelProperty;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BlockModelPart;
 import net.minecraft.client.renderer.block.model.BlockStateModel;
-import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -38,11 +40,11 @@ public class DisguisableBlockStateModel implements BlockStateModel {
 			BlockStateModel model = Minecraft.getInstance().getBlockRenderer().getBlockModel(disguisedState);
 
 			if (model != this) {
-				ChunkSectionLayer layer = ItemBlockRenderTypes.getChunkRenderType(disguisedState);
+				BlendMode blendMode = BlendMode.fromRenderLayer(ItemBlockRenderTypes.getChunkRenderType(disguisedState));
 
 				//the disguised model should be rendered in the render layer of the disguised block
 				emitter.pushTransform(quad -> {
-					quad.renderLayer(layer);
+					quad.material(Renderer.get().materialFinder().copyFrom(quad.material()).blendMode(blendMode).find());
 					return true;
 				});
 				model.emitQuads(emitter, level, pos, disguisedState, random, cullTest);

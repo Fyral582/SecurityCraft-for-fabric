@@ -2,23 +2,24 @@ package net.geforcemods.securitycraft.util;
 
 import java.util.Arrays;
 
+import org.joml.Matrix4f;
 import org.joml.Quaternionf;
+
+import com.mojang.blaze3d.vertex.VertexConsumer;
 
 import net.geforcemods.securitycraft.SecurityCraft;
 import net.geforcemods.securitycraft.misc.ModuleType;
+import net.minecraft.core.BlockPos;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.SectionPos;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
-import net.minecraft.world.level.Level;
+import net.minecraft.resources.ResourceLocation;
 
 public class ClientUtils {
 	//@formatter:off
-	private static final Identifier[] MODULE_TEXTURES = {
+	private static final ResourceLocation[] MODULE_TEXTURES = {
 			SecurityCraft.resLoc("textures/item/module_background.png"),
 			SecurityCraft.resLoc("textures/item/whitelist_module.png"),
 			SecurityCraft.resLoc("textures/item/blacklist_module.png"),
@@ -29,8 +30,8 @@ public class ClientUtils {
 			SecurityCraft.resLoc("textures/item/module_background.png")
 	};
 	//@formatter:on
-	private static final Identifier REDSTONE_TEXTURE = SecurityCraft.mcResLoc("textures/item/redstone.png");
-	private static final Identifier SUGAR_TEXTURE = SecurityCraft.mcResLoc("textures/item/sugar.png");
+	private static final ResourceLocation REDSTONE_TEXTURE = SecurityCraft.mcResLoc("textures/item/redstone.png");
+	private static final ResourceLocation SUGAR_TEXTURE = SecurityCraft.mcResLoc("textures/item/sugar.png");
 
 	private ClientUtils() {}
 
@@ -48,23 +49,15 @@ public class ClientUtils {
 			drawTexture(guiGraphics, SUGAR_TEXTURE, moduleLeft, moduleTop, color);
 
 		if (moduleTooltip != null && mouseX >= moduleLeft && mouseX < moduleRight && mouseY >= moduleTop && mouseY <= moduleBottom && mc.screen != null)
-			guiGraphics.setComponentTooltipForNextFrame(font, Arrays.asList(moduleTooltip), mouseX, mouseY);
+			guiGraphics.renderComponentTooltip(font, Arrays.asList(moduleTooltip), mouseX, mouseY);
 	}
 
-	private static void drawTexture(GuiGraphics guiGraphics, Identifier texture, int moduleLeft, int moduleTop, int color) {
-		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, texture, moduleLeft, moduleTop, 0.0F, 0.0F, 16, 16, 16, 16, color);
+	private static void drawTexture(GuiGraphics guiGraphics, ResourceLocation texture, int moduleLeft, int moduleTop, int color) {
+		guiGraphics.blit(RenderType::guiTextured, texture, moduleLeft, moduleTop, 0.0F, 0.0F, 16, 16, 16, 16, color);
 	}
 
 	public static void recompileChunk(BlockPos pos) {
 		Minecraft.getInstance().levelRenderer.setBlocksDirty(pos.getX(), pos.getY(), pos.getZ(), pos.getX(), pos.getY(), pos.getZ());
-	}
-
-	public static void recompileAllChunksInRange() {
-		int renderDistance = Minecraft.getInstance().options.renderDistance().get();
-		SectionPos current = SectionPos.of(Minecraft.getInstance().player.blockPosition());
-		Level level = Minecraft.getInstance().level;
-
-		Minecraft.getInstance().levelRenderer.setSectionRangeDirty(current.x() - renderDistance, level.getMinSectionY(), current.z() - renderDistance, current.x() + renderDistance, level.getMaxSectionY(), current.z() + renderDistance);
 	}
 
 	public static Quaternionf fromXYZDegrees(float x, float y, float z) {
@@ -78,6 +71,26 @@ public class ClientUtils {
 		quaternion.mul(new Quaternionf(0.0F, (float) Math.sin(y / 2.0F), 0.0F, (float) Math.cos(y / 2.0F)));
 		quaternion.mul(new Quaternionf(0.0F, 0.0F, (float) Math.sin(z / 2.0F), (float) Math.cos(z / 2.0F)));
 		return quaternion;
+	}
+
+	public static void fillHorizontalGradient(GuiGraphics guiGraphics, int zLevel, int left, int top, int right, int bottom, int fromColor, int toColor) {
+		float fromAlpha = (fromColor >> 24 & 255) / 255.0F;
+		float fromRed = (fromColor >> 16 & 255) / 255.0F;
+		float fromGreen = (fromColor >> 8 & 255) / 255.0F;
+		float fromBlue = (fromColor & 255) / 255.0F;
+		float toAlpha = (toColor >> 24 & 255) / 255.0F;
+		float toRed = (toColor >> 16 & 255) / 255.0F;
+		float toGreen = (toColor >> 8 & 255) / 255.0F;
+		float toBlue = (toColor & 255) / 255.0F;
+		guiGraphics.drawSpecial(bufferSource -> {
+			Matrix4f mat = guiGraphics.pose().last().pose();
+			VertexConsumer builder = bufferSource.getBuffer(RenderType.gui());
+
+			builder.addVertex(mat, right, top, zLevel).setColor(toRed, toGreen, toBlue, toAlpha);
+			builder.addVertex(mat, left, top, zLevel).setColor(fromRed, fromGreen, fromBlue, fromAlpha);
+			builder.addVertex(mat, left, bottom, zLevel).setColor(fromRed, fromGreen, fromBlue, fromAlpha);
+			builder.addVertex(mat, right, bottom, zLevel).setColor(toRed, toGreen, toBlue, toAlpha);
+		});
 	}
 
 	public static int HSBtoRGB(float hue, float saturation, float brightness) {
@@ -128,7 +141,7 @@ public class ClientUtils {
 			}
 		}
 
-		return (r << 16) | (g << 8) | b;
+		return 0xFF000000 | (r << 16) | (g << 8) | b;
 	}
 
 	public static float[] RGBtoHSB(int r, int g, int b) {

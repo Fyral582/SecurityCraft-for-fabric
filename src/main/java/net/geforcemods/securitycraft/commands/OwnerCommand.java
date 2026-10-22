@@ -1,18 +1,17 @@
 package net.geforcemods.securitycraft.commands;
 
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 import java.util.UUID;
 
 import org.apache.commons.lang3.RandomStringUtils;
 
+import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 
-import net.geforcemods.securitycraft.SCEventHandler;
 import net.geforcemods.securitycraft.api.IOwnable;
 import net.geforcemods.securitycraft.api.Owner;
 import net.minecraft.commands.CommandSourceStack;
@@ -22,11 +21,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.commands.FillCommand;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.players.NameAndId;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 
 public class OwnerCommand {
@@ -38,52 +35,38 @@ public class OwnerCommand {
 	public static ArgumentBuilder<CommandSourceStack, ?> register() {
 		//@formatter:off
 		return Commands.literal("owner")
-                .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                .requires(ctx -> ctx.hasPermission(2))
                 .then(Commands.literal("set")
                 		.then(Commands.argument("pos", BlockPosArgument.blockPos())
                 				.then(Commands.literal("reset")
-                						.executes(ctx -> setOwner(ctx, "ownerUUID", "owner", false))
-										.then(Commands.literal("resetSettings")
-												.executes(ctx -> setOwner(ctx, "ownerUUID", "owner", true))))
+                						.executes(ctx -> setOwner(ctx.getSource(), BlockPosArgument.getLoadedBlockPos(ctx, "pos"), "ownerUUID", "owner")))
                 				.then(Commands.literal("random")
-                						.executes(ctx -> setRandomOwner(ctx, false))
-										.then(Commands.literal("resetSettings")
-												.executes(ctx -> setRandomOwner(ctx, true))))
+                						.executes(ctx -> setRandomOwner(ctx.getSource(), BlockPosArgument.getLoadedBlockPos(ctx, "pos"))))
                 				.then(Commands.literal("player")
                 						.then(Commands.argument("owner", SingleGameProfileArgument.singleGameProfile())
-                								.executes(ctx -> setOwner(ctx, SingleGameProfileArgument.getGameProfile(ctx, "owner"), false))
-												.then(Commands.literal("resetSettings")
-														.executes(ctx -> setOwner(ctx, SingleGameProfileArgument.getGameProfile(ctx, "owner"), true)))))))
+                								.executes(ctx -> setOwner(ctx.getSource(), BlockPosArgument.getLoadedBlockPos(ctx, "pos"), SingleGameProfileArgument.getGameProfile(ctx, "owner")))))))
                 .then(Commands.literal("fill")
                 		.then(Commands.argument("from", BlockPosArgument.blockPos())
                 				.then(Commands.argument("to", BlockPosArgument.blockPos())
                 						.then(Commands.literal("reset")
-                        						.executes(ctx -> fillOwner(ctx, "ownerUUID", "owner", false))
-												.then(Commands.literal("resetSettings")
-														.executes(ctx -> fillOwner(ctx, "ownerUUID", "owner", true))))
+                        						.executes(ctx -> fillOwner(ctx, "ownerUUID", "owner")))
                         				.then(Commands.literal("random")
-                        						.executes(ctx -> fillRandomOwner(ctx, false))
-												.then(Commands.literal("resetSettings")
-														.executes(ctx -> fillRandomOwner(ctx, true))))
+                        						.executes(ctx -> fillRandomOwner(ctx)))
                         				.then(Commands.literal("player")
                         						.then(Commands.argument("owner", SingleGameProfileArgument.singleGameProfile())
-                        								.executes(ctx -> fillOwner(ctx, SingleGameProfileArgument.getGameProfile(ctx, "owner"), false))
-														.then(Commands.literal("resetSettings")
-																.executes(ctx -> fillOwner(ctx, SingleGameProfileArgument.getGameProfile(ctx, "owner"), true))))))));
+                        								.executes(ctx -> fillOwner(ctx, SingleGameProfileArgument.getGameProfile(ctx, "owner"))))))));
 		//@formatter:on
 	}
 
-	private static int setRandomOwner(CommandContext<CommandSourceStack> ctx, boolean resetSettings) throws CommandSyntaxException {
-		return setOwner(ctx, UUID.randomUUID().toString(), RandomStringUtils.randomAlphanumeric(10), resetSettings);
+	private static int setRandomOwner(CommandSourceStack source, BlockPos pos) throws CommandSyntaxException {
+		return setOwner(source, pos, UUID.randomUUID().toString(), RandomStringUtils.randomAlphanumeric(10));
 	}
 
-	private static int setOwner(CommandContext<CommandSourceStack> ctx, NameAndId gameProfile, boolean resetSettings) throws CommandSyntaxException {
-		return setOwner(ctx, gameProfile.id().toString(), gameProfile.name(), resetSettings);
+	private static int setOwner(CommandSourceStack source, BlockPos pos, GameProfile gameProfile) throws CommandSyntaxException {
+		return setOwner(source, pos, gameProfile.getId().toString(), gameProfile.getName());
 	}
 
-	private static int setOwner(CommandContext<CommandSourceStack> ctx, String uuid, String name, boolean resetSettings) throws CommandSyntaxException {
-		BlockPos pos = BlockPosArgument.getLoadedBlockPos(ctx, "pos");
-		CommandSourceStack source = ctx.getSource();
+	private static int setOwner(CommandSourceStack source, BlockPos pos, String uuid, String name) throws CommandSyntaxException {
 		ServerLevel level = source.getLevel();
 
 		if (!(level.getBlockEntity(pos) instanceof IOwnable ownable))
@@ -96,12 +79,9 @@ public class OwnerCommand {
 			Owner oldOwner = ownable.getOwner().copy();
 
 			ownable.setOwner(uuid, name);
-
-			if (resetSettings)
-				ownable.onOwnerChanged(state, level, pos, null, oldOwner, ownable.getOwner());
-
+			ownable.onOwnerChanged(state, level, pos, null, oldOwner, ownable.getOwner());
+			ownable.getOwner().setValidated(true);
 			level.sendBlockUpdated(pos, state, state, 3);
-			SCEventHandler.TINT_UPDATE_QUEUE.computeIfAbsent(level.dimension(), r -> new ArrayList<>()).add(level.getChunk(pos)); //Queues chunks with modified blocks to be sent to the client, so reinforced block tints are updated properly
 			source.sendSuccess(() -> Component.translatableWithFallback("commands.securitycraft.owner.set.success", "Set the owner at %s, %s, %s", pos.getX(), pos.getY(), pos.getZ()), true);
 			return 1;
 		}
@@ -109,58 +89,60 @@ public class OwnerCommand {
 			throw ERROR_SET_FAILED.create();
 	}
 
-	private static int fillRandomOwner(CommandContext<CommandSourceStack> ctx, boolean resetSettings) throws CommandSyntaxException {
-		return fillOwner(ctx, UUID.randomUUID().toString(), RandomStringUtils.randomAlphanumeric(10), resetSettings);
+	private static int fillRandomOwner(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+		return fillOwner(ctx, UUID.randomUUID().toString(), RandomStringUtils.randomAlphanumeric(10));
 	}
 
-	private static int fillOwner(CommandContext<CommandSourceStack> ctx, NameAndId gameProfile, boolean resetSettings) throws CommandSyntaxException {
-		return fillOwner(ctx, gameProfile.id().toString(), gameProfile.name(), resetSettings);
+	private static int fillOwner(CommandContext<CommandSourceStack> ctx, GameProfile gameProfile) throws CommandSyntaxException {
+		return fillOwner(ctx, gameProfile.getId().toString(), gameProfile.getName());
 	}
 
-	private static int fillOwner(CommandContext<CommandSourceStack> ctx, String uuid, String name, boolean resetSettings) throws CommandSyntaxException {
+	private static int fillOwner(CommandContext<CommandSourceStack> ctx, String uuid, String name) throws CommandSyntaxException {
 		BoundingBox area = BoundingBox.fromCorners(BlockPosArgument.getLoadedBlockPos(ctx, "from"), BlockPosArgument.getLoadedBlockPos(ctx, "to"));
 		CommandSourceStack source = ctx.getSource();
 		ServerLevel level = source.getLevel();
-		Set<ChunkAccess> modifiedChunks = new HashSet<>();
 		int blockCount = area.getXSpan() * area.getYSpan() * area.getZSpan();
-		int maxBlockModifications = level.getGameRules().get(GameRules.MAX_BLOCK_MODIFICATIONS);
+		int commandModificationBlockLimit = level.getGameRules().getInt(GameRules.RULE_COMMAND_MODIFICATION_BLOCK_LIMIT);
 
-		if (blockCount > maxBlockModifications)
-			throw FillCommand.ERROR_AREA_TOO_LARGE.create(maxBlockModifications, blockCount);
+		if (blockCount > commandModificationBlockLimit)
+			throw FillCommand.ERROR_AREA_TOO_LARGE.create(commandModificationBlockLimit, blockCount);
 		else {
-			int blocksModified = 0;
+			List<OwnerChange> modifiedBlocks = new ArrayList<>();
 
 			for (BlockPos pos : BlockPos.betweenClosed(area.minX(), area.minY(), area.minZ(), area.maxX(), area.maxY(), area.maxZ())) {
-				BlockEntity be = level.getBlockEntity(pos);
-
-				if (be instanceof IOwnable ownable) {
+				if (level.getBlockEntity(pos) instanceof IOwnable ownable) {
 					Owner previousOwner = ownable.getOwner();
 
 					if (!previousOwner.getUUID().equals(uuid) || !previousOwner.getName().equals(name)) {
-						BlockState state = be.getBlockState();
 						Owner oldOwner = ownable.getOwner().copy();
 
 						ownable.setOwner(uuid, name);
-
-						if (resetSettings)
-							ownable.onOwnerChanged(state, level, pos, null, oldOwner, ownable.getOwner());
-
-						level.sendBlockUpdated(pos, state, state, 3);
-						modifiedChunks.add(level.getChunk(pos));
-						blocksModified++;
+						modifiedBlocks.add(new OwnerChange((BlockEntity) ownable, oldOwner));
 					}
 				}
 			}
 
+			int blocksModified = modifiedBlocks.size();
+
 			if (blocksModified == 0)
 				throw ERROR_FILL_FAILED.create();
 			else {
-				int finalBlocksModified = blocksModified;
+				for (OwnerChange ownerChange : modifiedBlocks) {
+					BlockEntity be = ownerChange.be;
+					BlockPos pos = be.getBlockPos();
+					BlockState state = be.getBlockState();
+					IOwnable ownable = (IOwnable) be;
 
-				SCEventHandler.TINT_UPDATE_QUEUE.computeIfAbsent(level.dimension(), r -> new ArrayList<>()).addAll(modifiedChunks); //Queues chunks with modified blocks to be sent to the client, so reinforced block tints are updated properly
-				source.sendSuccess(() -> Component.translatableWithFallback("commands.securitycraft.owner.fill.success", "Successfully set the owner of %s block(s)", finalBlocksModified), true);
+					ownable.onOwnerChanged(state, level, pos, null, ownerChange.oldOwner, ownable.getOwner());
+					ownable.getOwner().setValidated(true);
+					level.sendBlockUpdated(pos, state, state, 3);
+				}
+
+				source.sendSuccess(() -> Component.translatableWithFallback("commands.securitycraft.owner.fill.success", "Successfully set the owner of %s block(s)", blocksModified), true);
 				return blocksModified;
 			}
 		}
 	}
+
+	private record OwnerChange(BlockEntity be, Owner oldOwner) {}
 }

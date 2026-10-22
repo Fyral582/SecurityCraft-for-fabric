@@ -25,12 +25,15 @@ import net.geforcemods.securitycraft.util.TeamUtils;
 import net.geforcemods.securitycraft.util.Utils;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -40,8 +43,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 
 public class KeycardReaderBlockEntity extends DisguisableBlockEntity implements MenuProvider, ILockable, ICodebreakable {
 	protected boolean[] acceptedLevels = {
@@ -61,28 +62,30 @@ public class KeycardReaderBlockEntity extends DisguisableBlockEntity implements 
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
-		super.saveAdditional(tag);
+	public void saveAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.saveAdditional(tag, lookupProvider);
 
-		ValueOutput acceptedLevelsTag = tag.child("acceptedLevels");
+		CompoundTag acceptedLevelsTag = new CompoundTag();
 
 		for (int i = 1; i <= 5; i++) {
 			acceptedLevelsTag.putBoolean("lvl" + i, acceptedLevels[i - 1]);
 		}
 
+		tag.put("acceptedLevels", acceptedLevelsTag);
 		tag.putInt("signature", signature);
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
+	public void loadAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.loadAdditional(tag, lookupProvider);
 
 		//carry over old data
-		if (tag.getInt("passLV").isPresent()) {
+		if (tag.contains("passLV")) {
 			boolean oldRequiresExactKeycard = false;
 			int oldPassLV = tag.getIntOr("passLV", 0) - 1; //old data was 1-indexed, new one is 0-indexed
 
-			oldRequiresExactKeycard = tag.getBooleanOr("requiresExactKeycard", false);
+			if (tag.contains("requiresExactKeycard"))
+				oldRequiresExactKeycard = tag.getBooleanOr("requiresExactKeycard", false);
 
 			for (int i = 0; i < 5; i++) {
 				acceptedLevels[i] = oldRequiresExactKeycard ? i == oldPassLV : i >= oldPassLV;
@@ -90,8 +93,8 @@ public class KeycardReaderBlockEntity extends DisguisableBlockEntity implements 
 		}
 
 		//don't try to load this data if it doesn't exist, otherwise everything will be "false"
-		if (tag.child("acceptedLevels").isPresent()) {
-			ValueInput acceptedLevelsTag = tag.childOrEmpty("acceptedLevels");
+		if (tag.contains("acceptedLevels")) {
+			CompoundTag acceptedLevelsTag = tag.getCompoundOrEmpty("acceptedLevels");
 
 			for (int i = 1; i <= 5; i++) {
 				acceptedLevels[i - 1] = acceptedLevelsTag.getBooleanOr("lvl" + i, false);
@@ -99,7 +102,7 @@ public class KeycardReaderBlockEntity extends DisguisableBlockEntity implements 
 		}
 
 		signature = tag.getIntOr("signature", 0);
-		sendDenylistMessage.setValue(tag.getBooleanOr("sendMessage", sendsDenylistMessage()));
+		tag.getBoolean("sendMessage").ifPresent(b -> sendDenylistMessage.setValue(b));
 	}
 
 	@Override
@@ -114,7 +117,7 @@ public class KeycardReaderBlockEntity extends DisguisableBlockEntity implements 
 
 	@Override
 	public void useCodebreaker(Player player) {
-		if (!level.isClientSide())
+		if (!level.isClientSide)
 			activate();
 	}
 
@@ -130,7 +133,7 @@ public class KeycardReaderBlockEntity extends DisguisableBlockEntity implements 
 
 				boolean isSuccessful = player.isCreative() || SecurityCraft.RANDOM.nextDouble() < chance;
 
-				stack.hurtAndBreak(1, player, hand.asEquipmentSlot());
+				stack.hurtAndBreak(1, player, LivingEntity.getSlotForHand(hand));
 				stack.set(SCContent.CODEBREAKER_DATA, new CodebreakerData(System.currentTimeMillis(), isSuccessful));
 
 				if (isSuccessful)
@@ -178,23 +181,23 @@ public class KeycardReaderBlockEntity extends DisguisableBlockEntity implements 
 
 		//owner of this keycard reader and the keycard reader the keycard got linked to do not match
 		if (!TeamUtils.areOnSameTeam(getOwner(), keycardOwner) || !getOwner().getUUID().equals(keycardOwner.getUUID()))
-			return Component.translatable("messages.securitycraft:keycard_acceptor.different_owner");
+			return Component.translatable("messages.securitycraft:keycardReader.differentOwner");
 
 		KeycardData keycardData = stack.getOrDefault(SCContent.KEYCARD_DATA, KeycardData.DEFAULT);
 
 		//the name of the player who can use the keycard does not match the one of the player trying to use it
-		if (!keycardData.usableBy().map(name -> player.getGameProfile().name().equals(name) && PlayerUtils.getNameFromPlayerOrMask(player).equals(name)).orElse(true))
-			return Component.translatable("messages.securitycraft:keycard_acceptor.cant_use");
+		if (!keycardData.usableBy().map(player.getGameProfile().getName()::equals).orElse(true))
+			return Component.translatable("messages.securitycraft:keycardReader.cantUse");
 
 		//the keycard's signature does not match this keycard reader's
 		if (getSignature() != keycardData.signature())
-			return Component.translatable("messages.securitycraft:keycard_acceptor.wrong_signature");
+			return Component.translatable("messages.securitycraft:keycardReader.wrongSignature");
 
 		int keycardLevel = ((KeycardItem) stack.getItem()).getLevel();
 
 		//the keycard's level
 		if (!getAcceptedLevels()[keycardLevel]) //both are 0 indexed, so it's ok
-			return Component.translatable("messages.securitycraft:keycard_acceptor.wrong_level", keycardLevel + 1); //level is 0-indexed, so it has to be increased by one to match with the item name
+			return Component.translatable("messages.securitycraft:keycardReader.wrongLevel", keycardLevel + 1); //level is 0-indexed, so it has to be increased by one to match with the item name
 
 		//don't consider the block powered if the signal length is 0, because players need to be able to toggle it off
 		boolean powered = level.getBlockState(worldPosition).getValue(BlockStateProperties.POWERED) && getSignalLength() > 0;
@@ -204,7 +207,7 @@ public class KeycardReaderBlockEntity extends DisguisableBlockEntity implements 
 				int usesLeft = keycardData.usesLeft();
 
 				if (usesLeft <= 0)
-					return Component.translatable("messages.securitycraft:keycard_acceptor.no_uses");
+					return Component.translatable("messages.securitycraft:keycardReader.noUses");
 
 				if (!player.isCreative())
 					stack.set(SCContent.KEYCARD_DATA, keycardData.setUsesLeft(--usesLeft));

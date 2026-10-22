@@ -10,6 +10,7 @@ import net.geforcemods.securitycraft.recipe.BlockUnreinforcingRecipe;
 import net.geforcemods.securitycraft.recipe.CopyPositionComponentItemRecipe;
 import net.geforcemods.securitycraft.recipe.LimitedUseKeycardRecipe;
 import net.geforcemods.securitycraft.util.Utils;
+import net.minecraft.core.HolderGetter;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
@@ -22,8 +23,8 @@ import net.minecraft.data.recipes.ShapelessRecipeBuilder;
 import net.minecraft.data.recipes.SimpleCookingRecipeBuilder;
 import net.minecraft.data.recipes.SingleItemRecipeBuilder;
 import net.minecraft.data.recipes.SpecialRecipeBuilder;
-import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.ARGB;
@@ -39,8 +40,12 @@ import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.common.Tags;
 
 public class RecipeGenerator extends RecipeProvider {
+	//TODO: Remove when the field in the super class is protected
+	private final HolderGetter<Item> items;
+
 	public RecipeGenerator(HolderLookup.Provider lookupProvider, RecipeOutput output) {
 		super(lookupProvider, output);
+		items = lookupProvider.lookupOrThrow(Registries.ITEM);
 	}
 
 	@Override
@@ -510,16 +515,6 @@ public class RecipeGenerator extends RecipeProvider {
 		.define('C', Items.COMPARATOR)
 		.unlockedBy("has_radar", has(SCContent.PORTABLE_RADAR))
 		.save(output);
-		ShapedRecipeBuilder.shaped(items, RecipeCategory.REDSTONE, SCContent.SECURE_TRADING_STATION)
-		.pattern("GGG")
-		.pattern("GHG")
-		.pattern("SRS")
-		.define('G', SCContent.REINFORCED_GLASS)
-		.define('H', SCContent.REINFORCED_HOPPER)
-		.define('S', SCContent.REINFORCED_SMOOTH_STONE_SLAB)
-		.define('R', SCContent.REINFORCED_REDSTONE_BLOCK)
-		.unlockedBy("has_hopper", has(SCContent.REINFORCED_HOPPER))
-		.save(output);
 		ShapedRecipeBuilder.shaped(items, RecipeCategory.MISC, SCContent.SECURITY_CAMERA)
 		.pattern("III")
 		.pattern("GRI")
@@ -854,10 +849,6 @@ public class RecipeGenerator extends RecipeProvider {
 		addColoredWoolRecipe(Tags.Items.DYES_WHITE, SCContent.REINFORCED_WHITE_WOOL);
 		addCompressingRecipe(SCContent.REINFORCED_ICE, SCContent.REINFORCED_PACKED_ICE);
 		addCompressingRecipe(SCContent.REINFORCED_PACKED_ICE, SCContent.REINFORCED_BLUE_ICE);
-		addCopperBulbRecipe(SCContent.REINFORCED_COPPER_BLOCK, SCContent.REINFORCED_COPPER_BULB);
-		addCopperBulbRecipe(SCContent.REINFORCED_EXPOSED_COPPER, SCContent.REINFORCED_EXPOSED_COPPER_BULB);
-		addCopperBulbRecipe(SCContent.REINFORCED_OXIDIZED_COPPER, SCContent.REINFORCED_OXIDIZED_COPPER_BULB);
-		addCopperBulbRecipe(SCContent.REINFORCED_WEATHERED_COPPER, SCContent.REINFORCED_WEATHERED_COPPER_BULB);
 		addCopperGrateRecipe(SCContent.REINFORCED_COPPER_BLOCK, SCContent.REINFORCED_COPPER_GRATE);
 		addCopperGrateRecipe(SCContent.REINFORCED_EXPOSED_COPPER, SCContent.REINFORCED_EXPOSED_COPPER_GRATE);
 		addCopperGrateRecipe(SCContent.REINFORCED_OXIDIZED_COPPER, SCContent.REINFORCED_OXIDIZED_COPPER_GRATE);
@@ -959,18 +950,6 @@ public class RecipeGenerator extends RecipeProvider {
 		addSecuritySeaBoatRecipe(SCContent.REINFORCED_CHERRY_PLANKS, SCContent.CHERRY_SECURITY_SEA_BOAT);
 		addSecuritySeaBoatRecipe(SCContent.REINFORCED_PALE_OAK_PLANKS, SCContent.PALE_OAK_SECURITY_SEA_BOAT);
 		addSecuritySeaBoatRecipe(SCContent.REINFORCED_BAMBOO_PLANKS, SCContent.BAMBOO_SECURITY_SEA_RAFT);
-		addShelfRecipe(SCContent.REINFORCED_STRIPPED_ACACIA_LOG, SCContent.REINFORCED_ACACIA_SHELF);
-		addShelfRecipe(SCContent.REINFORCED_STRIPPED_BAMBOO_BLOCK, SCContent.REINFORCED_BAMBOO_SHELF);
-		addShelfRecipe(SCContent.REINFORCED_STRIPPED_BIRCH_LOG, SCContent.REINFORCED_BIRCH_SHELF);
-		addShelfRecipe(SCContent.REINFORCED_STRIPPED_CHERRY_LOG, SCContent.REINFORCED_CHERRY_SHELF);
-		addShelfRecipe(SCContent.REINFORCED_STRIPPED_CRIMSON_STEM, SCContent.REINFORCED_CRIMSON_SHELF);
-		addShelfRecipe(SCContent.REINFORCED_STRIPPED_DARK_OAK_LOG, SCContent.REINFORCED_DARK_OAK_SHELF);
-		addShelfRecipe(SCContent.REINFORCED_STRIPPED_JUNGLE_LOG, SCContent.REINFORCED_JUNGLE_SHELF);
-		addShelfRecipe(SCContent.REINFORCED_STRIPPED_MANGROVE_LOG, SCContent.REINFORCED_MANGROVE_SHELF);
-		addShelfRecipe(SCContent.REINFORCED_STRIPPED_OAK_LOG, SCContent.REINFORCED_OAK_SHELF);
-		addShelfRecipe(SCContent.REINFORCED_STRIPPED_PALE_OAK_LOG, SCContent.REINFORCED_PALE_OAK_SHELF);
-		addShelfRecipe(SCContent.REINFORCED_STRIPPED_SPRUCE_LOG, SCContent.REINFORCED_SPRUCE_SHELF);
-		addShelfRecipe(SCContent.REINFORCED_STRIPPED_WARPED_STEM, SCContent.REINFORCED_WARPED_SHELF);
 		addSlabRecipe(Ingredient.of(SCContent.CRYSTAL_QUARTZ_BLOCK, SCContent.CRYSTAL_QUARTZ_PILLAR, SCContent.CHISELED_CRYSTAL_QUARTZ), SCContent.CRYSTAL_QUARTZ_SLAB);
 		addSlabRecipe(SCContent.REINFORCED_ANDESITE, SCContent.REINFORCED_ANDESITE_SLAB);
 		addSlabRecipe(SCContent.REINFORCED_BAMBOO_MOSAIC, SCContent.REINFORCED_BAMBOO_MOSAIC_SLAB);
@@ -1555,7 +1534,7 @@ public class RecipeGenerator extends RecipeProvider {
 		.requires(dye)
 		.requires(SCTags.Items.REINFORCED_WOOL_CARPETS)
 		.unlockedBy("has_wool_carpet", has(SCTags.Items.REINFORCED_WOOL_CARPETS))
-		.save(output, ResourceKey.create(Registries.RECIPE, Identifier.parse(Utils.getRegistryName(carpet.asItem()).toString() + "_from_dye")));
+		.save(output, ResourceKey.create(Registries.RECIPE, ResourceLocation.parse(Utils.getRegistryName(carpet.asItem()).toString() + "_from_dye")));
 		//@formatter:on
 	}
 
@@ -1606,20 +1585,6 @@ public class RecipeGenerator extends RecipeProvider {
 		//@formatter:on
 	}
 
-	protected final void addCopperBulbRecipe(ItemLike copperBlock, ItemLike bulb) {
-		//@formatter:off
-		ShapedRecipeBuilder.shaped(items, RecipeCategory.BUILDING_BLOCKS, bulb, 4)
-				.pattern(" C ")
-				.pattern("CBC")
-				.pattern(" R ")
-				.define('C', copperBlock)
-				.define('B', Tags.Items.RODS_BLAZE)
-				.define('R', Tags.Items.DUSTS_REDSTONE)
-				.unlockedBy("has_copper_block", has(copperBlock))
-				.save(output);
-		//@formatter:on
-	}
-
 	protected final void addCopperGrateRecipe(ItemLike block, ItemLike grate) {
 		//@formatter:off
 		ShapedRecipeBuilder.shaped(items, RecipeCategory.BUILDING_BLOCKS, grate, 4)
@@ -1628,6 +1593,20 @@ public class RecipeGenerator extends RecipeProvider {
 		.pattern(" C ")
 		.define('C', block)
 		.unlockedBy("has_copper_block", has(block))
+		.save(output);
+		//@formatter:on
+	}
+
+	protected final void addCopperBulbRecipe(ItemLike copperBlock, ItemLike bulb) {
+		//@formatter:off
+		ShapedRecipeBuilder.shaped(items, RecipeCategory.BUILDING_BLOCKS, bulb, 4)
+		.pattern(" C ")
+		.pattern("CBC")
+		.pattern(" R ")
+		.define('C', copperBlock)
+		.define('B', Tags.Items.RODS_BLAZE)
+		.define('R', Tags.Items.DUSTS_REDSTONE)
+		.unlockedBy("has_copper_block", has(copperBlock))
 		.save(output);
 		//@formatter:on
 	}
@@ -1787,19 +1766,6 @@ public class RecipeGenerator extends RecipeProvider {
 		.define('P', planks)
 		.define('C', SCContent.KEYPAD_CHEST)
 		.unlockedBy("has_keypad_chest", has(SCContent.KEYPAD_CHEST))
-		.save(output);
-		//@formatter:on
-	}
-
-	protected final void addShelfRecipe(ItemLike log, ItemLike shelf) {
-		//@formatter:off
-		ShapedRecipeBuilder.shaped(items, RecipeCategory.DECORATIONS, shelf, 6)
-		.group("securitycraft:reinforced_shelves")
-		.pattern("LLL")
-		.pattern("   ")
-		.pattern("LLL")
-		.define('L', log)
-		.unlockedBy(getHasName(log), has(log))
 		.save(output);
 		//@formatter:on
 	}

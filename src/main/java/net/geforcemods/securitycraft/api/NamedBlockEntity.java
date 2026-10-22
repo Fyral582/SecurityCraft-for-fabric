@@ -3,16 +3,16 @@ package net.geforcemods.securitycraft.api;
 import net.geforcemods.securitycraft.SCContent;
 import net.geforcemods.securitycraft.util.Utils;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.world.Nameable;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 
 public class NamedBlockEntity extends OwnableBlockEntity implements Nameable {
 	private Component customName;
@@ -26,15 +26,19 @@ public class NamedBlockEntity extends OwnableBlockEntity implements Nameable {
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
-		super.saveAdditional(tag);
+	public void saveAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.saveAdditional(tag, lookupProvider);
 		tag.storeNullable("CustomName", ComponentSerialization.CODEC, customName);
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
-		customName = parseCustomNameSafe(tag, "CustomName");
+	public void loadAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.loadAdditional(tag, lookupProvider);
+
+		if (tag.contains("CustomName"))
+			customName = tag.read("CustomName", ComponentSerialization.CODEC).orElse(null);
+		else if (tag.contains("customName")) //Conversion of old string literal names
+			customName = Component.literal(tag.getStringOr("customName", ""));
 	}
 
 	@Override
@@ -77,8 +81,8 @@ public class NamedBlockEntity extends OwnableBlockEntity implements Nameable {
 	}
 
 	@Override
-	public void removeComponentsFromTag(ValueOutput tag) {
-		tag.discard("CustomName");
-		tag.discard("customName");
+	public void removeComponentsFromTag(CompoundTag tag) {
+		tag.remove("CustomName");
+		tag.remove("customName");
 	}
 }

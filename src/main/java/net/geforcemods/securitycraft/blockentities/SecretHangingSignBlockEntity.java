@@ -13,7 +13,9 @@ import net.geforcemods.securitycraft.api.Option.BooleanOption;
 import net.geforcemods.securitycraft.api.Owner;
 import net.geforcemods.securitycraft.misc.ModuleType;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -21,8 +23,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.entity.HangingSignBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 
 public class SecretHangingSignBlockEntity extends HangingSignBlockEntity implements IOwnable, IModuleInventory, ICustomizable {
 	private Owner owner = new Owner();
@@ -56,10 +56,10 @@ public class SecretHangingSignBlockEntity extends HangingSignBlockEntity impleme
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
-		super.saveAdditional(tag);
+	public void saveAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.saveAdditional(tag, lookupProvider);
 
-		writeModuleInventory(tag);
+		writeModuleInventory(tag, lookupProvider);
 		writeModuleStates(tag);
 		writeOptions(tag);
 
@@ -68,13 +68,23 @@ public class SecretHangingSignBlockEntity extends HangingSignBlockEntity impleme
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
+	public void loadAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.loadAdditional(tag, lookupProvider);
 
-		readModuleInventory(modules, tag);
+		modules = readModuleInventory(tag, lookupProvider);
 		moduleStates = readModuleStates(tag);
 		readOptions(tag);
 		owner.load(tag);
+	}
+
+	@Override
+	public void readOptions(CompoundTag tag) {
+		if (tag.contains("isSecret")) {
+			tag.putBoolean(isFrontSecret.getName(), tag.getBooleanOr("isSecret", true));
+			tag.remove("isSecret");
+		}
+
+		ICustomizable.super.readOptions(tag);
 	}
 
 	@Override

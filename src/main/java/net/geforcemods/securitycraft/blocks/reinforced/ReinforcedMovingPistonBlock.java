@@ -6,6 +6,8 @@ import java.util.List;
 import net.geforcemods.securitycraft.SCContent;
 import net.geforcemods.securitycraft.blockentities.ReinforcedPistonMovingBlockEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -26,6 +28,10 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 public class ReinforcedMovingPistonBlock extends MovingPistonBlock {
 	public ReinforcedMovingPistonBlock(BlockBehaviour.Properties properties) {
 		super(properties);
+	}
+
+	public static BlockEntity newMovingBlockEntity(BlockPos pos, BlockState state, BlockState movedState, CompoundTag tag, Direction direction, boolean extending, boolean shouldHeadBeRendered) {
+		return new ReinforcedPistonMovingBlockEntity(pos, state, movedState, tag, direction, extending, shouldHeadBeRendered);
 	}
 
 	@Override

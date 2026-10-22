@@ -32,6 +32,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.dispenser.BlockSource;
 import net.minecraft.core.dispenser.DispenseItemBehavior;
 import net.minecraft.core.dispenser.ProjectileDispenseBehavior;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
@@ -70,8 +71,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.material.PushReaction;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -101,7 +100,7 @@ public class Sentry extends PathfinderMob implements RangedAttackMob, IEMPAffect
 	}
 
 	public void setUpSentry(Player player) {
-		entityData.set(OWNER, new Owner(player.getName().getString(), player.getGameProfile().id().toString()));
+		entityData.set(OWNER, new Owner(player.getName().getString(), player.getGameProfile().getId().toString()));
 		entityData.set(ALLOWLIST, ItemStack.EMPTY);
 		entityData.set(HAS_SPEED_MODULE, false);
 		entityData.set(MODE, SentryMode.CAMOUFLAGE_HP.ordinal());
@@ -202,7 +201,7 @@ public class Sentry extends PathfinderMob implements RangedAttackMob, IEMPAffect
 				kill(null);
 
 				if (!player.isCreative())
-					player.getMainHandItem().hurtAndBreak(1, player, hand.asEquipmentSlot());
+					player.getMainHandItem().hurtAndBreak(1, player, LivingEntity.getSlotForHand(hand));
 			}
 			else if (item == SCContent.DISGUISE_MODULE.get()) {
 				ItemStack module = getDisguiseModule();
@@ -405,13 +404,13 @@ public class Sentry extends PathfinderMob implements RangedAttackMob, IEMPAffect
 	}
 
 	@Override
-	public void addAdditionalSaveData(ValueOutput tag) {
+	public void addAdditionalSaveData(CompoundTag tag) {
 		ItemStack allowlistModule = getAllowlistModule();
 
-		tag.store("TileEntityData", Owner.CODEC, getOwner());
+		tag.put("TileEntityData", getOwnerTag());
 
 		if (!allowlistModule.isEmpty())
-			tag.store("InstalledWhitelist", ItemStack.CODEC, allowlistModule);
+			tag.put("InstalledWhitelist", allowlistModule.save(level().registryAccess()));
 
 		tag.putBoolean("HasSpeedModule", hasSpeedModule());
 		tag.putInt("SentryMode", entityData.get(MODE));
@@ -421,22 +420,33 @@ public class Sentry extends PathfinderMob implements RangedAttackMob, IEMPAffect
 		super.addAdditionalSaveData(tag);
 	}
 
+	private CompoundTag getOwnerTag() {
+		CompoundTag tag = new CompoundTag();
+		Owner owner = entityData.get(OWNER);
+
+		owner.save(tag, needsValidation());
+		return tag;
+	}
+
 	@Override
-	public void readAdditionalSaveData(ValueInput tag) {
-		Owner owner = tag.read("TileEntityData", Owner.CODEC).orElseGet(Owner::new);
+	public void readAdditionalSaveData(CompoundTag tag) {
+		CompoundTag teTag = tag.getCompoundOrEmpty("TileEntityData");
+		Owner owner = Owner.fromCompound(teTag);
 		float savedHeadRotation = tag.getFloatOr("HeadRotation", 0.0F);
 
 		entityData.set(OWNER, owner);
 		getSentryDisguiseBlockEntity().ifPresent(be -> {
 			//put the old module, if it exists, into the new disguise block
-			ItemStack module = tag.read("InstalledModule", ItemStack.CODEC).orElse(ItemStack.EMPTY);
+			if (tag.contains("InstalledModule")) {
+				ItemStack module = Utils.parseOptional(level().registryAccess(), tag.getCompoundOrEmpty("InstalledModule"));
 
-			if (!module.isEmpty() && module.getItem() instanceof ModuleItem && ModuleItem.getBlockAddon(module) != null) {
-				be.insertModule(module, false);
-				level().setBlockAndUpdate(blockPosition(), level().getBlockState(blockPosition()).setValue(SometimesVisibleBlock.INVISIBLE, false));
+				if (!module.isEmpty() && module.getItem() instanceof ModuleItem && ModuleItem.getBlockAddon(module) != null) {
+					be.insertModule(module, false);
+					level().setBlockAndUpdate(blockPosition(), level().getBlockState(blockPosition()).setValue(SometimesVisibleBlock.INVISIBLE, false));
+				}
 			}
 		});
-		entityData.set(ALLOWLIST, tag.read("InstalledWhitelist", ItemStack.CODEC).orElse(ItemStack.EMPTY));
+		entityData.set(ALLOWLIST, Utils.parseOptional(level().registryAccess(), tag.getCompoundOrEmpty("InstalledWhitelist")));
 		entityData.set(HAS_SPEED_MODULE, tag.getBooleanOr("HasSpeedModule", false));
 		entityData.set(MODE, tag.getIntOr("SentryMode", 0));
 		entityData.set(HAS_TARGET, tag.getBooleanOr("HasTarget", false));

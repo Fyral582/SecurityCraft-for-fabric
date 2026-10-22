@@ -17,17 +17,15 @@ import net.geforcemods.securitycraft.util.Utils;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.Rect2i;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
-import net.minecraft.util.CommonColors;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
 public class ProjectorScreen extends AbstractContainerScreen<ProjectorMenu> implements IHasExtraAreas {
-	private static final Identifier TEXTURE = SecurityCraft.resLoc("textures/gui/container/projector.png");
+	private static final ResourceLocation TEXTURE = SecurityCraft.resLoc("textures/gui/container/projector.png");
 	private static final Component SLOT_TOOLTIP = Utils.localize("gui.securitycraft:projector.block");
 	private ProjectorBlockEntity be;
 	private TextHoverChecker slotHoverChecker;
@@ -72,13 +70,12 @@ public class ProjectorScreen extends AbstractContainerScreen<ProjectorMenu> impl
 		horizontalToggleButton = addRenderableWidget(new TogglePictureButton(left + sliderWidth - 20, topPos + 36, 20, 20, 2, 16, 16, 2, button -> {
 			//@formatter:on
 			boolean horizontal = !be.isHorizontal();
-			double oldValue = projectionRangeSlider.getValue();
 
 			be.setHorizontal(horizontal);
 			updateHorizontalToggleButtonTooltip();
 			projectionRangeSlider.setMinValue(projectionRangeSlider.getMinValue() - (horizontal ? 16 : -16));
 			projectionRangeSlider.setMaxValue(projectionRangeSlider.getMaxValue() - (horizontal ? 16 : -16));
-			projectionRangeSlider.setValue(oldValue - (horizontal ? 16 : -16));
+			projectionRangeSlider.setValue(projectionRangeSlider.getValue() - (horizontal ? 16 : -16));
 			applySliderValue(projectionRangeSlider);
 			ClientPacketDistributor.sendToServer(new SyncProjector(be.getBlockPos(), be.isHorizontal() ? 1 : 0, DataType.HORIZONTAL));
 		}, SecurityCraft.resLoc("projector/vertical"), SecurityCraft.resLoc("projector/horizontal")));
@@ -94,8 +91,8 @@ public class ProjectorScreen extends AbstractContainerScreen<ProjectorMenu> impl
 
 		slotHoverChecker = new TextHoverChecker(topPos + 22, topPos + 39, leftPos + 78, leftPos + 95, SLOT_TOOLTIP);
 
-		stateSelector = addRenderableWidget(new StateSelector(menu, title, leftPos - 190, topPos + 7, 0, 197, 0, 173, -60));
-		stateSelector.init(width, height);
+		stateSelector = addRenderableWidget(new StateSelector(menu, title, leftPos - 190, topPos + 7, 0, 197, 0, 234, 35));
+		stateSelector.init(minecraft, width, height);
 	}
 
 	private void updateHorizontalToggleButtonTooltip() {
@@ -113,44 +110,33 @@ public class ProjectorScreen extends AbstractContainerScreen<ProjectorMenu> impl
 		renderTooltip(guiGraphics, mouseX, mouseY);
 
 		if (slotHoverChecker.checkHover(mouseX, mouseY) && menu.be.isEmpty())
-			guiGraphics.setTooltipForNextFrame(font, slotHoverChecker.getName(), mouseX, mouseY);
+			guiGraphics.renderTooltip(font, slotHoverChecker.getName(), mouseX, mouseY);
 	}
 
 	@Override
 	protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-		guiGraphics.drawString(font, title, imageWidth / 2 - font.width(title) / 2, 6, CommonColors.DARK_GRAY, false);
+		guiGraphics.drawString(font, title, imageWidth / 2 - font.width(title) / 2, 6, 0x404040, false);
 	}
 
 	@Override
 	protected void renderBg(GuiGraphics guiGraphics, float partialTicks, int mouseX, int mouseY) {
-		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
-
-		if (stateSelector != null)
-			stateSelector.renderBackground(guiGraphics, mouseX, mouseY, partialTicks);
+		guiGraphics.blit(RenderType::guiTextured, TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
 	}
 
 	@Override
-	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+	public boolean mouseClicked(double mouseX, double mouseY, int button) {
 		if (minecraft.player.isSpectator())
 			return false;
 
-		return super.mouseClicked(event, doubleClick);
+		return super.mouseClicked(mouseX, mouseY, button);
 	}
 
 	@Override
-	public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
-		if (stateSelector != null && stateSelector.mouseDragged(event, dragX, dragY))
+	public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+		if (stateSelector != null && stateSelector.mouseDragged(mouseX, mouseY, button, dragX, dragY))
 			return true;
 
-		return (getFocused() != null && isDragging() && event.button() == 0 && getFocused().mouseDragged(event, dragX, dragY)) || super.mouseDragged(event, dragX, dragY);
-	}
-
-	@Override
-	public boolean mouseReleased(MouseButtonEvent event) {
-		if (stateSelector != null && stateSelector.mouseReleased(event))
-			return true;
-
-		return super.mouseReleased(event);
+		return (getFocused() != null && isDragging() && button == 0 && getFocused().mouseDragged(mouseX, mouseY, button, dragX, dragY)) || super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
 	}
 
 	@Override

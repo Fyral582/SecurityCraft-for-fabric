@@ -11,7 +11,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.InsideBlockEffectApplier;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -76,20 +75,20 @@ public class MineBlock extends ExplosiveBlock implements SimpleWaterloggedBlock 
 	}
 
 	@Override
-	public boolean onDestroyedByPlayer(BlockState state, Level level, BlockPos pos, Player player, ItemStack stack, boolean willHarvest, FluidState fluid) {
-		if (!level.isClientSide()) {
+	public boolean onDestroyedByPlayer(BlockState state, Level level, BlockPos pos, Player player, boolean willHarvest, FluidState fluid) {
+		if (!level.isClientSide) {
 			MineBlockEntity mine = (MineBlockEntity) level.getBlockEntity(pos);
 			TargetingMode mode = mine.getTargetingMode();
 
 			if (!mode.allowsPlayers() || player != null && player.isCreative() && !ConfigHandler.SERVER.mineExplodesWhenInCreative.get())
-				return super.onDestroyedByPlayer(state, level, pos, player, stack, willHarvest, fluid);
+				return super.onDestroyedByPlayer(state, level, pos, player, willHarvest, fluid);
 			else if (mine.isOwnedBy(player) && !mine.ignoresOwner()) {
 				explode(level, pos);
-				return super.onDestroyedByPlayer(state, level, pos, player, stack, willHarvest, fluid);
+				return super.onDestroyedByPlayer(state, level, pos, player, willHarvest, fluid);
 			}
 		}
 
-		return super.onDestroyedByPlayer(state, level, pos, player, stack, willHarvest, fluid);
+		return super.onDestroyedByPlayer(state, level, pos, player, willHarvest, fluid);
 	}
 
 	@Override
@@ -98,8 +97,8 @@ public class MineBlock extends ExplosiveBlock implements SimpleWaterloggedBlock 
 	}
 
 	@Override
-	public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity, InsideBlockEffectApplier effectApplier, boolean stillInside) {
-		if (!level.isClientSide() && entity instanceof LivingEntity livingEntity && getShape(state, level, pos, CollisionContext.of(entity)).bounds().move(pos).inflate(0.01D).intersects(entity.getBoundingBox())) {
+	public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity, InsideBlockEffectApplier effectApplier) {
+		if (!level.isClientSide && entity instanceof LivingEntity livingEntity && getShape(state, level, pos, CollisionContext.of(entity)).bounds().move(pos).inflate(0.01D).intersects(entity.getBoundingBox())) {
 			MineBlockEntity mine = (MineBlockEntity) level.getBlockEntity(pos);
 			TargetingMode mode = mine.getTargetingMode();
 
@@ -136,7 +135,7 @@ public class MineBlock extends ExplosiveBlock implements SimpleWaterloggedBlock 
 
 	@Override
 	public void explode(Level level, BlockPos pos) {
-		if (!level.isClientSide() && !level.getBlockState(pos).getValue(DEACTIVATED)) {
+		if (!level.isClientSide && !level.getBlockState(pos).getValue(DEACTIVATED)) {
 			level.destroyBlock(pos, false);
 			level.explode(null, pos.getX(), pos.getY(), pos.getZ(), ConfigHandler.SERVER.smallerMineExplosion.get() ? 1.0F : 3.0F, ConfigHandler.SERVER.shouldSpawnFire.get(), BlockUtils.getExplosionInteraction());
 		}

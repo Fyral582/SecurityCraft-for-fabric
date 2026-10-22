@@ -1,89 +1,111 @@
 package net.geforcemods.securitycraft.renderers;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.mojang.blaze3d.vertex.PoseStack;
 
+import net.geforcemods.securitycraft.platform.util.TriPredicate;
 import net.geforcemods.securitycraft.ClientHandler;
 import net.geforcemods.securitycraft.blockentities.ProjectorBlockEntity;
-import net.geforcemods.securitycraft.renderers.state.ProjectorRenderState;
-import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.client.renderer.block.MovingBlockRenderState;
+import net.geforcemods.securitycraft.blocks.ProjectorBlock;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.block.BlockRenderDispatcher;
+import net.minecraft.client.renderer.block.ModelBlockRenderer;
+import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
-import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Vec3i;
+import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.AABB;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
-public class ProjectorRenderer implements BlockEntityRenderer<ProjectorBlockEntity, ProjectorRenderState> {
+public class ProjectorRenderer implements BlockEntityRenderer<ProjectorBlockEntity> {
+	public static final int RENDER_DISTANCE = 100;
+	private final TriPredicate<ProjectorBlockEntity, Boolean, Integer> yLoopBoundary = (be, hanging, y) -> hanging ? y > -be.getProjectionHeight() : y < be.getProjectionHeight();
+
 	public ProjectorRenderer(BlockEntityRendererProvider.Context ctx) {}
 
 	@Override
-	public void submit(ProjectorRenderState state, PoseStack pose, SubmitNodeCollector collector, CameraRenderState camera) {
-		ClientHandler.DISGUISED_BLOCK_RENDER_DELEGATE.trySubmitDelegate(state.disguiseRenderState, pose, collector, camera);
-
-		for (ProjectionInfo projectionInfo : state.renderPositions) {
-			Vec3i positionalOffset = projectionInfo.positionalOffset;
-
-			pose.pushPose();
-			pose.translate(positionalOffset.getX(), positionalOffset.getY(), positionalOffset.getZ());
-			collector.submitMovingBlock(pose, projectionInfo.movingBlockRenderState);
-			ClientHandler.PROJECTOR_RENDER_DELEGATE.trySubmitDelegate(state.projectedBlockEntityRenderState, pose, collector, camera);
-			pose.popPose();
-		}
-	}
-
-	@Override
-	public ProjectorRenderState createRenderState() {
-		return new ProjectorRenderState();
-	}
-
-	@Override
-	public void extractRenderState(ProjectorBlockEntity be, ProjectorRenderState state, float partialTick, Vec3 cameraPos, ModelFeatureRenderer.CrumblingOverlay crumblingOverlay) {
-		BlockEntityRenderer.super.extractRenderState(be, state, partialTick, cameraPos, crumblingOverlay);
-		state.disguiseRenderState = ClientHandler.DISGUISED_BLOCK_RENDER_DELEGATE.tryExtractFromDelegate(be, partialTick, cameraPos, crumblingOverlay);
-		state.projectedBlockEntityRenderState = ClientHandler.PROJECTOR_RENDER_DELEGATE.tryExtractFromDelegate(be, partialTick, cameraPos, crumblingOverlay);
-
-		List<ProjectionInfo> renderPositions = new ArrayList<>();
+	public void render(ProjectorBlockEntity be, float partialTicks, PoseStack pose, MultiBufferSource buffer, int combinedLight, int combinedOverlay, Vec3 cameraPos) {
+		ClientHandler.DISGUISED_BLOCK_RENDER_DELEGATE.tryRenderDelegate(be, partialTicks, pose, buffer, combinedLight, combinedOverlay, cameraPos);
 
 		if (be.isActive() && !be.isEmpty()) {
 			Level level = be.getLevel();
-			BlockPos projectorPos = be.getBlockPos();
-			AABB projectedBlocksArea = be.getProjectedBlocksArea().deflate(0.1D);
+			BlockState state = be.getProjectedState();
+			boolean hanging = be.getBlockState().getValue(ProjectorBlock.HANGING);
+			BlockPos pos;
 
-			for (BlockPos relativePos : BlockPos.betweenClosed(projectedBlocksArea)) {
-				BlockPos projectionPos = projectorPos.offset(relativePos);
+			ModelBlockRenderer.enableCaching();
 
-				if (be.isOverridingBlocks() || level.isEmptyBlock(projectionPos)) {
-					MovingBlockRenderState movingBlockRenderState = new MovingBlockRenderState();
+			for (int x = 0; x < be.getProjectionWidth(); x++) {
+				for (int y = 0; yLoopBoundary.test(be, hanging, y); y = hanging ? y - 1 : y + 1) {
+					pose.pushPose();
 
-					movingBlockRenderState.randomSeedPos = projectionPos;
-					movingBlockRenderState.blockPos = projectionPos;
-					movingBlockRenderState.blockState = be.getProjectedState();
-					movingBlockRenderState.biome = level.getBiome(projectionPos);
-					movingBlockRenderState.level = level;
-					renderPositions.add(new ProjectionInfo(new BlockPos(relativePos), movingBlockRenderState));
+					if (!be.isHorizontal())
+						pos = translateProjection(be.getBlockPos(), pose, be.getBlockState().getValue(ProjectorBlock.FACING), x, y, be.getProjectionRange(), be.getProjectionOffset());
+					else
+						pos = translateProjection(be.getBlockPos(), pose, be.getBlockState().getValue(ProjectorBlock.FACING), x, be.getProjectionRange() - 16, y + 1, be.getProjectionOffset());
+
+					if (pos != null && (be.isOverridingBlocks() || level.isEmptyBlock(pos))) {
+						BlockRenderDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
+						BlockStateModel model = dispatcher.getBlockModel(state);
+
+						dispatcher.renderBatched(state, pos, level, pose, buffer.getBuffer(ItemBlockRenderTypes.getMovingBlockRenderType(state)), true, model.collectParts(RandomSource.create(state.getSeed(pos))));
+						ClientHandler.PROJECTOR_RENDER_DELEGATE.tryRenderDelegate(be, partialTicks, pose, buffer, combinedLight, combinedOverlay, cameraPos);
+					}
+
+					pose.popPose();
 				}
 			}
+
+			ModelBlockRenderer.clearCache();
+		}
+	}
+
+	/**
+	 * Shifts the projection depending on the offset and range set in the projector
+	 *
+	 * @param bePos The position of the projector which draws the fake block
+	 * @param pose the MatrixStack of the current render context
+	 * @param direction The direction the projector is facing
+	 * @param x The offset from the projectors position on the x axis of the position at which to draw the fake block
+	 * @param y The offset from the projectors position on the y axis of the position at which to draw the fake block
+	 * @param distance The distance in blocks that the fake block is away from the projector (set by player)
+	 * @param offset The offset in blocks that the fake block is moved to the side from the projector (set by player)
+	 * @return The BlockPos of the fake block to be drawn, null if an invalid direction was given
+	 */
+	private BlockPos translateProjection(BlockPos bePos, PoseStack pose, Direction direction, int x, int y, double distance, double offset) {
+		BlockPos pos = null;
+
+		switch (direction) {
+			case NORTH:
+				pos = BlockPos.containing(bePos.getX() + x + offset, bePos.getY() + y, bePos.getZ() + distance);
+				pose.translate(0.0D + x + offset, 0.0D + y, distance);
+				break;
+			case SOUTH:
+				pos = BlockPos.containing(bePos.getX() + x + offset, bePos.getY() + y, bePos.getZ() + -distance);
+				pose.translate(0.0D + x + offset, 0.0D + y, -distance);
+				break;
+			case WEST:
+				pos = BlockPos.containing(bePos.getX() + distance, bePos.getY() + y, bePos.getZ() + x + offset);
+				pose.translate(distance, 0.0D + y, 0.0D + x + offset);
+				break;
+			case EAST:
+				pos = BlockPos.containing(bePos.getX() + -distance, bePos.getY() + y, bePos.getZ() + x + offset);
+				pose.translate(-distance, 0.0D + y, 0.0D + x + offset);
+				break;
+			default:
+				break;
 		}
 
-		state.renderPositions = renderPositions;
+		return pos;
 	}
 
 	@Override
-	public boolean shouldRenderOffScreen() {
+	public boolean shouldRenderOffScreen(ProjectorBlockEntity be) {
 		return true;
 	}
 
-	@Override
-	public boolean shouldRender(ProjectorBlockEntity be, Vec3 cameraPosition) {
-		return true; //Projected blocks should always render, regardless of distance
-	}
-
-	public record ProjectionInfo(Vec3i positionalOffset, MovingBlockRenderState movingBlockRenderState) {}
 }

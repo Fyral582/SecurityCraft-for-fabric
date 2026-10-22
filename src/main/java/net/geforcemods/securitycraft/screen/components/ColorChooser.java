@@ -8,10 +8,6 @@ import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 
 import org.apache.commons.lang3.StringUtils;
-import org.joml.Matrix3x2f;
-
-import com.mojang.blaze3d.platform.InputConstants;
-import com.mojang.blaze3d.platform.cursor.CursorTypes;
 
 import net.geforcemods.securitycraft.SecurityCraft;
 import net.geforcemods.securitycraft.util.ClientUtils;
@@ -21,24 +17,20 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
-import net.minecraft.client.gui.render.TextureSetup;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.Rect2i;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
-import net.minecraft.util.CommonColors;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.geforcemods.securitycraft.platform.gui.ExtendedSlider;
 
 public class ColorChooser extends Screen implements GuiEventListener, NarratableEntry {
-	private static final Identifier TEXTURE = SecurityCraft.resLoc("textures/gui/container/color_chooser.png");
-	private static final Identifier HUE_SLIDER_SPRITE = SecurityCraft.resLoc("widget/color_chooser/hue_slider");
-	private static final Identifier HUE_SLIDER_HIGHLIGHTED_SPRITE = SecurityCraft.resLoc("widget/color_chooser/hue_slider_highlighted");
-	private static final Identifier FIELD_SELECTOR_SPRITE = SecurityCraft.resLoc("widget/color_chooser/field_selector");
-	private static final Identifier FIELD_SELECTOR_HIGHLIGHTED_SPRITE = SecurityCraft.resLoc("widget/color_chooser/field_selector_highlighted");
+	private static final ResourceLocation TEXTURE = SecurityCraft.resLoc("textures/gui/container/color_chooser.png");
+	private static final ResourceLocation HUE_SLIDER_SPRITE = SecurityCraft.resLoc("widget/color_chooser/hue_slider");
+	private static final ResourceLocation HUE_SLIDER_HIGHLIGHTED_SPRITE = SecurityCraft.resLoc("widget/color_chooser/hue_slider_highlighted");
+	private static final ResourceLocation FIELD_SELECTOR_SPRITE = SecurityCraft.resLoc("widget/color_chooser/field_selector");
+	private static final ResourceLocation FIELD_SELECTOR_HIGHLIGHTED_SPRITE = SecurityCraft.resLoc("widget/color_chooser/field_selector_highlighted");
 	private static final int COLOR_FIELD_SIZE = 75;
 	protected boolean disabled = true;
 	private final int xStart, yStart;
@@ -52,12 +44,11 @@ public class ColorChooser extends Screen implements GuiEventListener, Narratable
 	private int colorFieldTop, colorFieldBottom, colorFieldLeft, colorFieldRight;
 	private final HoverChecker colorFieldHoverChecker;
 	private float selectionX, selectionY;
-	private final Consumer<Integer> onColorChange;
-	private int rgbColor;
+	private final int rgbColor;
 	private ColorEditBox rBox, gBox, bBox, rgbHexBox;
 	private HueSlider hueSlider;
 
-	public ColorChooser(Component title, int xStart, int yStart, int rgbColor, Consumer<Integer> onColorChange) {
+	public ColorChooser(Component title, int xStart, int yStart, int rgbColor) {
 		super(title);
 		this.xStart = xStart;
 		this.yStart = yStart;
@@ -65,9 +56,7 @@ public class ColorChooser extends Screen implements GuiEventListener, Narratable
 		colorFieldTop = yStart + 6;
 		colorFieldRight = colorFieldLeft + COLOR_FIELD_SIZE;
 		colorFieldBottom = colorFieldTop + COLOR_FIELD_SIZE;
-		this.rgbColor = rgbColor & 0xFFFFFF;
-		this.onColorChange = onColorChange;
-		initHSBValues();
+		this.rgbColor = rgbColor;
 		colorFieldHoverChecker = new HoverChecker(colorFieldTop, colorFieldBottom, colorFieldLeft, colorFieldRight);
 	}
 
@@ -98,6 +87,7 @@ public class ColorChooser extends Screen implements GuiEventListener, Narratable
 		int green = rgbColor >> 8 & 255;
 		int blue = rgbColor & 255;
 
+		updateHSBValues(red, green, blue);
 		extraAreas.add(new Rect2i(xStart, yStart, 144, 108));
 		hueSlider = addRenderableWidget(new HueSlider(colorFieldLeft - 2, yStart + 85, 82, 20, h * 360.0D) {
 			@Override
@@ -114,7 +104,7 @@ public class ColorChooser extends Screen implements GuiEventListener, Narratable
 		rBox.setValue("" + red);
 		gBox.setValue("" + green);
 		bBox.setValue("" + blue);
-		getRgbHexBox().setValue(Integer.toHexString(rgbColor));
+		getRgbHexBox().setValue(Integer.toHexString(rgbColor).substring(2));
 		rBox.setMaxLength(3);
 		gBox.setMaxLength(3);
 		bBox.setMaxLength(3);
@@ -139,45 +129,40 @@ public class ColorChooser extends Screen implements GuiEventListener, Narratable
 
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-		boolean colorFieldHovered = colorFieldHoverChecker.checkHover(mouseX, mouseY);
-
-		super.render(guiGraphics, mouseX, mouseY, partialTick);
-		guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, colorFieldHovered ? FIELD_SELECTOR_HIGHLIGHTED_SPRITE : FIELD_SELECTOR_SPRITE, (int) selectionX - 1, (int) selectionY - 1, 3, 3); //color field indicator
-		guiGraphics.drawString(font, rText, colorFieldRight + 5, colorFieldTop + 1, CommonColors.DARK_GRAY, false);
-		guiGraphics.drawString(font, gText, colorFieldRight + 5, colorFieldTop + 16, CommonColors.DARK_GRAY, false);
-		guiGraphics.drawString(font, bText, colorFieldRight + 5, colorFieldTop + 31, CommonColors.DARK_GRAY, false);
-		guiGraphics.drawString(font, rgbHexText, colorFieldRight + 5, colorFieldTop + 46, CommonColors.DARK_GRAY, false);
-
-		if (clickedInDragRegion)
-			guiGraphics.requestCursor(CursorTypes.RESIZE_ALL);
-		else if (colorFieldHovered)
-			guiGraphics.requestCursor(CursorTypes.POINTING_HAND);
+		if (!disabled) {
+			super.render(guiGraphics, mouseX, mouseY, partialTick);
+			guiGraphics.blitSprite(RenderType::guiTextured, colorFieldHoverChecker.checkHover(mouseX, mouseY) ? FIELD_SELECTOR_HIGHLIGHTED_SPRITE : FIELD_SELECTOR_SPRITE, (int) selectionX - 1, (int) selectionY - 1, 3, 3); //color field indicator
+			guiGraphics.drawString(font, rText, colorFieldRight + 5, colorFieldTop + 1, 0x404040, false);
+			guiGraphics.drawString(font, gText, colorFieldRight + 5, colorFieldTop + 16, 0x404040, false);
+			guiGraphics.drawString(font, bText, colorFieldRight + 5, colorFieldTop + 31, 0x404040, false);
+			guiGraphics.drawString(font, rgbHexText, colorFieldRight + 5, colorFieldTop + 46, 0x404040, false);
+		}
 	}
 
 	@Override
 	public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, xStart, yStart, 0.0F, 0.0F, 145, 109, 256, 256);
-		guiGraphics.guiRenderState.submitGuiElement(new HorizontalGradientRenderState(RenderPipelines.GUI, TextureSetup.noTexture(), new Matrix3x2f(guiGraphics.pose()), colorFieldLeft, colorFieldTop, colorFieldRight + 1, colorFieldBottom + 1, 0xFFFFFFFF, ClientUtils.HSBtoRGB(h, 1.0F, 1.0F) | 0xFF000000, guiGraphics.scissorStack.peek()));
+		guiGraphics.blit(RenderType::guiTextured, TEXTURE, xStart, yStart, 0.0F, 0.0F, 145, 109, 256, 256);
+		ClientUtils.fillHorizontalGradient(guiGraphics, 0, colorFieldLeft, colorFieldTop, colorFieldRight + 1, colorFieldBottom + 1, 0xFFFFFFFF, ClientUtils.HSBtoRGB(h, 1.0F, 1.0F));
 		guiGraphics.fillGradient(colorFieldLeft, colorFieldTop, colorFieldRight + 1, colorFieldBottom + 1, 0x00000000, 0xFF000000);
 	}
 
 	@Override
 	public void tick() {
-		//this is validated here and not in the edit box' responder in order to allow for an empty box while typing
-		validateNotEmpty(rBox);
-		validateNotEmpty(gBox);
-		validateNotEmpty(bBox);
+		if (!disabled) {
+			//this is validated here and not in the edit box' responder in order to allow for an empty box while typing
+			validateNotEmpty(rBox);
+			validateNotEmpty(gBox);
+			validateNotEmpty(bBox);
 
-		if (getRgbHexBox() != null && !getRgbHexBox().isFocused() && getRgbHexBox().getValue().isEmpty())
-			getRgbHexBox().setValue("000000");
+			if (getRgbHexBox() != null && !getRgbHexBox().isFocused() && getRgbHexBox().getValue().isEmpty())
+				getRgbHexBox().setValue("000000");
+		}
 	}
 
 	@Override
-	public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
-		super.mouseDragged(event, dragX, dragY);
-
-		if (event.button() == 0 && clickedInDragRegion) {
-			setSelection(event.x(), event.y());
+	public boolean isMouseOver(double mouseX, double mouseY) {
+		if (!disabled && mouseX >= xStart && mouseX < xStart + 145 && mouseY >= yStart && mouseY < yStart + 109) {
+			clickedInDragRegion = colorFieldHoverChecker.checkHover(mouseX, mouseY);
 			return true;
 		}
 
@@ -185,31 +170,39 @@ public class ColorChooser extends Screen implements GuiEventListener, Narratable
 	}
 
 	@Override
-	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-		super.mouseClicked(event, doubleClick);
-		clickedInDragRegion = colorFieldHoverChecker.checkHover(event.x(), event.y());
+	public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+		if (!disabled) {
+			super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
 
-		if (clickedInDragRegion)
-			setSelection(event.x(), event.y());
-
-		return false;
-	}
-
-	@Override
-	public boolean mouseReleased(MouseButtonEvent event) {
-		super.mouseReleased(event);
-		clickedInDragRegion = false;
-		return false;
-	}
-
-	@Override
-	public boolean keyPressed(KeyEvent event) {
-		if (minecraft.options.keyInventory.isActiveAndMatches(InputConstants.getKey(event))) {
-			onClose();
-			return true;
+			if (button == 0 && clickedInDragRegion) {
+				setSelection(mouseX, mouseY);
+				return true;
+			}
 		}
 
-		return super.keyPressed(event);
+		return false;
+	}
+
+	@Override
+	public boolean mouseClicked(double mouseX, double mouseY, int button) {
+		if (!disabled) {
+			super.mouseClicked(mouseX, mouseY, button);
+
+			if (clickedInDragRegion)
+				setSelection(mouseX, mouseY);
+		}
+
+		return false;
+	}
+
+	@Override
+	public boolean mouseReleased(double mouseX, double mouseY, int button) {
+		if (!disabled) {
+			super.mouseReleased(mouseX, mouseY, button);
+			clickedInDragRegion = false;
+		}
+
+		return false;
 	}
 
 	@Override
@@ -220,22 +213,12 @@ public class ColorChooser extends Screen implements GuiEventListener, Narratable
 		return NarrationPriority.NONE;
 	}
 
-	@Override
-	public void onClose() {
-		super.onClose();
-		disabled = true;
-	}
-
 	public List<Rect2i> getGuiExtraAreas() {
-		return extraAreas;
-	}
-
-	public int getARGBColor() {
-		return rgbColor | 0xFF000000;
+		return disabled ? List.of() : extraAreas;
 	}
 
 	public int getRGBColor() {
-		return rgbColor;
+		return ClientUtils.HSBtoRGB(h, s, b);
 	}
 
 	private void setSelection(double mouseX, double mouseY) {
@@ -245,14 +228,6 @@ public class ColorChooser extends Screen implements GuiEventListener, Narratable
 		b = 1.0F - ((selectionY - colorFieldTop) / COLOR_FIELD_SIZE);
 		updateTextFields(null);
 		onColorChange();
-	}
-
-	private void initHSBValues() {
-		int red = rgbColor >> 16 & 255;
-		int green = rgbColor >> 8 & 255;
-		int blue = rgbColor & 255;
-
-		updateHSBValues(red, green, blue);
 	}
 
 	private void updateHSBValues(int red, int green, int blue) {
@@ -265,17 +240,16 @@ public class ColorChooser extends Screen implements GuiEventListener, Narratable
 	}
 
 	private void updateTextFields(EditBox excluded) {
-		int currentRGBColor = ClientUtils.HSBtoRGB(h, s, b);
+		int currentRGBColor = getRGBColor();
 		int red = currentRGBColor >> 16 & 255;
 		int green = currentRGBColor >> 8 & 255;
 		int blue = currentRGBColor & 255;
 
-		rgbColor = currentRGBColor;
 		//setting the value directly to prevent a stack overflow due to setValue calling the responder, which in turn calls this
 		trySetText(excluded, rBox, "" + red);
 		trySetText(excluded, gBox, "" + green);
 		trySetText(excluded, bBox, "" + blue);
-		trySetText(excluded, getRgbHexBox(), Integer.toHexString(currentRGBColor));
+		trySetText(excluded, getRgbHexBox(), Integer.toHexString(currentRGBColor).substring(2));
 	}
 
 	private void trySetText(EditBox excluded, ColorEditBox editBox, String value) {
@@ -293,9 +267,7 @@ public class ColorChooser extends Screen implements GuiEventListener, Narratable
 			hueSlider.setValue(h * 360.0D);
 	}
 
-	public void onColorChange() {
-		onColorChange.accept(rgbColor);
-	}
+	public void onColorChange() {}
 
 	private void validateNotEmpty(EditBox box) {
 		if (box != null && !box.isFocused() && box.getValue().isEmpty())
@@ -306,11 +278,6 @@ public class ColorChooser extends Screen implements GuiEventListener, Narratable
 		return rgbHexBox;
 	}
 
-	@Override
-	public boolean isPauseScreen() {
-		return false;
-	}
-
 	class HueSlider extends ExtendedSlider {
 		public HueSlider(int x, int y, int width, int height, double currentValue) {
 			super(x, y, width, height, Component.empty(), Component.empty(), 0.0D, 360.0D, currentValue, 1.0D, 0, false);
@@ -318,7 +285,7 @@ public class ColorChooser extends Screen implements GuiEventListener, Narratable
 
 		@Override
 		public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-			guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, isHoveredOrFocused() ? HUE_SLIDER_HIGHLIGHTED_SPRITE : HUE_SLIDER_SPRITE, getX() + (int) (value * (width - 8)), getY(), 6, height);
+			guiGraphics.blitSprite(RenderType::guiTextured, isHoveredOrFocused() ? HUE_SLIDER_HIGHLIGHTED_SPRITE : HUE_SLIDER_SPRITE, getX() + (int) (value * (width - 8)), getY(), 6, height);
 		}
 	}
 

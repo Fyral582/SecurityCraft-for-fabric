@@ -3,9 +3,7 @@ package net.geforcemods.securitycraft.screen;
 import net.geforcemods.securitycraft.SCContent;
 import net.geforcemods.securitycraft.items.CameraMonitorItem;
 import net.geforcemods.securitycraft.network.server.MountCamera;
-import net.geforcemods.securitycraft.util.PlayerUtils;
 import net.minecraft.core.GlobalPos;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
@@ -26,10 +24,5 @@ public class CameraMonitorScreen extends CameraSelectScreen {
 	@Override
 	protected void unbindCamera(GlobalPos cameraPos) {
 		CameraMonitorItem.removeCameraOnClient(cameraPos, stack);
-	}
-
-	@Override
-	public boolean stillValid(Player player) {
-		return !PlayerUtils.getItemStackFromAnyHand(player, stack.getItem()).isEmpty();
 	}
 }

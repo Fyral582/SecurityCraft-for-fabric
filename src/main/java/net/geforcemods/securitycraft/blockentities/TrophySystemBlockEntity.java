@@ -33,6 +33,8 @@ import net.geforcemods.securitycraft.util.TeamUtils;
 import net.geforcemods.securitycraft.util.Utils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -46,19 +48,17 @@ import net.minecraft.world.entity.Entity.RemovalReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.AbstractThrownPotion;
 import net.minecraft.world.entity.projectile.FishingHook;
 import net.minecraft.world.entity.projectile.Projectile;
-import net.minecraft.world.entity.projectile.arrow.ThrownTrident;
-import net.minecraft.world.entity.projectile.throwableitemprojectile.AbstractThrownPotion;
-import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownExperienceBottle;
+import net.minecraft.world.entity.projectile.ThrownExperienceBottle;
+import net.minecraft.world.entity.projectile.ThrownTrident;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.Level.ExplosionInteraction;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
 import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 import net.geforcemods.securitycraft.platform.network.PacketDistributor;
@@ -141,10 +141,10 @@ public class TrophySystemBlockEntity extends DisguisableBlockEntity implements I
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
-		super.saveAdditional(tag);
+	public void saveAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.saveAdditional(tag, lookupProvider);
 
-		ValueOutput projectilesNBT = tag.child("projectiles");
+		CompoundTag projectilesNBT = new CompoundTag();
 		int i = 0;
 
 		for (boolean b : projectileFilter.values()) {
@@ -152,22 +152,25 @@ public class TrophySystemBlockEntity extends DisguisableBlockEntity implements I
 			i++;
 		}
 
-		lens.storeAsItemList(tag.list("lens", ItemStack.CODEC));
+		tag.put("projectiles", projectilesNBT);
+		tag.put("lens", lens.createTag(lookupProvider));
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
+	public void loadAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.loadAdditional(tag, lookupProvider);
 
-		ValueInput projectilesNBT = tag.childOrEmpty("projectiles");
-		int i = 0;
+		if (tag.contains("projectiles")) {
+			CompoundTag projectilesNBT = tag.getCompoundOrEmpty("projectiles");
+			int i = 0;
 
-		for (EntityType<?> projectileType : projectileFilter.keySet()) {
-			projectileFilter.put(projectileType, projectilesNBT.getBooleanOr("projectile" + i, projectileFilter.get(projectileType)));
-			i++;
+			for (EntityType<?> projectileType : projectileFilter.keySet()) {
+				projectileFilter.put(projectileType, projectilesNBT.getBooleanOr("projectile" + i, false));
+				i++;
+			}
 		}
 
-		lens.fromItemList(tag.listOrEmpty("lens", ItemStack.CODEC));
+		lens.fromTag(tag.getListOrEmpty("lens"), lookupProvider);
 	}
 
 	@Override

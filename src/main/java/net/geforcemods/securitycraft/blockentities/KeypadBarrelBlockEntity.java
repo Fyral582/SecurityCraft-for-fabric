@@ -38,12 +38,11 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.ContainerHelper;
-import net.minecraft.world.entity.ContainerUser;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -54,8 +53,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.ContainerOpenersCounter;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import net.geforcemods.securitycraft.platform.model.ModelData;
 
 public class KeypadBarrelBlockEntity extends RandomizableContainerBlockEntity implements IPasscodeProtected, IOwnable, IModuleInventory, ICustomizable, ILockable, ISentryBulletContainer {
@@ -94,22 +91,22 @@ public class KeypadBarrelBlockEntity extends RandomizableContainerBlockEntity im
 	private SmartModuleCooldownOption smartModuleCooldown = new SmartModuleCooldownOption();
 	private long cooldownEnd = 0;
 	private Map<ModuleType, Boolean> moduleStates = new EnumMap<>(ModuleType.class);
-	private Identifier previousBarrel;
+	private ResourceLocation previousBarrel;
 
 	public KeypadBarrelBlockEntity(BlockPos pos, BlockState state) {
 		super(SCContent.KEYPAD_BARREL_BLOCK_ENTITY.get(), pos, state);
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
+	public void saveAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
 		long cooldownLeft;
 
-		super.saveAdditional(tag);
+		super.saveAdditional(tag, lookupProvider);
 
 		if (!trySaveLootTable(tag))
-			ContainerHelper.saveAllItems(tag, items);
+			ContainerHelper.saveAllItems(tag, items, lookupProvider);
 
-		writeModuleInventory(tag);
+		writeModuleInventory(tag, lookupProvider);
 		writeModuleStates(tag);
 		writeOptions(tag);
 		cooldownLeft = getCooldownEnd() - System.currentTimeMillis();
@@ -124,28 +121,31 @@ public class KeypadBarrelBlockEntity extends RandomizableContainerBlockEntity im
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
+	public void loadAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.loadAdditional(tag, lookupProvider);
 
 		items = NonNullList.withSize(getContainerSize(), ItemStack.EMPTY);
 
 		if (!tryLoadLootTable(tag))
-			ContainerHelper.loadAllItems(tag, items);
+			ContainerHelper.loadAllItems(tag, items, lookupProvider);
 
-		readModuleInventory(modules, tag);
+		modules = readModuleInventory(tag, lookupProvider);
 		moduleStates = readModuleStates(tag);
 		readOptions(tag);
 		cooldownEnd = System.currentTimeMillis() + tag.getLongOr("cooldownLeft", 0);
-		loadPasscodeAndSaltKey(tag);
+		loadSaltKey(tag);
+		loadPasscode(tag);
 		owner.load(tag);
 
-		String savedPreviousBarrel = tag.getStringOr("previous_barrel", "");
+		if (tag.contains("previous_barrel")) {
+			String savedPreviousBarrel = tag.getStringOr("previous_barrel", "");
 
-		if (!savedPreviousBarrel.isBlank()) {
-			Identifier parsedPreviousBarrel = Identifier.parse(savedPreviousBarrel);
+			if (!savedPreviousBarrel.isBlank()) {
+				ResourceLocation parsedPreviousBarrel = ResourceLocation.parse(savedPreviousBarrel);
 
-			if (parsedPreviousBarrel.getPath() != null && !parsedPreviousBarrel.getPath().isBlank())
-				previousBarrel = parsedPreviousBarrel;
+				if (parsedPreviousBarrel.getPath() != null && !parsedPreviousBarrel.getPath().isBlank())
+					previousBarrel = parsedPreviousBarrel;
+			}
 		}
 
 		if (!tag.getBooleanOr("sendMessage", true)) {
@@ -187,8 +187,8 @@ public class KeypadBarrelBlockEntity extends RandomizableContainerBlockEntity im
 	}
 
 	@Override
-	public void onDataPacket(Connection net, ValueInput tag) {
-		super.onDataPacket(net, tag);
+	public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet, HolderLookup.Provider lookupProvider) {
+		super.onDataPacket(net, packet, lookupProvider);
 		DisguisableBlockEntity.onHandleUpdateTag(this);
 	}
 
@@ -367,15 +367,15 @@ public class KeypadBarrelBlockEntity extends RandomizableContainerBlockEntity im
 	}
 
 	@Override
-	public void startOpen(ContainerUser player) {
-		if (!remove && !player.getLivingEntity().isSpectator())
-			openersCounter.incrementOpeners(player.getLivingEntity(), getLevel(), getBlockPos(), getBlockState(), player.getContainerInteractionRange());
+	public void startOpen(Player player) {
+		if (!remove && !player.isSpectator())
+			openersCounter.incrementOpeners(player, getLevel(), getBlockPos(), getBlockState());
 	}
 
 	@Override
-	public void stopOpen(ContainerUser player) {
-		if (!remove && !player.getLivingEntity().isSpectator())
-			openersCounter.decrementOpeners(player.getLivingEntity(), getLevel(), getBlockPos(), getBlockState());
+	public void stopOpen(Player player) {
+		if (!remove && !player.isSpectator())
+			openersCounter.decrementOpeners(player, getLevel(), getBlockPos(), getBlockState());
 	}
 
 	public void recheckOpen() {
@@ -405,7 +405,7 @@ public class KeypadBarrelBlockEntity extends RandomizableContainerBlockEntity im
 		this.previousBarrel = Utils.getRegistryName(previousBarrel);
 	}
 
-	public Identifier getPreviousBarrel() {
+	public ResourceLocation getPreviousBarrel() {
 		return previousBarrel;
 	}
 

@@ -39,6 +39,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.core.component.DataComponentType;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -55,7 +56,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.vehicle.boat.AbstractChestBoat;
+import net.minecraft.world.entity.vehicle.AbstractChestBoat;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -63,8 +64,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 import net.geforcemods.securitycraft.platform.network.PacketDistributor;
 
@@ -291,31 +290,31 @@ public abstract class AbstractSecuritySeaBoat extends AbstractChestBoat implemen
 	}
 
 	@Override
-	protected void addAdditionalSaveData(ValueOutput tag) {
+	protected void addAdditionalSaveData(CompoundTag tag) {
+		CompoundTag ownerTag = new CompoundTag();
 		long cooldownLeft;
 
 		super.addAdditionalSaveData(tag);
-		writeModuleInventory(tag);
+		writeModuleInventory(tag, registryAccess());
 		writeModuleStates(tag);
 		writeOptions(tag);
 		cooldownLeft = getCooldownEnd() - System.currentTimeMillis();
 		tag.putLong("cooldownLeft", cooldownLeft <= 0 ? -1 : cooldownLeft);
-		tag.store("owner", Owner.CODEC, getOwner());
+		getOwner().save(ownerTag, needsValidation());
+		tag.put("owner", ownerTag);
 		savePasscodeAndSalt(tag);
 	}
 
 	@Override
-	protected void readAdditionalSaveData(ValueInput tag) {
-		NonNullList<ItemStack> modules = NonNullList.withSize(getMaxNumberOfModules(), ItemStack.EMPTY);
-
+	protected void readAdditionalSaveData(CompoundTag tag) {
 		super.readAdditionalSaveData(tag);
-		readModuleInventory(modules, tag);
-		entityData.set(MODULES, modules);
+		entityData.set(MODULES, readModuleInventory(tag, registryAccess()));
 		entityData.set(MODULE_STATES, readModuleStates(tag));
 		readOptions(tag);
 		entityData.set(COOLDOWN_END, System.currentTimeMillis() + tag.getLongOr("cooldownLeft", 0));
-		entityData.set(OWNER, tag.read("owner", Owner.CODEC).orElseGet(Owner::new));
-		loadPasscodeAndSaltKey(tag);
+		entityData.set(OWNER, Owner.fromCompound(tag.getCompoundOrEmpty("owner")));
+		loadSaltKey(tag);
+		loadPasscode(tag);
 	}
 
 	@Override
@@ -340,7 +339,7 @@ public abstract class AbstractSecuritySeaBoat extends AbstractChestBoat implemen
 
 	public void setOwner(Player player) {
 		if (player != null)
-			setOwner(player.getGameProfile().id().toString(), player.getName().getString());
+			setOwner(player.getGameProfile().getId().toString(), player.getName().getString());
 	}
 
 	@Override

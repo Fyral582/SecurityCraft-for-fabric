@@ -3,7 +3,6 @@ package net.geforcemods.securitycraft.blocks;
 import net.geforcemods.securitycraft.SCEventHandler;
 import java.util.stream.Stream;
 
-import net.geforcemods.securitycraft.SecurityCraft;
 import net.geforcemods.securitycraft.api.IDisguisable;
 import net.geforcemods.securitycraft.api.IModuleInventory;
 import net.geforcemods.securitycraft.api.IOwnable;
@@ -18,7 +17,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.ProblemReporter;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
@@ -38,7 +36,6 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.gameevent.GameEvent;
-import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -115,7 +112,7 @@ public abstract class AbstractKeypadFurnaceBlock extends DisguisableBlock {
 
 	@Override
 	public InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-		if (!level.isClientSide()) {
+		if (!level.isClientSide) {
 			AbstractKeypadFurnaceBlockEntity be = (AbstractKeypadFurnaceBlockEntity) level.getBlockEntity(pos);
 
 			if (be.isDisabled())
@@ -217,10 +214,7 @@ public abstract class AbstractKeypadFurnaceBlock extends DisguisableBlock {
 			furnace.clearContent();
 			level.setBlockAndUpdate(pos, convertedState);
 			furnace = (AbstractFurnaceBlockEntity) level.getBlockEntity(pos);
-
-			try (ProblemReporter.ScopedCollector problemReporter = new ProblemReporter.ScopedCollector(furnace.problemPath(), SecurityCraft.LOGGER)) {
-				furnace.loadWithComponents(TagValueInput.create(problemReporter, level.registryAccess(), tag));
-			}
+			furnace.loadWithComponents(tag, level.registryAccess());
 
 			if (protect && player != null)
 				((IOwnable) furnace).setOwner(player.getUUID().toString(), player.getName().getString());

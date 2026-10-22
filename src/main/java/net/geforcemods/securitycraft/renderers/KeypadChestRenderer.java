@@ -8,14 +8,10 @@ import net.geforcemods.securitycraft.ClientHandler;
 import net.geforcemods.securitycraft.SecurityCraft;
 import net.geforcemods.securitycraft.api.IModuleInventory;
 import net.geforcemods.securitycraft.misc.ModuleType;
-import net.geforcemods.securitycraft.renderers.state.KeypadChestRenderState;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.Sheets;
-import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.ChestRenderer;
-import net.minecraft.client.renderer.blockentity.state.ChestRenderState;
-import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
-import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.properties.ChestType;
@@ -43,35 +39,23 @@ public class KeypadChestRenderer extends ChestRenderer<ChestBlockEntity> {
 	}
 
 	@Override
-	public void submit(ChestRenderState state, PoseStack pose, SubmitNodeCollector collector, CameraRenderState camera) {
-		if (state instanceof KeypadChestRenderState keypadChestRenderState) {
-			ClientHandler.DISGUISED_BLOCK_RENDER_DELEGATE.trySubmitDelegate(keypadChestRenderState.disguiseRenderState, pose, collector, camera);
+	public void render(ChestBlockEntity be, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, Vec3 cameraPos) {
+		ClientHandler.DISGUISED_BLOCK_RENDER_DELEGATE.tryRenderDelegate(be, partialTicks, poseStack, buffer, packedLight, packedOverlay, cameraPos);
 
-			if (!keypadChestRenderState.isDisguised)
-				super.submit(state, pose, collector, camera);
-		}
+		if (be instanceof IModuleInventory moduleInv && !moduleInv.isModuleEnabled(ModuleType.DISGUISE))
+			super.render(be, partialTicks, poseStack, buffer, packedLight, packedOverlay, cameraPos);
 	}
 
-	@Override
-	public ChestRenderState createRenderState() {
-		return new KeypadChestRenderState();
-	}
-
-	@Override
-	public void extractRenderState(ChestBlockEntity be, ChestRenderState state, float partialTick, Vec3 cameraPos, ModelFeatureRenderer.CrumblingOverlay crumblingOverlay) {
-		super.extractRenderState(be, state, partialTick, cameraPos, crumblingOverlay);
-
-		if (state instanceof KeypadChestRenderState keypadChestRenderState) {
-			keypadChestRenderState.disguiseRenderState = ClientHandler.DISGUISED_BLOCK_RENDER_DELEGATE.tryExtractFromDelegate(be, partialTick, cameraPos, crumblingOverlay);
-			keypadChestRenderState.isDisguised = be instanceof IModuleInventory moduleInv && moduleInv.isModuleEnabled(ModuleType.DISGUISE);
-
-			if (isChristmas)
-				keypadChestRenderState.customMaterial = getMaterialForType(state.type, CHRISTMAS_LEFT, CHRISTMAS_RIGHT, CHRISTMAS);
-			else if (be.getOpenNess(0.0F) >= 0.9F)
-				keypadChestRenderState.customMaterial = getMaterialForType(state.type, LEFT_ACTIVE, RIGHT_ACTIVE, ACTIVE);
-			else
-				keypadChestRenderState.customMaterial = getMaterialForType(state.type, LEFT_INACTIVE, RIGHT_INACTIVE, INACTIVE);
-		}
+	/**
+	 * Replaces NeoForge's ChestRenderer#getMaterial, used by ChestRendererMixin
+	 */
+	public Material getMaterial(ChestBlockEntity be, ChestType type) {
+		if (isChristmas)
+			return getMaterialForType(type, CHRISTMAS_LEFT, CHRISTMAS_RIGHT, CHRISTMAS);
+		else if (be.getOpenNess(0.0F) >= 0.9F)
+			return getMaterialForType(type, LEFT_ACTIVE, RIGHT_ACTIVE, ACTIVE);
+		else
+			return getMaterialForType(type, LEFT_INACTIVE, RIGHT_INACTIVE, INACTIVE);
 	}
 
 	private Material getMaterialForType(ChestType type, Material left, Material right, Material single) {
@@ -79,6 +63,7 @@ public class KeypadChestRenderer extends ChestRenderer<ChestBlockEntity> {
 			case LEFT -> left;
 			case RIGHT -> right;
 			case SINGLE -> single;
+			default -> single;
 		};
 	}
 

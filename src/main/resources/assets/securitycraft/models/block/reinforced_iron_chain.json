@@ -1,6 +1,0 @@
-{
-	"parent": "securitycraft:block/template_reinforced_chain",
-	"textures": {
-		"texture": "minecraft:block/iron_chain"
-	}
-}

@@ -8,6 +8,7 @@ import net.geforcemods.securitycraft.util.LevelUtils;
 import net.geforcemods.securitycraft.util.PlayerUtils;
 import net.geforcemods.securitycraft.util.Utils;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.MutableComponent;
@@ -108,7 +109,7 @@ public class DisplayCaseBlock extends OwnableBlock implements SimpleWaterloggedB
 
 	@Override
 	public InteractionResult useItemOn(ItemStack heldStack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-		if (!level.isClientSide() && !heldStack.isEmpty() && level.getBlockEntity(pos) instanceof DisplayCaseBlockEntity be && be.isOpen()) {
+		if (!level.isClientSide && !heldStack.isEmpty() && level.getBlockEntity(pos) instanceof DisplayCaseBlockEntity be && be.isOpen()) {
 			ItemStack displayedStack = be.getDisplayedStack();
 
 			if (displayedStack.isEmpty()) {
@@ -132,8 +133,8 @@ public class DisplayCaseBlock extends OwnableBlock implements SimpleWaterloggedB
 
 	@Override
 	public InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-		if (!level.isClientSide() && level.getBlockEntity(pos) instanceof DisplayCaseBlockEntity be) {
-			if (be.isLockedBySSS() && be.disableInteractionWhenLocked(level, pos, player)) {
+		if (!level.isClientSide && level.getBlockEntity(pos) instanceof DisplayCaseBlockEntity be) {
+			if (be.isLocked() && be.disableInteractionWhenLocked(level, pos, player)) {
 				MutableComponent blockName = Utils.localize(getDescriptionId());
 
 				PlayerUtils.sendMessageToPlayer(player, blockName, Utils.localize("messages.securitycraft:sonic_security_system.locked", blockName), ChatFormatting.DARK_RED, false);
@@ -206,7 +207,7 @@ public class DisplayCaseBlock extends OwnableBlock implements SimpleWaterloggedB
 		if (level.getBlockEntity(pos) instanceof DisplayCaseBlockEntity be) {
 			ItemStack displayedStack = be.getDisplayedStack();
 
-			if (!displayedStack.isEmpty() && be.isOpen() && !includeData)
+			if (!displayedStack.isEmpty() && be.isOpen() && !Screen.hasControlDown())
 				return displayedStack;
 		}
 
@@ -230,7 +231,7 @@ public class DisplayCaseBlock extends OwnableBlock implements SimpleWaterloggedB
 
 	@Override
 	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-		if (level.isClientSide()) {
+		if (level.isClientSide) {
 			if (glowing)
 				return createTickerHelper(type, SCContent.GLOW_DISPLAY_CASE_BLOCK_ENTITY.get(), LevelUtils::blockEntityTicker);
 			else

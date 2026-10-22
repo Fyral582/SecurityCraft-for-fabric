@@ -21,6 +21,8 @@ import net.geforcemods.securitycraft.util.BlockUtils;
 import net.geforcemods.securitycraft.util.ITickingBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
@@ -33,11 +35,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
 
 public class ClaymoreBlockEntity extends CustomizableBlockEntity implements ITickingBlockEntity, MenuProvider, ContainerListener, SingleLensContainer {
@@ -85,17 +84,17 @@ public class ClaymoreBlockEntity extends CustomizableBlockEntity implements ITic
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
-		super.saveAdditional(tag);
+	public void saveAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.saveAdditional(tag, lookupProvider);
 		tag.putInt("cooldown", cooldown);
-		lens.storeAsItemList(tag.list("lens", ItemStack.CODEC));
+		tag.put("lens", lens.createTag(lookupProvider));
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
+	public void loadAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.loadAdditional(tag, lookupProvider);
 		cooldown = tag.getIntOr("cooldown", -1);
-		lens.fromItemList(tag.listOrEmpty("lens", ItemStack.CODEC));
+		tag.getList("lens").ifPresent(inv -> lens.fromTag(inv, lookupProvider));
 	}
 
 	@Override

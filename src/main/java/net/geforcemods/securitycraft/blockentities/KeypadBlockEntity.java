@@ -20,12 +20,12 @@ import net.geforcemods.securitycraft.misc.SaltData;
 import net.geforcemods.securitycraft.util.BlockUtils;
 import net.geforcemods.securitycraft.util.Utils;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 
 public class KeypadBlockEntity extends DisguisableBlockEntity implements IPasscodeProtected, ILockable {
 	private byte[] passcode;
@@ -43,8 +43,8 @@ public class KeypadBlockEntity extends DisguisableBlockEntity implements IPassco
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
-		super.saveAdditional(tag);
+	public void saveAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.saveAdditional(tag, lookupProvider);
 
 		long cooldownLeft = getCooldownEnd() - System.currentTimeMillis();
 
@@ -53,10 +53,11 @@ public class KeypadBlockEntity extends DisguisableBlockEntity implements IPassco
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
+	public void loadAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.loadAdditional(tag, lookupProvider);
 
-		loadPasscodeAndSaltKey(tag);
+		loadSaltKey(tag);
+		loadPasscode(tag);
 		cooldownEnd = System.currentTimeMillis() + tag.getLongOr("cooldownLeft", 0);
 
 		if (!tag.getBooleanOr("sendMessage", true)) {
@@ -67,7 +68,7 @@ public class KeypadBlockEntity extends DisguisableBlockEntity implements IPassco
 
 	@Override
 	public void activate(Player player) {
-		if (!level.isClientSide() && getBlockState().getBlock() instanceof KeypadBlock block)
+		if (!level.isClientSide && getBlockState().getBlock() instanceof KeypadBlock block)
 			block.activate(getBlockState(), level, worldPosition, signalLength.get());
 	}
 

@@ -1,7 +1,12 @@
 package net.geforcemods.securitycraft.blockentities;
 
+import java.util.Optional;
+
+import com.mojang.authlib.properties.PropertyMap;
+
 import net.geforcemods.securitycraft.ConfigHandler;
 import net.geforcemods.securitycraft.SCContent;
+import net.geforcemods.securitycraft.SecurityCraft;
 import net.geforcemods.securitycraft.api.ILockable;
 import net.geforcemods.securitycraft.api.IViewActivated;
 import net.geforcemods.securitycraft.api.Option;
@@ -20,6 +25,9 @@ import net.geforcemods.securitycraft.util.PlayerUtils;
 import net.geforcemods.securitycraft.util.Utils;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.StringUtil;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -28,9 +36,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.SkullBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.BlockHitResult;
 
 public class RetinalScannerBlockEntity extends DisguisableBlockEntity implements IViewActivated, ITickingBlockEntity, ILockable {
@@ -59,7 +66,7 @@ public class RetinalScannerBlockEntity extends DisguisableBlockEntity implements
 
 	@Override
 	public boolean onEntityViewed(LivingEntity entity, BlockHitResult hitResult) {
-		if (!isLockedBySSS() && !isDisabled()) {
+		if (!isLocked() && !isDisabled()) {
 			BlockState state = getBlockState();
 
 			if (state.getValue(RetinalScannerBlock.FACING) != hitResult.getDirection())
@@ -77,9 +84,7 @@ public class RetinalScannerBlockEntity extends DisguisableBlockEntity implements
 						viewingPlayer = isOwnedBy(player, true) ? PlayerUtils.getOwnerFromPlayerOrMask(player) : new Owner(player);
 
 					if (!isOwnedBy(viewingPlayer) && !isAllowed(viewingPlayer.getName())) {
-						if (sendMessage.get())
-							PlayerUtils.sendMessageToPlayer(player, Utils.localize(SCContent.RETINAL_SCANNER.get().getDescriptionId()), Utils.localize("messages.securitycraft:retinalScanner.notOwner", PlayerUtils.getOwnerComponent(getOwner())), ChatFormatting.RED);
-
+						PlayerUtils.sendMessageToPlayer(player, Utils.localize(SCContent.RETINAL_SCANNER.get().getDescriptionId()), Utils.localize("messages.securitycraft:retinalScanner.notOwner", PlayerUtils.getOwnerComponent(getOwner())), ChatFormatting.RED);
 						return true;
 					}
 
@@ -99,7 +104,7 @@ public class RetinalScannerBlockEntity extends DisguisableBlockEntity implements
 			}
 		}
 		else if (entity instanceof Player player) {
-			if (isLockedBySSS() && sendMessage.get()) {
+			if (isLocked() && sendMessage.get()) {
 				MutableComponent blockName = Utils.localize(SCContent.RETINAL_SCANNER.get().getDescriptionId());
 
 				PlayerUtils.sendMessageToPlayer(player, blockName, Utils.localize("messages.securitycraft:sonic_security_system.locked", blockName), ChatFormatting.DARK_RED, false);
@@ -172,27 +177,46 @@ public class RetinalScannerBlockEntity extends DisguisableBlockEntity implements
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
-		super.saveAdditional(tag);
+	public void saveAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.saveAdditional(tag, lookupProvider);
 
 		if (!StringUtil.isNullOrEmpty(getOwner().getName()) && !(getOwner().getName().equals("owner")) && ownerProfile != null)
-			tag.store("ownerProfile", ResolvableProfile.CODEC, ownerProfile);
+			tag.put("ownerProfile", ResolvableProfile.CODEC.encodeStart(NbtOps.INSTANCE, ownerProfile).getOrThrow());
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
-		setOwnerProfile(tag.read("ownerProfile", ResolvableProfile.CODEC).orElse(null));
+	public void loadAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.loadAdditional(tag, lookupProvider);
+
+		if (tag.contains("ownerProfile")) {
+			CompoundTag ownerProfileTag = tag.getCompoundOrEmpty("ownerProfile");
+
+			//for upgrading pre-1.20.5 scanners
+			ownerProfileTag.getString("Name").ifPresent(name -> ownerProfileTag.putString("name", name));
+			ResolvableProfile.CODEC.parse(NbtOps.INSTANCE, ownerProfileTag).resultOrPartial(name -> SecurityCraft.LOGGER.error("Failed to load profile from player head: {}", name)).ifPresent(this::setOwnerProfile);
+		}
 	}
 
 	@Override
 	public void onOwnerChanged(BlockState state, Level world, BlockPos pos, Player player, Owner oldOwner, Owner newOwner) {
-		setOwnerProfile(ResolvableProfile.createUnresolved(getOwner().getName()));
+		setOwnerProfile(new ResolvableProfile(Optional.of(getOwner().getName()), Optional.empty(), new PropertyMap()));
 		super.onOwnerChanged(state, world, pos, player, oldOwner, newOwner);
 	}
 
 	public void setOwnerProfile(ResolvableProfile ownerProfile) {
 		this.ownerProfile = ownerProfile;
+		updateOwnerProfile();
+	}
+
+	private void updateOwnerProfile() {
+		if (ownerProfile != null && !ownerProfile.isResolved()) {
+			ownerProfile.resolve().thenAcceptAsync(ownerProfile -> {
+				this.ownerProfile = ownerProfile;
+				setChanged();
+			}, SkullBlockEntity.CHECKED_MAIN_THREAD_EXECUTOR);
+		}
+		else
+			setChanged();
 	}
 
 	public ResolvableProfile getPlayerProfile() {

@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -31,31 +32,27 @@ import net.geforcemods.securitycraft.items.SCManualItem;
 import net.geforcemods.securitycraft.misc.ModuleType;
 import net.geforcemods.securitycraft.misc.PageGroup;
 import net.geforcemods.securitycraft.misc.SCManualPage;
-import net.geforcemods.securitycraft.misc.StillValid;
 import net.geforcemods.securitycraft.screen.components.HoverChecker;
 import net.geforcemods.securitycraft.screen.components.ItemStacksDisplay;
 import net.geforcemods.securitycraft.screen.components.TextHoverChecker;
-import net.geforcemods.securitycraft.util.PlayerUtils;
 import net.geforcemods.securitycraft.util.Utils;
+import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.language.I18n;
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
-import net.minecraft.resources.Identifier;
-import net.minecraft.util.CommonColors;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
-import net.minecraft.util.Util;
 import net.minecraft.util.context.ContextMap;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -68,32 +65,32 @@ import net.minecraft.world.item.crafting.display.SlotDisplayContext;
 import net.minecraft.world.level.block.Block;
 import net.geforcemods.securitycraft.platform.gui.ScrollPanel;
 
-public class SCManualScreen extends Screen implements StillValid {
-	private static final Identifier PAGE = SecurityCraft.resLoc("textures/gui/info_book_texture.png");
-	private static final Identifier PAGE_WITH_SCROLL = SecurityCraft.resLoc("textures/gui/info_book_texture_special.png"); //for items without a recipe
-	private static final Identifier TITLE_PAGE = SecurityCraft.resLoc("textures/gui/info_book_title_page.png");
-	private static final Identifier OWNABLE_SPRITE = SecurityCraft.resLoc("sc_manual/ownable");
-	private static final Identifier OWNABLE_HIGHLIGHTED_SPRITE = SecurityCraft.resLoc("sc_manual/ownable_highlighted");
-	private static final Identifier PASSCODE_PROTECTED_SPRITE = SecurityCraft.resLoc("sc_manual/passcode_protected");
-	private static final Identifier PASSCODE_PROTECTED_HIGHLIGHTED_SPRITE = SecurityCraft.resLoc("sc_manual/passcode_protected_highlighted");
-	private static final Identifier VIEW_ACTIVATED_SPRITE = SecurityCraft.resLoc("sc_manual/view_activated");
-	private static final Identifier VIEW_ACTIVATED_HIGHLIGHTED_SPRITE = SecurityCraft.resLoc("sc_manual/view_activated_highlighted");
-	private static final Identifier EXPLOSIVE_SPRITE = SecurityCraft.resLoc("sc_manual/explosive");
-	private static final Identifier EXPLOSIVE_HIGHLIGHTED_SPRITE = SecurityCraft.resLoc("sc_manual/explosive_highlighted");
-	private static final Identifier HAS_OPTIONS_SPRITE = SecurityCraft.resLoc("sc_manual/has_options");
-	private static final Identifier HAS_OPTIONS_HIGHLIGHTED_SPRITE = SecurityCraft.resLoc("sc_manual/has_options_highlighted");
-	private static final Identifier HAS_MODULES_SPRITE = SecurityCraft.resLoc("sc_manual/has_modules");
-	private static final Identifier HAS_MODULES_HIGHLIGHTED_SPRITE = SecurityCraft.resLoc("sc_manual/has_modules_highlighted");
-	private static final Identifier LOCKABLE_SPRITE = SecurityCraft.resLoc("sc_manual/lockable");
-	private static final Identifier LOCKABLE_HIGHLIGHTED_SPRITE = SecurityCraft.resLoc("sc_manual/lockable_highlighted");
-	private static final Identifier CUSTOMIZABLE_SPRITE = SecurityCraft.resLoc("sc_manual/customizable");
-	private static final Identifier CUSTOMIZABLE_HIGHLIGHTED_SPRITE = SecurityCraft.resLoc("sc_manual/customizable_highlighted");
-	private static final Identifier LINK_OUT_HIGHLIGHTED_SPRITE = SecurityCraft.resLoc("sc_manual/link_out_highlighted");
-	private static final Identifier LINK_OUT_SPRITE = SecurityCraft.resLoc("sc_manual/link_out");
-	private static final Identifier PAGE_FORWARD_HIGHLIGHTED_SPRITE = SecurityCraft.mcResLoc("widget/page_forward_highlighted");
-	private static final Identifier PAGE_FORWARD_SPRITE = SecurityCraft.mcResLoc("widget/page_forward");
-	private static final Identifier PAGE_BACKWARD_HIGHLIGHTED_SPRITE = SecurityCraft.mcResLoc("widget/page_backward_highlighted");
-	private static final Identifier PAGE_BACKWARD_SPRITE = SecurityCraft.mcResLoc("widget/page_backward");
+public class SCManualScreen extends Screen {
+	private static final ResourceLocation PAGE = SecurityCraft.resLoc("textures/gui/info_book_texture.png");
+	private static final ResourceLocation PAGE_WITH_SCROLL = SecurityCraft.resLoc("textures/gui/info_book_texture_special.png"); //for items without a recipe
+	private static final ResourceLocation TITLE_PAGE = SecurityCraft.resLoc("textures/gui/info_book_title_page.png");
+	private static final ResourceLocation OWNABLE_SPRITE = SecurityCraft.resLoc("sc_manual/ownable");
+	private static final ResourceLocation OWNABLE_HIGHLIGHTED_SPRITE = SecurityCraft.resLoc("sc_manual/ownable_highlighted");
+	private static final ResourceLocation PASSCODE_PROTECTED_SPRITE = SecurityCraft.resLoc("sc_manual/passcode_protected");
+	private static final ResourceLocation PASSCODE_PROTECTED_HIGHLIGHTED_SPRITE = SecurityCraft.resLoc("sc_manual/passcode_protected_highlighted");
+	private static final ResourceLocation VIEW_ACTIVATED_SPRITE = SecurityCraft.resLoc("sc_manual/view_activated");
+	private static final ResourceLocation VIEW_ACTIVATED_HIGHLIGHTED_SPRITE = SecurityCraft.resLoc("sc_manual/view_activated_highlighted");
+	private static final ResourceLocation EXPLOSIVE_SPRITE = SecurityCraft.resLoc("sc_manual/explosive");
+	private static final ResourceLocation EXPLOSIVE_HIGHLIGHTED_SPRITE = SecurityCraft.resLoc("sc_manual/explosive_highlighted");
+	private static final ResourceLocation HAS_OPTIONS_SPRITE = SecurityCraft.resLoc("sc_manual/has_options");
+	private static final ResourceLocation HAS_OPTIONS_HIGHLIGHTED_SPRITE = SecurityCraft.resLoc("sc_manual/has_options_highlighted");
+	private static final ResourceLocation HAS_MODULES_SPRITE = SecurityCraft.resLoc("sc_manual/has_modules");
+	private static final ResourceLocation HAS_MODULES_HIGHLIGHTED_SPRITE = SecurityCraft.resLoc("sc_manual/has_modules_highlighted");
+	private static final ResourceLocation LOCKABLE_SPRITE = SecurityCraft.resLoc("sc_manual/lockable");
+	private static final ResourceLocation LOCKABLE_HIGHLIGHTED_SPRITE = SecurityCraft.resLoc("sc_manual/lockable_highlighted");
+	private static final ResourceLocation CUSTOMIZABLE_SPRITE = SecurityCraft.resLoc("sc_manual/customizable");
+	private static final ResourceLocation CUSTOMIZABLE_HIGHLIGHTED_SPRITE = SecurityCraft.resLoc("sc_manual/customizable_highlighted");
+	private static final ResourceLocation LINK_OUT_HIGHLIGHTED_SPRITE = SecurityCraft.resLoc("sc_manual/link_out_highlighted");
+	private static final ResourceLocation LINK_OUT_SPRITE = SecurityCraft.resLoc("sc_manual/link_out");
+	private static final ResourceLocation PAGE_FORWARD_HIGHLIGHTED_SPRITE = SecurityCraft.mcResLoc("widget/page_forward_highlighted");
+	private static final ResourceLocation PAGE_FORWARD_SPRITE = SecurityCraft.mcResLoc("widget/page_forward");
+	private static final ResourceLocation PAGE_BACKWARD_HIGHLIGHTED_SPRITE = SecurityCraft.mcResLoc("widget/page_backward_highlighted");
+	private static final ResourceLocation PAGE_BACKWARD_SPRITE = SecurityCraft.mcResLoc("widget/page_backward");
 	private static final int SUBPAGE_LENGTH = 1285;
 	private final MutableComponent intro1 = Utils.localize("gui.securitycraft:scManual.intro.1").setStyle(Style.EMPTY.withUnderlined(true));
 	private final Component ourPatrons = Utils.localize("gui.securitycraft:scManual.patreon.title");
@@ -125,11 +122,11 @@ public class SCManualScreen extends Screen implements StillValid {
 		startX = (width - 256) / 2;
 		patreonLinkButton = addRenderableWidget(new HyperlinkButton(startX + 225, 143, 16, 16, Component.empty(), b -> {
 			try {
-				clickUrlAction(minecraft, this, new URI("https://www.patreon.com/Geforce"));
+				handleComponentClicked(Style.EMPTY.withClickEvent(new ClickEvent.OpenUrl(new URI("https://www.patreon.com/Geforce"))));
 			}
 			catch (URISyntaxException e) {}
 		}));
-		patronList = addRenderableWidget(new PatronList(minecraft, 112, 90, 50, startX + 130));
+		patronList = addRenderableWidget(new PatronList(minecraft, 115, 90, 50, startX + 125));
 		previousSubpage = addRenderableWidget(new ChangePageButton(startX + 155, startY + 95, PAGE_BACKWARD_SPRITE, PAGE_BACKWARD_HIGHLIGHTED_SPRITE, b -> previousSubpage()));
 		nextSubpage = addRenderableWidget(new ChangePageButton(startX + 180, startY + 95, PAGE_FORWARD_SPRITE, PAGE_FORWARD_HIGHLIGHTED_SPRITE, b -> nextSubpage()));
 		addRenderableWidget(new ChangePageButton(startX + 22, startY + 188, PAGE_BACKWARD_SPRITE, PAGE_BACKWARD_HIGHLIGHTED_SPRITE, b -> previousPage()));
@@ -154,7 +151,7 @@ public class SCManualScreen extends Screen implements StillValid {
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
 		renderTransparentBackground(guiGraphics);
-		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, currentPage == -1 ? TITLE_PAGE : (recipe != null && !recipe.isEmpty() ? PAGE : PAGE_WITH_SCROLL), startX, 5, 0.0F, 0.0F, 256, 250, 256, 256);
+		guiGraphics.blit(RenderType::guiTextured, currentPage == -1 ? TITLE_PAGE : (recipe != null && !recipe.isEmpty() ? PAGE : PAGE_WITH_SCROLL), startX, 5, 0.0F, 0.0F, 256, 250, 256, 256);
 
 		for (Renderable renderable : renderables) {
 			renderable.render(guiGraphics, mouseX, mouseY, partialTicks);
@@ -164,33 +161,33 @@ public class SCManualScreen extends Screen implements StillValid {
 			String pageNumberText = (currentPage + 2) + "/" + (SCManualItem.PAGES.size() + 1); //+1 because the "welcome" page is not included
 
 			if (subpages.size() > 1)
-				guiGraphics.drawString(font, (currentSubpage + 1) + "/" + subpages.size(), startX + 205, 100, 0xFF8E8270, false);
+				guiGraphics.drawString(font, (currentSubpage + 1) + "/" + subpages.size(), startX + 205, 100, 0x8E8270, false);
 
 			if (designedBy != null)
-				guiGraphics.drawWordWrap(font, designedBy, startX + 18, 150, 75, CommonColors.BLACK, false);
+				guiGraphics.drawWordWrap(font, designedBy, startX + 18, 150, 75, 0, false);
 
-			guiGraphics.drawString(font, pageTitle, startX + 39, 27, CommonColors.BLACK, false);
-			guiGraphics.drawWordWrap(font, subpages.get(currentSubpage), startX + 18, 45, 225, CommonColors.BLACK, false);
-			guiGraphics.drawString(font, pageNumberText, startX + 240 - font.width(pageNumberText), 182, 0xFF8E8270, false);
-			guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, ownable ? OWNABLE_HIGHLIGHTED_SPRITE : OWNABLE_SPRITE, startX + 29, 118, 16, 16);
-			guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, passcodeProtected ? PASSCODE_PROTECTED_HIGHLIGHTED_SPRITE : PASSCODE_PROTECTED_SPRITE, startX + 56, 118, 16, 16);
-			guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, viewActivated ? VIEW_ACTIVATED_HIGHLIGHTED_SPRITE : VIEW_ACTIVATED_SPRITE, startX + 82, 118, 16, 16);
-			guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, explosive ? EXPLOSIVE_HIGHLIGHTED_SPRITE : EXPLOSIVE_SPRITE, startX + 107, 116, 18, 18);
-			guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, hasOptions ? HAS_OPTIONS_HIGHLIGHTED_SPRITE : HAS_OPTIONS_SPRITE, startX + 136, 118, 16, 16);
-			guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, hasModules ? HAS_MODULES_HIGHLIGHTED_SPRITE : HAS_MODULES_SPRITE, startX + 163, 118, 16, 16);
-			guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, lockable ? LOCKABLE_HIGHLIGHTED_SPRITE : LOCKABLE_SPRITE, startX + 189, 118, 16, 16);
-			guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, hasOptions || hasModules ? CUSTOMIZABLE_HIGHLIGHTED_SPRITE : CUSTOMIZABLE_SPRITE, startX + 213, 117, 16, 16);
+			guiGraphics.drawString(font, pageTitle, startX + 39, 27, 0, false);
+			guiGraphics.drawWordWrap(font, subpages.get(currentSubpage), startX + 18, 45, 225, 0, false);
+			guiGraphics.drawString(font, pageNumberText, startX + 240 - font.width(pageNumberText), 182, 0x8E8270, false);
+			guiGraphics.blitSprite(RenderType::guiTextured, ownable ? OWNABLE_HIGHLIGHTED_SPRITE : OWNABLE_SPRITE, startX + 29, 118, 16, 16);
+			guiGraphics.blitSprite(RenderType::guiTextured, passcodeProtected ? PASSCODE_PROTECTED_HIGHLIGHTED_SPRITE : PASSCODE_PROTECTED_SPRITE, startX + 56, 118, 16, 16);
+			guiGraphics.blitSprite(RenderType::guiTextured, viewActivated ? VIEW_ACTIVATED_HIGHLIGHTED_SPRITE : VIEW_ACTIVATED_SPRITE, startX + 82, 118, 16, 16);
+			guiGraphics.blitSprite(RenderType::guiTextured, explosive ? EXPLOSIVE_HIGHLIGHTED_SPRITE : EXPLOSIVE_SPRITE, startX + 107, 116, 18, 18);
+			guiGraphics.blitSprite(RenderType::guiTextured, hasOptions ? HAS_OPTIONS_HIGHLIGHTED_SPRITE : HAS_OPTIONS_SPRITE, startX + 136, 118, 16, 16);
+			guiGraphics.blitSprite(RenderType::guiTextured, hasModules ? HAS_MODULES_HIGHLIGHTED_SPRITE : HAS_MODULES_SPRITE, startX + 163, 118, 16, 16);
+			guiGraphics.blitSprite(RenderType::guiTextured, lockable ? LOCKABLE_HIGHLIGHTED_SPRITE : LOCKABLE_SPRITE, startX + 189, 118, 16, 16);
+			guiGraphics.blitSprite(RenderType::guiTextured, hasOptions || hasModules ? CUSTOMIZABLE_HIGHLIGHTED_SPRITE : CUSTOMIZABLE_SPRITE, startX + 213, 117, 16, 16);
 
 			for (int i = 0; i < hoverCheckers.size(); i++) {
 				HoverChecker chc = hoverCheckers.get(i);
 
 				if (chc != null && chc.checkHover(mouseX, mouseY)) {
 					if (chc instanceof TextHoverChecker thc && thc.getName() != null) {
-						guiGraphics.setComponentTooltipForNextFrame(font, thc.getLines(), mouseX, mouseY);
+						guiGraphics.renderComponentTooltip(font, thc.getLines(), mouseX, mouseY);
 						break;
 					}
 					else if (i < displays.length && !displays[i].getCurrentStack().isEmpty()) {
-						guiGraphics.setTooltipForNextFrame(font, displays[i].getCurrentStack(), mouseX, mouseY);
+						guiGraphics.renderTooltip(font, displays[i].getCurrentStack(), mouseX, mouseY);
 						break;
 					}
 				}
@@ -199,22 +196,22 @@ public class SCManualScreen extends Screen implements StillValid {
 		else { //"welcome" page
 			String pageNumberText = "1/" + (SCManualItem.PAGES.size() + 1); //+1 because the "welcome" page is not included
 
-			guiGraphics.drawString(font, intro1, width / 2 - font.width(intro1) / 2, 22, CommonColors.BLACK, false);
+			guiGraphics.drawString(font, intro1, width / 2 - font.width(intro1) / 2, 22, 0, false);
 
 			for (int i = 0; i < intro2.size(); i++) {
 				FormattedCharSequence text = intro2.get(i);
 
-				guiGraphics.drawString(font, text, width / 2 - font.width(text) / 2, 150 + 10 * i, CommonColors.BLACK, false);
+				guiGraphics.drawString(font, text, width / 2 - font.width(text) / 2, 150 + 10 * i, 0, false);
 			}
 
 			for (int i = 0; i < author.size(); i++) {
 				FormattedCharSequence text = author.get(i);
 
-				guiGraphics.drawString(font, text, width / 2 - font.width(text) / 2, 180 + 10 * i, CommonColors.BLACK, false);
+				guiGraphics.drawString(font, text, width / 2 - font.width(text) / 2, 180 + 10 * i, 0, false);
 			}
 
-			guiGraphics.drawString(font, pageNumberText, startX + 240 - font.width(pageNumberText), 182, 0xFF8E8270, false);
-			guiGraphics.drawString(font, ourPatrons, width / 2 - font.width(ourPatrons) / 2 + 34, 40, CommonColors.BLACK, false);
+			guiGraphics.drawString(font, pageNumberText, startX + 240 - font.width(pageNumberText), 182, 0x8E8270, false);
+			guiGraphics.drawString(font, ourPatrons, width / 2 - font.width(ourPatrons) / 2 + 30, 40, 0, false);
 		}
 	}
 
@@ -241,7 +238,7 @@ public class SCManualScreen extends Screen implements StillValid {
 
 	@Override
 	public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-		if (Minecraft.getInstance().hasShiftDown()) {
+		if (Screen.hasShiftDown()) {
 			for (ItemStacksDisplay display : displays) {
 				if (display != null)
 					display.changeRenderingStack(-scrollY);
@@ -258,7 +255,7 @@ public class SCManualScreen extends Screen implements StillValid {
 			return true;
 		}
 
-		if (Minecraft.getInstance().hasControlDown() && subpages.size() > 1) {
+		if (Screen.hasControlDown() && subpages.size() > 1) {
 			switch ((int) Math.signum(scrollY)) {
 				case -1:
 					nextSubpage();
@@ -561,19 +558,19 @@ public class SCManualScreen extends Screen implements StillValid {
 	}
 
 	@Override
-	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+	public boolean mouseClicked(double mouseX, double mouseY, int button) {
 		if (patronList != null)
-			patronList.mouseClicked(event, doubleClick);
+			patronList.mouseClicked(mouseX, mouseY, button);
 
-		return super.mouseClicked(event, doubleClick);
+		return super.mouseClicked(mouseX, mouseY, button);
 	}
 
 	@Override
-	public boolean mouseReleased(MouseButtonEvent event) {
+	public boolean mouseReleased(double mouseX, double mouseY, int button) {
 		if (patronList != null)
-			patronList.mouseReleased(event);
+			patronList.mouseReleased(mouseX, mouseY, button);
 
-		return super.mouseReleased(event);
+		return super.mouseReleased(mouseX, mouseY, button);
 	}
 
 	class PatronList extends ScrollPanel {
@@ -622,7 +619,7 @@ public class SCManualScreen extends Screen implements StillValid {
 						int baseY = top + border - (int) scrollDistance;
 
 						if (length >= width - 6) //6 = barWidth
-							guiGraphics.setTooltipForNextFrame(font, Component.literal(patron), left - 10, baseY + (SLOT_HEIGHT * slotIndex + SLOT_HEIGHT));
+							guiGraphics.renderTooltip(font, List.of(Component.literal(patron)), Optional.empty(), left - 10, baseY + (SLOT_HEIGHT * slotIndex + SLOT_HEIGHT));
 					}
 
 					if (patrons.isEmpty()) {
@@ -651,7 +648,7 @@ public class SCManualScreen extends Screen implements StillValid {
 					}
 				}
 				else
-					guiGraphics.drawString(font, loadingText, left + width / 2 - font.width(loadingText) / 2, top + 30, CommonColors.BLACK, false);
+					guiGraphics.drawString(font, loadingText, left + width / 2 - font.width(loadingText) / 2, top + 30, 0, false);
 			}
 		}
 
@@ -662,8 +659,10 @@ public class SCManualScreen extends Screen implements StillValid {
 				String patron = patrons.get(i);
 
 				if (patron != null && !patron.isEmpty())
-					guiGraphics.drawString(font, patron, left + 2, relativeY + (SLOT_HEIGHT * i), CommonColors.BLACK, false);
+					guiGraphics.drawString(font, patron, left + 2, relativeY + (SLOT_HEIGHT * i), 0, false);
 			}
+
+			guiGraphics.flush();
 		}
 
 		public void fetchPatrons() {
@@ -696,30 +695,30 @@ public class SCManualScreen extends Screen implements StillValid {
 		public void updateNarration(NarrationElementOutput narrationElementOutput) {}
 	}
 
-	static class ChangePageButton extends Button.Plain {
-		private final Identifier normalSprite, highlightedSprite;
+	static class ChangePageButton extends Button {
+		private final ResourceLocation normalSprite, highlightedSprite;
 
-		public ChangePageButton(int xPos, int yPos, Identifier normalSprite, Identifier highlightedSprite, OnPress onPress) {
+		public ChangePageButton(int xPos, int yPos, ResourceLocation normalSprite, ResourceLocation highlightedSprite, OnPress onPress) {
 			super(xPos, yPos, 23, 13, Component.empty(), onPress, DEFAULT_NARRATION);
 			this.normalSprite = normalSprite;
 			this.highlightedSprite = highlightedSprite;
 		}
 
 		@Override
-		public void renderContents(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-			guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, isHoveredOrFocused() ? highlightedSprite : normalSprite, getX(), getY(), 23, 13);
+		public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+			guiGraphics.blitSprite(RenderType::guiTextured, isHoveredOrFocused() ? highlightedSprite : normalSprite, getX(), getY(), 23, 13);
 		}
 	}
 
-	static class HyperlinkButton extends Button.Plain {
+	static class HyperlinkButton extends Button {
 		public HyperlinkButton(int xPos, int yPos, int width, int height, Component displayString, OnPress handler) {
 			super(xPos, yPos, width, height, displayString, handler, s -> Component.empty());
 		}
 
 		@Override
-		public void renderContents(GuiGraphics guiGraphics, int mouseX, int mouseY, float partial) {
+		public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partial) {
 			isHovered = mouseX >= getX() && mouseY >= getY() && mouseX < getX() + width && mouseY < getY() + height;
-			guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, isHoveredOrFocused() ? LINK_OUT_HIGHLIGHTED_SPRITE : LINK_OUT_SPRITE, getX(), getY(), 16, 16);
+			guiGraphics.blitSprite(RenderType::guiTextured, isHoveredOrFocused() ? LINK_OUT_HIGHLIGHTED_SPRITE : LINK_OUT_SPRITE, getX(), getY(), 16, 16);
 		}
 	}
 
@@ -753,10 +752,5 @@ public class SCManualScreen extends Screen implements StillValid {
 			index = i;
 
 		return index;
-	}
-
-	@Override
-	public boolean stillValid(Player player) {
-		return !PlayerUtils.getItemStackFromAnyHand(player, SCContent.SC_MANUAL.get()).isEmpty();
 	}
 }

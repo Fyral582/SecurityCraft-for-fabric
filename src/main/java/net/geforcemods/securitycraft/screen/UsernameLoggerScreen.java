@@ -8,8 +8,6 @@ import com.mojang.blaze3d.platform.InputConstants;
 
 import net.geforcemods.securitycraft.SecurityCraft;
 import net.geforcemods.securitycraft.blockentities.UsernameLoggerBlockEntity;
-import net.geforcemods.securitycraft.blockentities.UsernameLoggerBlockEntity.UsernameLoggerEntry;
-import net.geforcemods.securitycraft.misc.StillValid;
 import net.geforcemods.securitycraft.network.server.ClearLoggerServer;
 import net.geforcemods.securitycraft.screen.components.SmallButton;
 import net.geforcemods.securitycraft.util.Utils;
@@ -19,19 +17,17 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.CommonColors;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
 import net.geforcemods.securitycraft.platform.gui.ScrollPanel;
 import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
-public class UsernameLoggerScreen extends Screen implements StillValid {
-	private static final Identifier TEXTURE = SecurityCraft.resLoc("textures/gui/container/blank.png");
+public class UsernameLoggerScreen extends Screen {
+	private static final ResourceLocation TEXTURE = SecurityCraft.resLoc("textures/gui/container/blank.png");
 	private final Component logged = Utils.localize("gui.securitycraft:logger.logged");
 	private int imageWidth = 176;
 	private int imageHeight = 166;
@@ -53,7 +49,7 @@ public class UsernameLoggerScreen extends Screen implements StillValid {
 		topPos = (height - imageHeight) / 2;
 
 		Button clearButton = addRenderableWidget(SmallButton.createWithX(leftPos + 4, topPos + 4, b -> {
-			be.clearEntries();
+			be.setPlayers(new String[100]);
 			ClientPacketDistributor.sendToServer(new ClearLoggerServer(be.getBlockPos()));
 		}));
 
@@ -65,39 +61,39 @@ public class UsernameLoggerScreen extends Screen implements StillValid {
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
 		super.render(guiGraphics, mouseX, mouseY, partialTick);
-		guiGraphics.drawString(font, logged, width / 2 - font.width(logged) / 2, topPos + 6, CommonColors.DARK_GRAY, false);
+		guiGraphics.drawString(font, logged, width / 2 - font.width(logged) / 2, topPos + 6, 4210752, false);
 	}
 
 	@Override
 	public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
 		renderTransparentBackground(guiGraphics);
-		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
+		guiGraphics.blit(RenderType::guiTextured, TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
 	}
 
 	@Override
-	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+	public boolean mouseClicked(double mouseX, double mouseY, int button) {
 		if (playerList != null)
-			playerList.mouseClicked(event, doubleClick);
+			playerList.mouseClicked(mouseX, mouseY, button);
 
-		return super.mouseClicked(event, doubleClick);
+		return super.mouseClicked(mouseX, mouseY, button);
 	}
 
 	@Override
-	public boolean mouseReleased(MouseButtonEvent event) {
+	public boolean mouseReleased(double mouseX, double mouseY, int button) {
 		if (playerList != null)
-			playerList.mouseReleased(event);
+			playerList.mouseReleased(mouseX, mouseY, button);
 
-		return super.mouseReleased(event);
+		return super.mouseReleased(mouseX, mouseY, button);
 	}
 
 	@Override
-	public boolean keyPressed(KeyEvent event) {
-		if (minecraft.options.keyInventory.isActiveAndMatches(InputConstants.getKey(event))) {
+	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+		if (minecraft.options.keyInventory.isActiveAndMatches(InputConstants.getKey(keyCode, scanCode))) {
 			onClose();
 			return true;
 		}
 
-		return super.keyPressed(event);
+		return super.keyPressed(keyCode, scanCode, modifiers);
 	}
 
 	@Override
@@ -105,14 +101,9 @@ public class UsernameLoggerScreen extends Screen implements StillValid {
 		return false;
 	}
 
-	@Override
-	public boolean stillValid(Player player) {
-		return Container.stillValidBlockEntity(be, player);
-	}
-
 	class PlayerList extends ScrollPanel {
 		private final DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.DEFAULT, DateFormat.DEFAULT, Locale.getDefault());
-		private static final int SLOT_HEIGHT = 12;
+		private static final int SLOT_HEIGHT = 12, LIST_LENGTH = 100;
 
 		public PlayerList(Minecraft client, int width, int height, int top, int left) {
 			super(client, width, height, top, left);
@@ -120,7 +111,7 @@ public class UsernameLoggerScreen extends Screen implements StillValid {
 
 		@Override
 		protected int getContentHeight() {
-			int height = UsernameLoggerBlockEntity.LOGGER_LIST_SIZE * (font.lineHeight + 3);
+			int height = be.getPlayers().length * (font.lineHeight + 3);
 
 			if (height < bottom - top - 4)
 				height = bottom - top - 4;
@@ -135,20 +126,24 @@ public class UsernameLoggerScreen extends Screen implements StillValid {
 
 		@Override
 		public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+			guiGraphics.flush();
 			super.render(guiGraphics, mouseX, mouseY, partialTicks);
 
 			if (be.isOwnedBy(minecraft.player)) {
 				int mouseListY = (int) (mouseY - top + scrollDistance - border);
 				int slotIndex = mouseListY / SLOT_HEIGHT;
 
-				if (mouseX >= left && mouseX < right - 6 && slotIndex >= 0 && mouseListY >= 0 && mouseY >= top && mouseY <= bottom) {
-					UsernameLoggerEntry entry = be.getEntry(slotIndex);
+				if (mouseX >= left && mouseX < right - 6 && slotIndex >= 0 && mouseListY >= 0 && slotIndex < LIST_LENGTH && mouseY >= top && mouseY <= bottom) {
+					String[] players = be.getPlayers();
 
-					if (entry != null) {
-						Component localized = Utils.localize("gui.securitycraft:logger.date", dateFormat.format(new Date(entry.timestamp())));
+					if (players[slotIndex] != null && !players[slotIndex].isEmpty()) {
+						Component localized = Utils.localize("gui.securitycraft:logger.date", dateFormat.format(new Date(be.getTimestamps()[slotIndex])));
+						String[] uuids = be.getUuids();
 
-						guiGraphics.setTooltipForNextFrame(font, Component.literal(entry.uuid().toString()), mouseX, mouseY);
-						guiGraphics.drawString(font, localized, leftPos + (imageWidth / 2 - font.width(localized) / 2), bottom + 5, CommonColors.DARK_GRAY, false);
+						if (uuids[slotIndex] != null && !uuids[slotIndex].isEmpty())
+							guiGraphics.renderTooltip(font, Component.literal(be.getUuids()[slotIndex]), mouseX, mouseY);
+
+						guiGraphics.drawString(font, localized, leftPos + (imageWidth / 2 - font.width(localized) / 2), bottom + 5, 4210752, false);
 					}
 				}
 			}
@@ -162,10 +157,10 @@ public class UsernameLoggerScreen extends Screen implements StillValid {
 			int slotIndex = mouseListY / SLOT_HEIGHT;
 
 			//highlight hovered slot
-			if (mouseX >= left && mouseX <= right - 6 && slotIndex >= 0 && mouseListY >= 0 && mouseY >= top && mouseY <= bottom) {
-				UsernameLoggerEntry entry = be.getEntry(slotIndex);
+			if (mouseX >= left && mouseX <= right - 6 && slotIndex >= 0 && mouseListY >= 0 && slotIndex < LIST_LENGTH && mouseY >= top && mouseY <= bottom) {
+				String[] players = be.getPlayers();
 
-				if (entry != null) {
+				if (players[slotIndex] != null && !players[slotIndex].isEmpty()) {
 					int min = left;
 					int max = entryRight - 6; //6 is the width of the scrollbar
 					int slotTop = baseY + slotIndex * SLOT_HEIGHT;
@@ -176,12 +171,12 @@ public class UsernameLoggerScreen extends Screen implements StillValid {
 			}
 
 			//draw entry strings
-			for (int i = 0; i < be.getEntries().length; i++) {
-				UsernameLoggerEntry entry = be.getEntry(i);
-
-				if (entry != null)
-					guiGraphics.drawString(font, entry.playerName(), left + width / 2 - font.width(entry.playerName()) / 2, relativeY + (SLOT_HEIGHT * i), 0xFFC6C6C6, false);
+			for (int i = 0; i < be.getPlayers().length; i++) {
+				if (be.getPlayers()[i] != null && !be.getPlayers()[i].equals(""))
+					guiGraphics.drawString(font, be.getPlayers()[i], left + width / 2 - font.width(be.getPlayers()[i]) / 2, relativeY + (SLOT_HEIGHT * i), 0xC6C6C6, false);
 			}
+
+			guiGraphics.flush();
 		}
 
 		@Override

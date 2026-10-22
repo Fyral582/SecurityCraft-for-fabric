@@ -8,35 +8,30 @@ import net.geforcemods.securitycraft.api.IExplosive;
 import net.geforcemods.securitycraft.api.IOwnable;
 import net.geforcemods.securitycraft.components.GlobalPositions;
 import net.geforcemods.securitycraft.items.MineRemoteAccessToolItem;
-import net.geforcemods.securitycraft.misc.StillValid;
 import net.geforcemods.securitycraft.network.server.RemoteControlMine;
 import net.geforcemods.securitycraft.network.server.RemoteControlMine.Action;
 import net.geforcemods.securitycraft.network.server.RemoveMineFromMRAT;
 import net.geforcemods.securitycraft.screen.components.PictureButton;
-import net.geforcemods.securitycraft.util.PlayerUtils;
 import net.geforcemods.securitycraft.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
-import net.minecraft.util.CommonColors;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
-public class MineRemoteAccessToolScreen extends Screen implements StillValid {
-	private static final Identifier TEXTURE = SecurityCraft.resLoc("textures/gui/container/mrat.png");
-	private static final Identifier EXPLOSIVE_SPRITE = SecurityCraft.resLoc("sc_manual/explosive_highlighted");
+public class MineRemoteAccessToolScreen extends Screen {
+	private static final ResourceLocation TEXTURE = SecurityCraft.resLoc("textures/gui/container/mrat.png");
+	private static final ResourceLocation EXPLOSIVE_SPRITE = SecurityCraft.resLoc("sc_manual/explosive_highlighted");
 	private static final int DEFUSE = 0, ACTIVATE = 1, DETONATE = 2, UNBIND = 3;
 	private ItemStack mrat;
 	private Button[][] guiButtons = new Button[6][4]; //6 mines, 4 actions (defuse, prime, detonate, unbind)
@@ -76,14 +71,10 @@ public class MineRemoteAccessToolScreen extends Screen implements StillValid {
 				id++;
 
 				switch (j) {
-					case DEFUSE ->
-							guiButtons[i][j] = new PictureButton(btnX, btnY, 20, 20, new ItemStack(SCContent.WIRE_CUTTERS.get()), b -> buttonClicked(mine, action));
-					case ACTIVATE ->
-							guiButtons[i][j] = new PictureButton(btnX, btnY, 20, 20, new ItemStack(Items.FLINT_AND_STEEL), b -> buttonClicked(mine, action));
-					case DETONATE ->
-							guiButtons[i][j] = new PictureButton(btnX, btnY, 20, 20, EXPLOSIVE_SPRITE, 0, 1, 18, 18, b -> buttonClicked(mine, action));
-					case UNBIND ->
-							guiButtons[i][j] = Button.builder(Component.literal("X"), b -> buttonClicked(mine, action)).pos(btnX, btnY).size(20, 20).build();
+					case DEFUSE -> guiButtons[i][j] = new PictureButton(btnX, btnY, 20, 20, new ItemStack(SCContent.WIRE_CUTTERS.get()), b -> buttonClicked(mine, action));
+					case ACTIVATE -> guiButtons[i][j] = new PictureButton(btnX, btnY, 20, 20, new ItemStack(Items.FLINT_AND_STEEL), b -> buttonClicked(mine, action));
+					case DETONATE -> guiButtons[i][j] = new PictureButton(btnX, btnY, 20, 20, EXPLOSIVE_SPRITE, 0, 1, 18, 18, b -> buttonClicked(mine, action));
+					case UNBIND -> guiButtons[i][j] = new Button(btnX, btnY, 20, 20, Component.literal("X"), b -> buttonClicked(mine, action), Button.DEFAULT_NARRATION);
 					default -> throw new IllegalArgumentException("Mine actions can only range from 0-3 (inclusive)");
 				}
 
@@ -138,17 +129,17 @@ public class MineRemoteAccessToolScreen extends Screen implements StillValid {
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
-		guiGraphics.drawString(font, title, leftPos + xSize / 2 - font.width(title) / 2, topPos + 6, CommonColors.DARK_GRAY, false);
+		guiGraphics.drawString(font, title, leftPos + xSize / 2 - font.width(title) / 2, topPos + 6, 4210752, false);
 
 		for (int i = 0; i < 6; i++) {
-			guiGraphics.drawString(font, lines[i], leftPos + xSize / 2 - lengths[i] + 25, topPos + i * 25 + 33, CommonColors.DARK_GRAY, false);
+			guiGraphics.drawString(font, lines[i], leftPos + xSize / 2 - lengths[i] + 25, topPos + i * 25 + 33, 4210752, false);
 		}
 	}
 
 	@Override
 	public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
 		renderTransparentBackground(guiGraphics);
-		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, leftPos, topPos, 0.0F, 0.0F, xSize, ySize, 256, 256);
+		guiGraphics.blit(RenderType::guiTextured, TEXTURE, leftPos, topPos, 0.0F, 0.0F, xSize, ySize, 256, 256);
 	}
 
 	private void buttonClicked(int mine, int action) {
@@ -220,17 +211,12 @@ public class MineRemoteAccessToolScreen extends Screen implements StillValid {
 	}
 
 	@Override
-	public boolean keyPressed(KeyEvent event) {
-		if (minecraft.options.keyInventory.isActiveAndMatches(InputConstants.getKey(event))) {
+	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+		if (minecraft.options.keyInventory.isActiveAndMatches(InputConstants.getKey(keyCode, scanCode))) {
 			onClose();
 			return true;
 		}
 
-		return super.keyPressed(event);
-	}
-
-	@Override
-	public boolean stillValid(Player player) {
-		return !PlayerUtils.getItemStackFromAnyHand(player, mrat.getItem()).isEmpty();
+		return super.keyPressed(keyCode, scanCode, modifiers);
 	}
 }

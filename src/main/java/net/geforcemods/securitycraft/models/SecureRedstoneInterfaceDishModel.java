@@ -1,19 +1,19 @@
 package net.geforcemods.securitycraft.models;
 
-import net.minecraft.client.model.Model;
+import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
 
-public class SecureRedstoneInterfaceDishModel extends Model<Float> {
+public class SecureRedstoneInterfaceDishModel extends EntityModel<EntityRenderState> {
 	private final ModelPart modelParts;
 
 	public SecureRedstoneInterfaceDishModel(ModelPart root) {
-		super(root, RenderTypes::entitySolid);
+		super(root);
 		modelParts = root.getChild("cubes");
 	}
 
@@ -34,9 +34,7 @@ public class SecureRedstoneInterfaceDishModel extends Model<Float> {
 		return LayerDefinition.create(meshDefinition, 16, 16);
 	}
 
-	@Override
-	public void setupAnim(Float rotation) {
-		super.setupAnim(rotation);
+	public void rotate(float rotation) {
 		modelParts.yRot = rotation;
 	}
 }

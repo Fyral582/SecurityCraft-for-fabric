@@ -7,18 +7,18 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Block;
 import net.geforcemods.securitycraft.platform.network.IPayloadContext;
 
-public record SyncAlarmSettings(BlockPos pos, Identifier soundEvent, float pitch, int soundLength) implements CustomPacketPayload {
+public record SyncAlarmSettings(BlockPos pos, ResourceLocation soundEvent, float pitch, int soundLength) implements CustomPacketPayload {
 
 	public static final Type<SyncAlarmSettings> TYPE = new Type<>(SecurityCraft.resLoc("sync_alarm_settings"));
 	//@formatter:off
 	public static final StreamCodec<RegistryFriendlyByteBuf, SyncAlarmSettings> STREAM_CODEC = StreamCodec.composite(
 			BlockPos.STREAM_CODEC, SyncAlarmSettings::pos,
-			Identifier.STREAM_CODEC, SyncAlarmSettings::soundEvent,
+			ResourceLocation.STREAM_CODEC, SyncAlarmSettings::soundEvent,
 			ByteBufCodecs.FLOAT, SyncAlarmSettings::pitch,
 			ByteBufCodecs.VAR_INT, SyncAlarmSettings::soundLength,
 			SyncAlarmSettings::new);
@@ -40,8 +40,6 @@ public record SyncAlarmSettings(BlockPos pos, Identifier soundEvent, float pitch
 
 			if (soundLength != be.getSoundLength())
 				be.setSoundLength(soundLength);
-
-			player.level().sendBlockUpdated(pos, be.getBlockState(), be.getBlockState(), Block.UPDATE_ALL);
 		}
 	}
 }

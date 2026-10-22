@@ -4,6 +4,7 @@ import net.geforcemods.securitycraft.ConfigHandler;
 import net.geforcemods.securitycraft.SCContent;
 import net.geforcemods.securitycraft.util.BlockUtils;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
@@ -15,25 +16,24 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 
 public class BouncingBetty extends Entity {
 	/** How many ticks until the explosion */
 	private int fuse;
 
 	public BouncingBetty(EntityType<BouncingBetty> type, Level level) {
-		super(type, level);
-		setFuse(15);
+		super(SCContent.BOUNCING_BETTY_ENTITY.get(), level);
 	}
 
 	public BouncingBetty(Level level, double x, double y, double z) {
-		this(SCContent.BOUNCING_BETTY_ENTITY.get(), level);
-		snapTo(x, y, z);
-
-		double f = Math.random() * Math.PI * 2.0D;
-
-		setDeltaMovement(Math.sin(f) * 0.02D, 0.20000000298023224D, Math.cos(f) * 0.02D);
+		super(SCContent.BOUNCING_BETTY_ENTITY.get(), level);
+		setPos(x, y, z);
+		float f = (float) (Math.random() * Math.PI * 2.0D);
+		setDeltaMovement(-((float) Math.sin(f)) * 0.02F, 0.20000000298023224D, -((float) Math.cos(f)) * 0.02F);
+		setFuse(80);
+		xo = x;
+		yo = y;
+		zo = z;
 	}
 
 	@Override
@@ -66,11 +66,11 @@ public class BouncingBetty extends Entity {
 		if (onGround())
 			setDeltaMovement(getDeltaMovement().multiply(0.699999988079071D, 0.699999988079071D, -0.5D));
 
-		if (fuse-- <= 0 && !level().isClientSide()) {
+		if (fuse-- <= 0 && !level().isClientSide) {
 			discard();
 			explode();
 		}
-		else if (level().isClientSide())
+		else if (level().isClientSide)
 			level().addParticle(ParticleTypes.SMOKE, getX(), getY() + 0.5D, getZ(), 0.0D, 0.0D, 0.0D);
 	}
 
@@ -79,12 +79,12 @@ public class BouncingBetty extends Entity {
 	}
 
 	@Override
-	protected void addAdditionalSaveData(ValueOutput tag) {
+	protected void addAdditionalSaveData(CompoundTag tag) {
 		tag.putByte("Fuse", (byte) getFuse());
 	}
 
 	@Override
-	protected void readAdditionalSaveData(ValueInput tag) {
+	protected void readAdditionalSaveData(CompoundTag tag) {
 		setFuse(tag.getByteOr("Fuse", (byte) 0));
 	}
 

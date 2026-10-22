@@ -11,9 +11,12 @@
               "function": "minecraft:copy_components",
               "include": [
                 "securitycraft:sss_linked_blocks",
-                "securitycraft:notes",
-                "minecraft:custom_name"
+                "securitycraft:notes"
               ],
+              "source": "block_entity"
+            },
+            {
+              "function": "minecraft:copy_name",
               "source": "block_entity"
             }
           ],

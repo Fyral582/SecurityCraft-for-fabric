@@ -8,7 +8,6 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.SimpleWaterloggedBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -19,7 +18,7 @@ import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-public class ReinforcedChainBlock extends ReinforcedRotatedPillarBlock implements SimpleWaterloggedBlock {
+public class ReinforcedChainBlock extends ReinforcedRotatedPillarBlock {
 	public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
 	protected static final VoxelShape X_AXIS_SHAPE = Block.box(0.0D, 6.5D, 6.5D, 16.0D, 9.5D, 9.5D);
 	protected static final VoxelShape Y_AXIS_SHAPE = Block.box(6.5D, 0.0D, 6.5D, 9.5D, 16.0D, 9.5D);
@@ -27,7 +26,7 @@ public class ReinforcedChainBlock extends ReinforcedRotatedPillarBlock implement
 
 	public ReinforcedChainBlock(BlockBehaviour.Properties properties, Block vB) {
 		super(properties, vB);
-		registerDefaultState(stateDefinition.any().setValue(WATERLOGGED, false).setValue(AXIS, Direction.Axis.Y));
+		this.registerDefaultState(stateDefinition.any().setValue(WATERLOGGED, false).setValue(AXIS, Direction.Axis.Y));
 	}
 
 	@Override
@@ -36,6 +35,7 @@ public class ReinforcedChainBlock extends ReinforcedRotatedPillarBlock implement
 			case X -> X_AXIS_SHAPE;
 			case Y -> Y_AXIS_SHAPE;
 			case Z -> Z_AXIS_SHAPE;
+			default -> X_AXIS_SHAPE;
 		};
 	}
 
@@ -43,7 +43,6 @@ public class ReinforcedChainBlock extends ReinforcedRotatedPillarBlock implement
 	public BlockState getStateForPlacement(BlockPlaceContext context) {
 		FluidState fluidState = context.getLevel().getFluidState(context.getClickedPos());
 		boolean isWater = fluidState.getType() == Fluids.WATER;
-
 		return super.getStateForPlacement(context).setValue(WATERLOGGED, isWater);
 	}
 

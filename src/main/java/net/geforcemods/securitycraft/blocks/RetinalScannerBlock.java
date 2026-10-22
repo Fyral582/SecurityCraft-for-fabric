@@ -32,20 +32,19 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 
 public class RetinalScannerBlock extends DisguisableBlock {
-	public static final EnumProperty<Direction> FACING = BlockStateProperties.FACING;
-	public static final EnumProperty<Direction> ROTATION = EnumProperty.create("rotation", Direction.class, Direction.Plane.HORIZONTAL);
+	public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
 	public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
 
 	public RetinalScannerBlock(BlockBehaviour.Properties properties) {
 		super(properties);
-		registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(ROTATION, Direction.NORTH).setValue(POWERED, false).setValue(WATERLOGGED, false));
+		registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(POWERED, false).setValue(WATERLOGGED, false));
 	}
 
 	@Override
 	public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity entity, ItemStack stack) {
 		if (entity instanceof Player player) {
 			if (level.getBlockEntity(pos) instanceof RetinalScannerBlockEntity be)
-				be.setOwnerProfile(ResolvableProfile.createResolved(player.getGameProfile()));
+				be.setOwnerProfile(new ResolvableProfile(player.getGameProfile()));
 
 			SCEventHandler.onOwnership(new OwnershipEvent(level, pos, player));
 		}
@@ -91,24 +90,12 @@ public class RetinalScannerBlock extends DisguisableBlock {
 
 	@Override
 	public BlockState getStateForPlacement(BlockPlaceContext ctx) {
-		Direction facing = ctx.getNearestLookingDirection().getOpposite();
-		BlockState state = super.getStateForPlacement(ctx).setValue(FACING, facing);
-
-		if (facing == Direction.UP || facing == Direction.DOWN) {
-			Direction horizontalDir = ctx.getHorizontalDirection();
-
-			if (horizontalDir == Direction.NORTH || horizontalDir == Direction.SOUTH)
-				return state.setValue(ROTATION, horizontalDir.getOpposite());
-			else
-				return state.setValue(ROTATION, horizontalDir);
-		}
-		else
-			return state.setValue(ROTATION, facing);
+		return super.getStateForPlacement(ctx).setValue(FACING, ctx.getHorizontalDirection().getOpposite()).setValue(POWERED, false);
 	}
 
 	@Override
 	protected void createBlockStateDefinition(Builder<Block, BlockState> builder) {
-		builder.add(FACING, ROTATION, POWERED, WATERLOGGED);
+		builder.add(FACING, POWERED, WATERLOGGED);
 	}
 
 	@Override
@@ -118,12 +105,12 @@ public class RetinalScannerBlock extends DisguisableBlock {
 
 	@Override
 	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-		return level.isClientSide() ? null : createTickerHelper(type, SCContent.RETINAL_SCANNER_BLOCK_ENTITY.get(), LevelUtils::blockEntityTicker);
+		return level.isClientSide ? null : createTickerHelper(type, SCContent.RETINAL_SCANNER_BLOCK_ENTITY.get(), LevelUtils::blockEntityTicker);
 	}
 
 	@Override
 	public BlockState rotate(BlockState state, Rotation rot) {
-		return state.setValue(FACING, rot.rotate(state.getValue(FACING))).setValue(ROTATION, rot.rotate(state.getValue(ROTATION)));
+		return state.setValue(FACING, rot.rotate(state.getValue(FACING)));
 	}
 
 	@Override

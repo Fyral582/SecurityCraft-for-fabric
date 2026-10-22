@@ -12,40 +12,35 @@ import net.geforcemods.securitycraft.components.NamedPositions;
 import net.geforcemods.securitycraft.entity.sentry.Sentry;
 import net.geforcemods.securitycraft.entity.sentry.Sentry.SentryMode;
 import net.geforcemods.securitycraft.items.SentryRemoteAccessToolItem;
-import net.geforcemods.securitycraft.misc.StillValid;
 import net.geforcemods.securitycraft.network.server.RemoveSentryFromSRAT;
 import net.geforcemods.securitycraft.network.server.SetSentryMode;
 import net.geforcemods.securitycraft.screen.components.IToggleableButton;
 import net.geforcemods.securitycraft.screen.components.TextHoverChecker;
 import net.geforcemods.securitycraft.screen.components.TogglePictureButton;
-import net.geforcemods.securitycraft.util.PlayerUtils;
 import net.geforcemods.securitycraft.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
-import net.minecraft.util.CommonColors;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
-public class SentryRemoteAccessToolScreen extends Screen implements StillValid {
-	private static final Identifier TEXTURE = SecurityCraft.resLoc("textures/gui/container/srat.png");
-	private static final Identifier CAMOUFLAGE_SPRITE = SecurityCraft.resLoc("sentry/camouflage");
-	private static final Identifier AGGRESSIVE_SPRITE = SecurityCraft.resLoc("sentry/aggressive");
-	private static final Identifier IDLE_SPRITE = SecurityCraft.resLoc("sentry/idle");
-	private static final Identifier ATTACK_HOSTILE_AND_PLAYERS_SPRITE = SecurityCraft.resLoc("sentry/attack_hostile_and_players");
-	private static final Identifier ATTACK_HOSTILE_SPRITE = SecurityCraft.resLoc("sentry/attack_hostile");
-	private static final Identifier ATTACK_PLAYERS_SPRITE = SecurityCraft.resLoc("sentry/attack_players");
+public class SentryRemoteAccessToolScreen extends Screen {
+	private static final ResourceLocation TEXTURE = SecurityCraft.resLoc("textures/gui/container/srat.png");
+	private static final ResourceLocation CAMOUFLAGE_SPRITE = SecurityCraft.resLoc("sentry/camouflage");
+	private static final ResourceLocation AGGRESSIVE_SPRITE = SecurityCraft.resLoc("sentry/aggressive");
+	private static final ResourceLocation IDLE_SPRITE = SecurityCraft.resLoc("sentry/idle");
+	private static final ResourceLocation ATTACK_HOSTILE_AND_PLAYERS_SPRITE = SecurityCraft.resLoc("sentry/attack_hostile_and_players");
+	private static final ResourceLocation ATTACK_HOSTILE_SPRITE = SecurityCraft.resLoc("sentry/attack_hostile");
+	private static final ResourceLocation ATTACK_PLAYERS_SPRITE = SecurityCraft.resLoc("sentry/attack_players");
 	private final Component modifyAll = Utils.localize("gui.securitycraft:srat.modifyAll");
 	private ItemStack srat;
 	private Button[][] guiButtons = new Button[12][3]; // 12 sentries, 3 actions (mode, targets, unbind)
@@ -99,7 +94,7 @@ public class SentryRemoteAccessToolScreen extends Screen implements StillValid {
 						guiButtons[i][j].active = false;
 						break;
 					case UNBIND:
-						guiButtons[i][j] = Button.builder(Component.literal("X"), b -> unbindButtonClicked(index)).pos(btnX, btnY).size(20, 20).build();
+						guiButtons[i][j] = new Button(btnX, btnY, 20, 20, Component.literal("X"), b -> unbindButtonClicked(index), Button.DEFAULT_NARRATION);
 						guiButtons[i][j].active = false;
 						break;
 					default:
@@ -174,7 +169,7 @@ public class SentryRemoteAccessToolScreen extends Screen implements StillValid {
 		//Add buttons for global operation (all sentries)
 		guiButtonsGlobal[0] = new TogglePictureButton(startX + 260, startY + 188, 20, 20, 2, 16, 16, 3, this::globalModeButtonClicked, CAMOUFLAGE_SPRITE, AGGRESSIVE_SPRITE, IDLE_SPRITE);
 		guiButtonsGlobal[1] = new TogglePictureButton(startX + 22 + 260, startY + 188, 20, 20, 2, 16, 16, 3, this::globalTargetsButtonClicked, ATTACK_HOSTILE_AND_PLAYERS_SPRITE, ATTACK_HOSTILE_SPRITE, ATTACK_PLAYERS_SPRITE);
-		guiButtonsGlobal[2] = Button.builder(Component.literal("X"), this::globalUnbindButtonClicked).pos(startX + 44 + 260, startY + 188).size(20, 20).build();
+		guiButtonsGlobal[2] = new Button(startX + 44 + 260, startY + 188, 20, 20, Component.literal("X"), this::globalUnbindButtonClicked, Button.DEFAULT_NARRATION);
 
 		for (int j = 0; j < 3; j++) {
 			guiButtonsGlobal[j].active = foundSentry;
@@ -190,17 +185,17 @@ public class SentryRemoteAccessToolScreen extends Screen implements StillValid {
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
 
-		guiGraphics.drawString(font, title, leftPos + xSize / 2 - font.width(title) / 2, topPos + 6, CommonColors.DARK_GRAY, false);
+		guiGraphics.drawString(font, title, leftPos + xSize / 2 - font.width(title) / 2, topPos + 6, 4210752, false);
 
 		for (int i = 0; i < 12; i++) {
-			guiGraphics.drawString(font, lines[i], leftPos + xSize / 4 - lengths[i] + 35 + (i / 6) * xSize / 2, topPos + (i % 6) * 25 + 33, CommonColors.DARK_GRAY, false);
+			guiGraphics.drawString(font, lines[i], leftPos + xSize / 4 - lengths[i] + 35 + (i / 6) * xSize / 2, topPos + (i % 6) * 25 + 33, 4210752, false);
 		}
 
-		guiGraphics.drawString(font, modifyAll, leftPos + xSize / 2 - font.width(modifyAll) + 25, topPos + 194, CommonColors.DARK_GRAY, false);
+		guiGraphics.drawString(font, modifyAll, leftPos + xSize / 2 - font.width(modifyAll) + 25, topPos + 194, 4210752, false);
 
 		for (TextHoverChecker chc : hoverCheckers) {
 			if (chc != null && chc.checkHover(mouseX, mouseY)) {
-				guiGraphics.setTooltipForNextFrame(font, chc.getName(), mouseX, mouseY);
+				guiGraphics.renderTooltip(font, chc.getName(), mouseX, mouseY);
 				break;
 			}
 		}
@@ -209,7 +204,7 @@ public class SentryRemoteAccessToolScreen extends Screen implements StillValid {
 	@Override
 	public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
 		renderTransparentBackground(guiGraphics);
-		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, leftPos, topPos, 0.0F, 0.0F, xSize, ySize, 512, 256);
+		guiGraphics.blit(RenderType::guiTextured, TEXTURE, leftPos, topPos, 0.0F, 0.0F, xSize, ySize, 512, 256);
 	}
 
 	/**
@@ -366,17 +361,12 @@ public class SentryRemoteAccessToolScreen extends Screen implements StillValid {
 	}
 
 	@Override
-	public boolean keyPressed(KeyEvent event) {
-		if (minecraft.options.keyInventory.isActiveAndMatches(InputConstants.getKey(event))) {
+	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+		if (minecraft.options.keyInventory.isActiveAndMatches(InputConstants.getKey(keyCode, scanCode))) {
 			onClose();
 			return true;
 		}
 
-		return super.keyPressed(event);
-	}
-
-	@Override
-	public boolean stillValid(Player player) {
-		return !PlayerUtils.getItemStackFromAnyHand(player, srat.getItem()).isEmpty();
+		return super.keyPressed(keyCode, scanCode, modifiers);
 	}
 }

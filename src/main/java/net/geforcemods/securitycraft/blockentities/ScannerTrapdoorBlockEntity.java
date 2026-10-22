@@ -60,7 +60,7 @@ public class ScannerTrapdoorBlockEntity extends DisguisableBlockEntity implement
 			if (!(entity instanceof Player player) || (!isModuleEnabled(ModuleType.DISGUISE) && !(state.getValue(TrapDoorBlock.OPEN) ? hitResult.getDirection().getAxis() == state.getValue(HorizontalDirectionalBlock.FACING).getAxis() : hitResult.getDirection().getAxis() == Axis.Y)))
 				return false;
 
-			if (!isLockedBySSS() && !isDisabled()) {
+			if (!isLocked() && !isDisabled()) {
 				Owner viewingPlayer;
 
 				if (ConfigHandler.SERVER.trickScannersWithPlayerHeads.get() && player.getItemBySlot(EquipmentSlot.HEAD).getItem() == Items.PLAYER_HEAD)
@@ -69,9 +69,7 @@ public class ScannerTrapdoorBlockEntity extends DisguisableBlockEntity implement
 					viewingPlayer = isOwnedBy(player, true) ? PlayerUtils.getOwnerFromPlayerOrMask(player) : new Owner(player);
 
 				if (!isOwnedBy(viewingPlayer) && !isAllowed(viewingPlayer.getName())) {
-					if (sendMessage.get())
-						PlayerUtils.sendMessageToPlayer(player, Utils.localize(SCContent.SCANNER_TRAPDOOR.get().getDescriptionId()), Utils.localize("messages.securitycraft:retinalScanner.notOwner", PlayerUtils.getOwnerComponent(getOwner())), ChatFormatting.RED);
-
+					PlayerUtils.sendMessageToPlayer(player, Utils.localize(SCContent.SCANNER_TRAPDOOR.get().getDescriptionId()), Utils.localize("messages.securitycraft:retinalScanner.notOwner", PlayerUtils.getOwnerComponent(getOwner())), ChatFormatting.RED);
 					return true;
 				}
 
@@ -88,7 +86,7 @@ public class ScannerTrapdoorBlockEntity extends DisguisableBlockEntity implement
 					level.scheduleTick(worldPosition, SCContent.SCANNER_TRAPDOOR.get(), getSignalLength());
 			}
 			else {
-				if (isLockedBySSS() && sendMessage.get()) {
+				if (isLocked() && sendMessage.get()) {
 					MutableComponent blockName = Utils.localize(SCContent.SCANNER_TRAPDOOR.get().getDescriptionId());
 
 					PlayerUtils.sendMessageToPlayer(player, blockName, Utils.localize("messages.securitycraft:sonic_security_system.locked", blockName), ChatFormatting.DARK_RED, false);

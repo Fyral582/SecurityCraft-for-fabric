@@ -2,25 +2,26 @@ package net.geforcemods.securitycraft.blocks;
 
 import net.geforcemods.securitycraft.platform.SCPlatform;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import net.geforcemods.securitycraft.SCContent;
 import net.geforcemods.securitycraft.api.OwnableBlockEntity;
 import net.geforcemods.securitycraft.blockentities.InventoryScannerBlockEntity;
 import net.geforcemods.securitycraft.misc.ModuleType;
 import net.geforcemods.securitycraft.util.BlockUtils;
-import net.geforcemods.securitycraft.util.InventoryUtils;
-import net.geforcemods.securitycraft.util.InventoryUtils.ItemAccess;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.NonNullList;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.InsideBlockEffectApplier;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.animal.equine.AbstractChestedHorse;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.vehicle.ContainerEntity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.BundleContents;
+import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -62,11 +63,26 @@ public class InventoryScannerFieldBlock extends OwnableBlock implements SimpleWa
 			return Shapes.empty();
 
 		Entity entity = ctx.getEntity();
-		Level level = entity.level();
+		Level level = entity.getCommandSenderWorld();
 		InventoryScannerBlockEntity connectedScanner = InventoryScannerBlock.getConnectedInventoryScanner(level, pos);
 
-		if (connectedScanner != null && connectedScanner.doesFieldSolidify() && scanEntity(entity, connectedScanner, false))
-			return getShape(state, blockGetter, pos, ctx);
+		if (connectedScanner != null && connectedScanner.doesFieldSolidify()) {
+			if (entity instanceof Player player && !connectedScanner.isConsideredInvisible(player)) {
+				if (connectedScanner.isAllowed(entity))
+					return Shapes.empty();
+
+				List<ItemStack> prohibitedItems = connectedScanner.getAllProhibitedItems();
+
+				if (!prohibitedItems.isEmpty() && checkInventory(player, connectedScanner, prohibitedItems, false))
+					return getShape(state, level, pos, ctx);
+			}
+			else if (entity instanceof ItemEntity item) {
+				List<ItemStack> prohibitedItems = connectedScanner.getAllProhibitedItems();
+
+				if (!prohibitedItems.isEmpty() && checkItemEntity(item, connectedScanner, prohibitedItems, false))
+					return getShape(state, level, pos, ctx);
+			}
+		}
 
 		return Shapes.empty();
 	}
@@ -85,7 +101,7 @@ public class InventoryScannerFieldBlock extends OwnableBlock implements SimpleWa
 	}
 
 	@Override
-	public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity, InsideBlockEffectApplier effectApplier, boolean stillInside) {
+	public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity, InsideBlockEffectApplier effectApplier) {
 		if (!getShape(state, level, pos, CollisionContext.of(entity)).bounds().move(pos).intersects(entity.getBoundingBox()))
 			return;
 
@@ -94,102 +110,170 @@ public class InventoryScannerFieldBlock extends OwnableBlock implements SimpleWa
 		if (connectedScanner == null || connectedScanner.doesFieldSolidify())
 			return;
 
-		scanEntity(entity, connectedScanner, true);
-	}
+		if (entity instanceof Player player && !connectedScanner.isConsideredInvisible(player)) {
+			if (connectedScanner.isAllowed(entity))
+				return;
 
-	public static boolean scanEntity(Entity entity, InventoryScannerBlockEntity be, boolean allowInteraction) {
-		if (entity instanceof LivingEntity living && !be.isConsideredInvisible(living) && !be.isAllowed(entity)) {
-			boolean foundItem;
+			List<ItemStack> prohibitedItems = connectedScanner.getAllProhibitedItems();
 
-			if (living instanceof Player player && (!be.isOwnedBy(player) || !be.ignoresOwner())) {
-				player.closeContainer(); //Fixes item smuggling using nearby containers
-
-				foundItem = checkInventory(ItemAccess.forContainer(player.getInventory()), be, allowInteraction);
-
-				return foundItem;
-			}
-
-			foundItem = checkInventory(ItemAccess.forEntityEquipment(living), be, allowInteraction);
-
-			if (living instanceof AbstractChestedHorse horse)
-				foundItem |= checkInventory(ItemAccess.forContainer(horse.inventory), be, allowInteraction);
-
-			return foundItem;
+			if (!prohibitedItems.isEmpty())
+				checkInventory(player, connectedScanner, prohibitedItems, true);
 		}
-		else if (entity instanceof ContainerEntity containerEntity)
-			return checkInventory(ItemAccess.forContainer(containerEntity), be, allowInteraction);
-		else if (entity instanceof ItemEntity item)
-			return checkItemEntity(item, be, allowInteraction);
+		else if (entity instanceof ItemEntity item) {
+			List<ItemStack> prohibitedItems = connectedScanner.getAllProhibitedItems();
 
-		return false;
+			if (!prohibitedItems.isEmpty())
+				checkItemEntity(item, connectedScanner, prohibitedItems, true);
+		}
 	}
 
-	public static boolean checkInventory(ItemAccess inventoryAccess, InventoryScannerBlockEntity be, boolean allowInteraction) {
+	public static boolean checkInventory(Player player, InventoryScannerBlockEntity be, List<ItemStack> prohibitedItems, boolean allowInteraction) {
 		boolean hasSmartModule = be.isModuleEnabled(ModuleType.SMART);
 		boolean hasStorageModule = allowInteraction && be.isModuleEnabled(ModuleType.STORAGE);
 		boolean hasRedstoneModule = allowInteraction && be.isModuleEnabled(ModuleType.REDSTONE);
-		List<ItemStack> prohibitedItems = be.getAllProhibitedItems();
 
-		if (prohibitedItems.isEmpty() || (!hasRedstoneModule && !hasStorageModule && allowInteraction))
+		if ((!hasRedstoneModule && !hasStorageModule && allowInteraction) || (be.isOwnedBy(player) && be.ignoresOwner()))
 			return false;
 
-		for (ItemStack prohibitedStack : prohibitedItems) {
-			int removeInventoryItems = InventoryUtils.checkInventoryForItem(inventoryAccess, prohibitedStack, Integer.MAX_VALUE, hasSmartModule, hasStorageModule, stack -> addItemToStorage(stack, be), inventoryAccess::set);
+		Inventory inventory = player.getInventory();
+		boolean itemFound = false;
 
-			if (removeInventoryItems < Integer.MAX_VALUE) {
-				if (hasRedstoneModule)
-					updateInventoryScannerPower(be);
+		for (int i = 0; i < inventory.getContainerSize(); i++) {
+			ItemStack stackToCheck = inventory.getItem(i);
 
-				return true;
+			if (!stackToCheck.isEmpty()) {
+				for (ItemStack prohibitedItem : prohibitedItems) {
+					if (areItemsEqual(stackToCheck, prohibitedItem, hasSmartModule)) {
+						if (hasStorageModule) {
+							ItemStack remainder = be.addItemToStorage(stackToCheck);
+
+							if (!remainder.isEmpty())
+								Block.popResource(be.getLevel(), be.getBlockPos(), remainder.copy());
+
+							inventory.setItem(i, ItemStack.EMPTY);
+						}
+
+						if (hasRedstoneModule)
+							updateInventoryScannerPower(be);
+
+						itemFound = true;
+						break;
+					}
+					else if (checkForContainer(stackToCheck, prohibitedItem, be, hasSmartModule, hasStorageModule, hasRedstoneModule) || checkForBundle(stackToCheck, prohibitedItem, be, hasSmartModule, hasStorageModule, hasRedstoneModule)) {
+						itemFound = true;
+						break;
+					}
+				}
 			}
 		}
 
-		return false;
+		return itemFound;
 	}
 
-	public static boolean checkItemEntity(ItemEntity entity, InventoryScannerBlockEntity be, boolean allowInteraction) {
+	public static boolean checkItemEntity(ItemEntity entity, InventoryScannerBlockEntity be, List<ItemStack> prohibitedItems, boolean allowInteraction) {
 		boolean hasSmartModule = be.isModuleEnabled(ModuleType.SMART);
 		boolean hasStorageModule = allowInteraction && be.isModuleEnabled(ModuleType.STORAGE);
 		boolean hasRedstoneModule = allowInteraction && be.isModuleEnabled(ModuleType.REDSTONE);
-		List<ItemStack> prohibitedItems = be.getAllProhibitedItems();
 
-		if (prohibitedItems.isEmpty() || (!hasRedstoneModule && !hasStorageModule && allowInteraction))
+		if ((!hasRedstoneModule && !hasStorageModule && allowInteraction))
 			return false;
 
-		for (ItemStack prohibitedStack : prohibitedItems) {
-			int removeItems = InventoryUtils.checkItemsInInventorySlot(entity.getItem(), 0, prohibitedStack, Integer.MAX_VALUE, hasSmartModule, hasStorageModule, stack -> addItemToStorage(stack, be), (i, stack) -> {
-				if (stack.isEmpty())
+		for (ItemStack prohibitedItem : prohibitedItems) {
+			if (areItemsEqual(entity.getItem(), prohibitedItem, hasSmartModule)) {
+				if (hasStorageModule) {
+					ItemStack remainder = be.addItemToStorage(entity.getItem());
+
+					if (!remainder.isEmpty())
+						Block.popResource(be.getLevel(), be.getBlockPos(), remainder.copy());
+
 					entity.discard();
-			});
+				}
 
-			if (removeItems < Integer.MAX_VALUE) {
 				if (hasRedstoneModule)
 					updateInventoryScannerPower(be);
 
 				return true;
+			}
+			else if (checkForContainer(entity.getItem(), prohibitedItem, be, hasSmartModule, hasStorageModule, hasRedstoneModule) || checkForBundle(entity.getItem(), prohibitedItem, be, hasSmartModule, hasStorageModule, hasRedstoneModule))
+				return true;
+		}
+
+		return false;
+	}
+
+	private static boolean checkForContainer(ItemStack item, ItemStack stackToCheck, InventoryScannerBlockEntity be, boolean hasSmartModule, boolean hasStorageModule, boolean hasRedstoneModule) {
+		if (item != null && item.has(DataComponents.CONTAINER)) {
+			ItemContainerContents contents = item.get(DataComponents.CONTAINER);
+			NonNullList<ItemStack> list = NonNullList.withSize(contents.items.size(), ItemStack.EMPTY);
+
+			contents.copyInto(list);
+
+			for (int i = 0; i < list.size(); i++) {
+				ItemStack itemInChest = list.get(i);
+
+				if (areItemsEqual(itemInChest, stackToCheck, hasSmartModule)) {
+					if (hasStorageModule) {
+						ItemStack remainder = be.addItemToStorage(itemInChest);
+
+						if (!remainder.isEmpty())
+							Block.popResource(be.getLevel(), be.getBlockPos(), remainder.copy());
+
+						list.set(i, ItemStack.EMPTY);
+						item.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(list));
+					}
+
+					if (hasRedstoneModule)
+						updateInventoryScannerPower(be);
+
+					return true;
+				}
 			}
 		}
 
 		return false;
 	}
 
-	private static void addItemToStorage(ItemStack stack, InventoryScannerBlockEntity be) {
-		ItemStack remainder = InventoryUtils.addItemToStorage(be, 10, be.getContents().size() - 1, stack);
+	private static boolean checkForBundle(ItemStack item, ItemStack stackToCheck, InventoryScannerBlockEntity be, boolean hasSmartModule, boolean hasStorageModule, boolean hasRedstoneModule) {
+		if (item != null && item.has(DataComponents.BUNDLE_CONTENTS)) {
+			List<ItemStack> items = item.get(DataComponents.BUNDLE_CONTENTS).itemCopyStream().collect(Collectors.toList());
 
-		if (!remainder.isEmpty())
-			Block.popResource(be.getLevel(), be.getBlockPos(), remainder.copy());
+			for (int i = 0; i < items.size(); i++) {
+				ItemStack itemInChest = items.get(i);
+
+				if (areItemsEqual(itemInChest, stackToCheck, hasSmartModule)) {
+					if (hasStorageModule) {
+						ItemStack remainder = be.addItemToStorage(itemInChest);
+
+						if (!remainder.isEmpty())
+							Block.popResource(be.getLevel(), be.getBlockPos(), remainder.copy());
+
+						items.remove(i);
+						item.set(DataComponents.BUNDLE_CONTENTS, new BundleContents(items));
+					}
+
+					if (hasRedstoneModule)
+						updateInventoryScannerPower(be);
+
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	private static boolean areItemsEqual(ItemStack firstItemStack, ItemStack secondItemStack, boolean hasSmartModule) {
+		return (hasSmartModule && areItemStacksEqual(firstItemStack, secondItemStack) && ItemStack.isSameItemSameComponents(firstItemStack, secondItemStack)) || (!hasSmartModule && firstItemStack.getItem() == secondItemStack.getItem());
 	}
 
 	private static void updateInventoryScannerPower(InventoryScannerBlockEntity be) {
-		if (!be.isProvidingPower() || be.getSignalLength() == 0) {
-			InventoryScannerBlockEntity connectedScanner = InventoryScannerBlock.getConnectedInventoryScanner(be.getLevel(), be.getBlockPos());
+		InventoryScannerBlockEntity connectedScanner = InventoryScannerBlock.getConnectedInventoryScanner(be.getLevel(), be.getBlockPos());
 
-			if (connectedScanner == null)
-				return;
+		if (connectedScanner == null)
+			return;
 
-			be.togglePowerOutput();
-			connectedScanner.togglePowerOutput();
-		}
+		be.togglePowerOutput();
+		connectedScanner.togglePowerOutput();
 	}
 
 	/**

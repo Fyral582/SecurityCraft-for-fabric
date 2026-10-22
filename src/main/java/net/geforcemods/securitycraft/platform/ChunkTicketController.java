@@ -8,7 +8,7 @@ import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.TicketType;
@@ -22,18 +22,18 @@ import net.minecraft.world.level.Level;
  * of stale tickets is necessary when the level loads.
  */
 public class ChunkTicketController {
-	private final Identifier id;
+	private final ResourceLocation id;
 	private TicketType loadingTicket;
 	private TicketType tickingTicket;
 	private final Map<ResourceKey<Level>, Map<Long, Set<Object>>> forcedChunks = new HashMap<>();
 
-	public ChunkTicketController(Identifier id) {
+	public ChunkTicketController(ResourceLocation id) {
 		this.id = id;
 	}
 
 	public void register() {
-		loadingTicket = Registry.register(BuiltInRegistries.TICKET_TYPE, id, new TicketType(TicketType.NO_TIMEOUT, TicketType.FLAG_LOADING | TicketType.FLAG_KEEP_DIMENSION_ACTIVE));
-		tickingTicket = Registry.register(BuiltInRegistries.TICKET_TYPE, id.withSuffix("_ticking"), new TicketType(TicketType.NO_TIMEOUT, TicketType.FLAG_LOADING | TicketType.FLAG_SIMULATION | TicketType.FLAG_KEEP_DIMENSION_ACTIVE));
+		loadingTicket = Registry.register(BuiltInRegistries.TICKET_TYPE, id, new TicketType(TicketType.NO_TIMEOUT, false, TicketType.TicketUse.LOADING));
+		tickingTicket = Registry.register(BuiltInRegistries.TICKET_TYPE, id.withSuffix("_ticking"), new TicketType(TicketType.NO_TIMEOUT, false, TicketType.TicketUse.LOADING_AND_SIMULATION));
 	}
 
 	public boolean forceChunk(ServerLevel level, BlockPos owner, int chunkX, int chunkZ, boolean add, boolean ticking) {

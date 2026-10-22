@@ -19,6 +19,8 @@ import net.geforcemods.securitycraft.misc.TargetingMode;
 import net.geforcemods.securitycraft.util.ITickingBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -27,8 +29,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -126,21 +126,21 @@ public class IMSBlockEntity extends CustomizableBlockEntity implements ITickingB
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
-		super.saveAdditional(tag);
+	public void saveAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.saveAdditional(tag, lookupProvider);
 
 		tag.putInt("bombsRemaining", bombsRemaining);
 		tag.putBoolean("updateBombCount", updateBombCount);
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
+	public void loadAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.loadAdditional(tag, lookupProvider);
 
 		bombsRemaining = tag.getIntOr("bombsRemaining", 4);
 		updateBombCount = tag.getBooleanOr("updateBombCount", false);
 
-		if (tag.getInt("targetingOption").isPresent())
+		if (tag.contains("targetingOption"))
 			targetingMode.setValue(TargetingMode.values()[tag.getIntOr("targetingOption", 1)]);
 	}
 

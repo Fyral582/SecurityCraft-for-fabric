@@ -7,7 +7,6 @@ import com.mojang.blaze3d.platform.InputConstants;
 import net.geforcemods.securitycraft.SecurityCraft;
 import net.geforcemods.securitycraft.blockentities.SonicSecuritySystemBlockEntity;
 import net.geforcemods.securitycraft.components.Notes.NoteWrapper;
-import net.geforcemods.securitycraft.misc.StillValid;
 import net.geforcemods.securitycraft.network.server.SyncSSSSettingsOnServer;
 import net.geforcemods.securitycraft.screen.components.SSSConnectionList;
 import net.geforcemods.securitycraft.screen.components.SSSConnectionList.ConnectionAccessor;
@@ -18,21 +17,17 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.CommonColors;
-import net.minecraft.world.Container;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
 import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
-public class SonicSecuritySystemScreen extends Screen implements ConnectionAccessor, StillValid {
-	private static final Identifier TEXTURE = SecurityCraft.resLoc("textures/gui/container/sonic_security_system.png");
+public class SonicSecuritySystemScreen extends Screen implements ConnectionAccessor {
+	private static final ResourceLocation TEXTURE = SecurityCraft.resLoc("textures/gui/container/sonic_security_system.png");
 	private static final Component SOUND_TEXT = Utils.localize("gui.securitycraft:sonic_security_system.sound");
 	/** The number of ticks between each note when playing back a recording **/
 	private static final int PLAYBACK_DELAY = 10;
@@ -90,7 +85,7 @@ public class SonicSecuritySystemScreen extends Screen implements ConnectionAcces
 		boolean hasNotes = be.getNumberOfNotes() > 0;
 		int buttonX = leftPos + xSize - 155;
 
-		powerButton = addRenderableWidget(Button.builder(getPowerString(be.isActive()), button -> {
+		powerButton = addRenderableWidget(new Button(buttonX, height / 2 - 59, 150, 20, getPowerString(be.isActive()), button -> {
 			boolean toggledState = !be.isActive();
 			boolean containsNotes = be.getNumberOfNotes() > 0;
 
@@ -106,33 +101,33 @@ public class SonicSecuritySystemScreen extends Screen implements ConnectionAcces
 			soundButton.active = toggledState;
 			playButton.active = toggledState && containsNotes;
 			clearButton.active = toggledState && containsNotes;
-		}).pos(buttonX, height / 2 - 59).size(150, 20).build());
+		}, Button.DEFAULT_NARRATION));
 
-		recordingButton = addRenderableWidget(Button.builder(getRecordingString(be.isRecording()), button -> {
+		recordingButton = addRenderableWidget(new Button(buttonX, height / 2 - 37, 150, 20, getRecordingString(be.isRecording()), button -> {
 			boolean recording = !be.isRecording();
 			be.setRecording(recording);
 			ClientPacketDistributor.sendToServer(new SyncSSSSettingsOnServer(be.getBlockPos(), recording ? SyncSSSSettingsOnServer.DataType.RECORDING_ON : SyncSSSSettingsOnServer.DataType.RECORDING_OFF));
 			recordingButton.setMessage(getRecordingString(be.isRecording()));
-		}).pos(buttonX, height / 2 - 37).size(150, 20).build());
+		}, Button.DEFAULT_NARRATION));
 
-		playButton = addRenderableWidget(Button.builder(Utils.localize("gui.securitycraft:sonic_security_system.recording.play"), button -> {
+		playButton = addRenderableWidget(new Button(buttonX, height / 2 - 15, 150, 20, Utils.localize("gui.securitycraft:sonic_security_system.recording.play"), button -> {
 			// Start playing back any notes that have been recorded
 			if (be.getNumberOfNotes() > 0)
 				playback = true;
-		}).pos(buttonX, height / 2 - 15).size(150, 20).build());
+		}, Button.DEFAULT_NARRATION));
 
-		clearButton = addRenderableWidget(Button.builder(Utils.localize("gui.securitycraft:sonic_security_system.recording.clear"), button -> {
+		clearButton = addRenderableWidget(new Button(buttonX, height / 2 + 7, 150, 20, Utils.localize("gui.securitycraft:sonic_security_system.recording.clear"), button -> {
 			be.clearNotes();
 			ClientPacketDistributor.sendToServer(new SyncSSSSettingsOnServer(be.getBlockPos(), SyncSSSSettingsOnServer.DataType.CLEAR_NOTES));
 			playButton.active = false;
 			clearButton.active = false;
-		}).pos(buttonX, height / 2 + 7).size(150, 20).build());
+		}, Button.DEFAULT_NARRATION));
 
-		invertButton = addRenderableWidget(Button.builder(Utils.localize("gui.securitycraft:sonic_security_system.invert_functionality"), button -> {
+		invertButton = addRenderableWidget(new Button(buttonX, height / 2 + 29, 150, 20, Utils.localize("gui.securitycraft:sonic_security_system.invert_functionality"), button -> {
 			be.setDisableBlocksWhenTuneIsPlayed(!be.disablesBlocksWhenTuneIsPlayed());
 			updateInvertButtonTooltip();
 			ClientPacketDistributor.sendToServer(new SyncSSSSettingsOnServer(be.getBlockPos(), SyncSSSSettingsOnServer.DataType.INVERT_FUNCTIONALITY));
-		}).pos(buttonX, height / 2 + 29).size(150, 20).build());
+		}, Button.DEFAULT_NARRATION));
 		updateInvertButtonTooltip();
 		//@formatter:off
 		soundButton = addRenderableWidget(new TogglePictureButton(buttonX + 130, height / 2 + 52, 20, 20, 2, 16, 16, 2, button -> {
@@ -159,24 +154,24 @@ public class SonicSecuritySystemScreen extends Screen implements ConnectionAcces
 		int soundTextLength = font.width(SOUND_TEXT);
 
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
-		guiGraphics.drawString(font, title, leftPos + xSize / 2 - textWidth / 2, topPos + 6, CommonColors.DARK_GRAY, false);
-		guiGraphics.drawString(font, SOUND_TEXT, soundButton.getX() - soundTextLength - 5, topPos + 141, CommonColors.DARK_GRAY, false);
+		guiGraphics.drawString(font, title, leftPos + xSize / 2 - textWidth / 2, topPos + 6, 4210752, false);
+		guiGraphics.drawString(font, SOUND_TEXT, soundButton.getX() - soundTextLength - 5, topPos + 141, 4210752, false);
 	}
 
 	@Override
 	public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
 		renderTransparentBackground(guiGraphics);
-		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, leftPos, topPos, 0.0F, 0.0F, xSize, ySize, 512, 512);
+		guiGraphics.blit(RenderType::guiTextured, TEXTURE, leftPos, topPos, 0.0F, 0.0F, xSize, ySize, 512, 512);
 	}
 
 	@Override
-	public boolean keyPressed(KeyEvent event) {
-		if (minecraft.options.keyInventory.isActiveAndMatches(InputConstants.getKey(event))) {
+	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+		if (minecraft.options.keyInventory.isActiveAndMatches(InputConstants.getKey(keyCode, scanCode))) {
 			onClose();
 			return true;
 		}
 
-		return super.keyPressed(event);
+		return super.keyPressed(keyCode, scanCode, modifiers);
 	}
 
 	@Override
@@ -209,10 +204,5 @@ public class SonicSecuritySystemScreen extends Screen implements ConnectionAcces
 
 	private void updateInvertButtonTooltip() {
 		invertButton.setTooltip(Tooltip.create(Utils.localize("gui.securitycraft:sonic_security_system.invert.tooltip_" + (be.disablesBlocksWhenTuneIsPlayed() ? "inverted" : "default"))));
-	}
-
-	@Override
-	public boolean stillValid(Player player) {
-		return Container.stillValidBlockEntity(be, player);
 	}
 }

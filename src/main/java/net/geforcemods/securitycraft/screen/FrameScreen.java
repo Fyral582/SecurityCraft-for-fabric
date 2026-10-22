@@ -5,8 +5,6 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.Container;
-import net.minecraft.world.entity.player.Player;
 
 public class FrameScreen extends CameraSelectScreen {
 	private final FrameBlockEntity be;
@@ -20,7 +18,7 @@ public class FrameScreen extends CameraSelectScreen {
 	public void init() {
 		super.init();
 
-		Button stopViewingButton = addRenderableWidget(Button.builder(Component.literal("x"), b -> viewCamera(null)).pos(width / 2 - 55, height / 2 + 57).size(20, 20).build());
+		Button stopViewingButton = addRenderableWidget(new Button(width / 2 - 55, height / 2 + 57, 20, 20, Component.literal("x"), b -> viewCamera(null), Button.DEFAULT_NARRATION));
 
 		if (be.getCurrentCamera() == null)
 			stopViewingButton.active = false;
@@ -38,10 +36,5 @@ public class FrameScreen extends CameraSelectScreen {
 	protected void unbindCamera(GlobalPos cameraPos) {
 		if (!readOnly)
 			be.removeCameraOnClient(cameraPos);
-	}
-
-	@Override
-	public boolean stillValid(Player player) {
-		return Container.stillValidBlockEntity(be, player);
 	}
 }

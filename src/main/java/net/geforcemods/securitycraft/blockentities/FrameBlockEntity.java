@@ -22,16 +22,16 @@ import net.geforcemods.securitycraft.util.Utils;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueInput.TypedInputList;
-import net.minecraft.world.level.storage.ValueOutput;
-import net.minecraft.world.level.storage.ValueOutput.TypedOutputList;
 import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
 public class FrameBlockEntity extends CustomizableBlockEntity implements ITickingBlockEntity {
@@ -53,9 +53,9 @@ public class FrameBlockEntity extends CustomizableBlockEntity implements ITickin
 		if (activatedByRedstone) {
 			boolean wasPowered = state.getValue(FrameBlock.POWERED);
 
-			if (level.isClientSide() && !wasPowered && clientInteracted)
+			if (level.isClientSide && !wasPowered && clientInteracted)
 				switchCameraOnClient(currentCameraPosition, true);
-			else if (!level.isClientSide()) {
+			else if (!level.isClientSide) {
 				boolean hasNeighborSignal = level.hasNeighborSignal(pos);
 
 				if (wasPowered && !hasNeighborSignal)
@@ -69,7 +69,7 @@ public class FrameBlockEntity extends CustomizableBlockEntity implements ITickin
 		if (switchCamera) { //Relevant on server and client: Server uses this to set up the play icon on world load, client uses this to update the frame when a remote client changes the feed
 			switchCamera = false;
 
-			if (!level.isClientSide())
+			if (!level.isClientSide)
 				disableCameraFeedOnServer(newCameraPosition);
 			else
 				switchCameraOnClient(newCameraPosition, true);
@@ -81,7 +81,7 @@ public class FrameBlockEntity extends CustomizableBlockEntity implements ITickin
 		super.setRemoved();
 
 		if (currentCameraPosition != null) { //This is being called on multiple occasions: Block break (server + client), clientside unload (client), world leave (server)
-			if (!level.isClientSide()) {//Serverside + block break: This method is also called for client; Serverside + world leave: Server does nothing, so chunks don't get loaded again, and client has special handling on world leave
+			if (!level.isClientSide) {//Serverside + block break: This method is also called for client; Serverside + world leave: Server does nothing, so chunks don't get loaded again, and client has special handling on world leave
 				if (level.isLoaded(worldPosition))
 					disableCameraFeedOnServer(currentCameraPosition);
 			}
@@ -93,20 +93,25 @@ public class FrameBlockEntity extends CustomizableBlockEntity implements ITickin
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
+	public void loadAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.loadAdditional(tag, lookupProvider);
 
-		TypedInputList<NamedPositions.Entry> cameras = tag.listOrEmpty("cameras", NamedPositions.Entry.CODEC.orElse(NamedPositions.Entry.EMPTY));
+		ListTag cameras = tag.getListOrEmpty("cameras");
 
 		cameraPositions.clear();
-		cameras.forEach(entry -> {
-			if (entry.equals(NamedPositions.Entry.EMPTY))
-				cameraPositions.add(null);
-			else
-				cameraPositions.add(entry);
-		});
 
-		GlobalPos newCameraPos = tag.read("current_camera", GlobalPos.CODEC).orElse(null);
+		for (int i = 0; i < cameras.size(); i++) {
+			CompoundTag cameraTag = cameras.getCompoundOrEmpty(i);
+
+			cameraPositions.add(cameraTag.isEmpty() ? null : NamedPositions.Entry.CODEC.parse(NbtOps.INSTANCE, cameraTag).getOrThrow());
+		}
+
+		GlobalPos newCameraPos;
+
+		if (tag.contains("current_camera"))
+			newCameraPos = GlobalPos.CODEC.parse(NbtOps.INSTANCE, tag.get("current_camera")).getOrThrow();
+		else
+			newCameraPos = null;
 
 		if ((currentCameraPosition == null && newCameraPos != null) || (currentCameraPosition != null && !currentCameraPosition.equals(newCameraPos))) {
 			switchCamera = true;
@@ -117,20 +122,19 @@ public class FrameBlockEntity extends CustomizableBlockEntity implements ITickin
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
-		super.saveAdditional(tag);
+	public void saveAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.saveAdditional(tag, lookupProvider);
 
-		TypedOutputList<NamedPositions.Entry> cameras = tag.list("cameras", NamedPositions.Entry.CODEC.orElse(NamedPositions.Entry.EMPTY));
+		ListTag camerasTag = new ListTag();
 
-		cameraPositions.forEach(entry -> {
-			if (entry == null)
-				cameras.add(NamedPositions.Entry.EMPTY);
-			else
-				cameras.add(entry);
-		});
+		for (NamedPositions.Entry camera : cameraPositions) {
+			camerasTag.add(camera == null ? new CompoundTag() : NamedPositions.Entry.CODEC.encodeStart(NbtOps.INSTANCE, camera).getOrThrow());
+		}
+
+		tag.put("cameras", camerasTag);
 
 		if (currentCameraPosition != null)
-			tag.store("current_camera", GlobalPos.CODEC, currentCameraPosition);
+			tag.put("current_camera", GlobalPos.CODEC.encodeStart(NbtOps.INSTANCE, currentCameraPosition).getOrThrow());
 	}
 
 	public boolean applyCameraPositions(ItemStack cameraMonitor) {
@@ -194,7 +198,7 @@ public class FrameBlockEntity extends CustomizableBlockEntity implements ITickin
 	}
 
 	public void switchCameraOnServer(GlobalPos newCameraPos, Player player, int requestedRenderDistance, boolean disableNewCamera) {
-		if (!level.isClientSide()) { //Note: This method will update nearby clients, through the updated NBT that is sent to clients
+		if (!level.isClientSide) { //Note: This method will update nearby clients, through the updated NBT that is sent to clients
 			GlobalPos previousCameraPos = getCurrentCamera();
 
 			setCurrentCamera(newCameraPos);
@@ -213,7 +217,7 @@ public class FrameBlockEntity extends CustomizableBlockEntity implements ITickin
 					if (redstoneSignalDisabled())
 						PlayerUtils.sendMessageToPlayer(player, Utils.localize(SCContent.FRAME.get().getDescriptionId()), Utils.localize("messages.securitycraft:frame.noRedstoneSignal", newCameraPos.pos()), ChatFormatting.RED);
 					else
-						newCamera.linkFrameForPlayer(serverPlayer, worldPosition, Mth.clamp(requestedRenderDistance, 2, Math.min(getChunkLoadingDistanceOption(), Math.min(ConfigHandler.SERVER.frameFeedViewDistance.get(), serverPlayer.level().getServer().getPlayerList().getViewDistance()))));
+						newCamera.linkFrameForPlayer(serverPlayer, worldPosition, Mth.clamp(requestedRenderDistance, 2, Math.min(getChunkLoadingDistanceOption(), Math.min(ConfigHandler.SERVER.frameFeedViewDistance.get(), serverPlayer.server.getPlayerList().getViewDistance()))));
 				}
 			}
 
@@ -223,7 +227,7 @@ public class FrameBlockEntity extends CustomizableBlockEntity implements ITickin
 	}
 
 	public void switchCameraOnClient(GlobalPos newCameraPos, boolean disableNewCamera) {
-		if (level.isClientSide()) {
+		if (level.isClientSide) {
 			GlobalPos previousCameraPos = getCurrentCamera();
 
 			setCurrentCamera(newCameraPos);
@@ -274,7 +278,7 @@ public class FrameBlockEntity extends CustomizableBlockEntity implements ITickin
 
 	@Override
 	public <T> void onOptionChanged(Option<T> option) {
-		if (!level.isClientSide() && ((option.getName().equals(disabled.getName()) && disabled.get()) || option.getName().equals(chunkLoadingDistance.getName())))
+		if (!level.isClientSide && ((option.getName().equals(disabled.getName()) && disabled.get()) || option.getName().equals(chunkLoadingDistance.getName())))
 			unsetCurrentCameraOnServer();
 	}
 
@@ -293,7 +297,7 @@ public class FrameBlockEntity extends CustomizableBlockEntity implements ITickin
 	public void onModuleRemoved(ItemStack stack, ModuleType module, boolean toggled) {
 		super.onModuleRemoved(stack, module, toggled);
 
-		if (module == ModuleType.ALLOWLIST && !level.isClientSide())
+		if (module == ModuleType.ALLOWLIST && !level.isClientSide)
 			unsetCurrentCameraOnServer(); //Disable the frame feed for all players, because serverside frames don't know which players are currently viewing them. Clients are updated automatically
 		else if (module == ModuleType.REDSTONE) {
 			activatedByRedstone = false;

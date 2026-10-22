@@ -14,21 +14,21 @@ import net.geforcemods.securitycraft.blockentities.ReinforcedChiseledBookshelfBl
 import net.geforcemods.securitycraft.blockentities.ReinforcedDispenserBlockEntity;
 import net.geforcemods.securitycraft.blockentities.ReinforcedDropperBlockEntity;
 import net.geforcemods.securitycraft.blockentities.ReinforcedHopperBlockEntity;
-import net.geforcemods.securitycraft.blockentities.ReinforcedShelfBlockEntity;
-import net.geforcemods.securitycraft.blockentities.SecureTradingStationBlockEntity;
 import net.geforcemods.securitycraft.blockentities.SecurityCameraBlockEntity;
 import net.geforcemods.securitycraft.blockentities.TrophySystemBlockEntity;
 import net.geforcemods.securitycraft.entity.AbstractSecuritySeaBoat;
 import net.geforcemods.securitycraft.misc.SCSounds;
+import net.geforcemods.securitycraft.network.client.BlockPocketManagerFailedActivation;
 import net.geforcemods.securitycraft.network.client.InteractWithFrame;
 import net.geforcemods.securitycraft.network.client.OpenScreen;
+import net.geforcemods.securitycraft.network.client.PlayAlarmSound;
 import net.geforcemods.securitycraft.network.client.RefreshDisguisableModel;
 import net.geforcemods.securitycraft.network.client.SendManualPages;
 import net.geforcemods.securitycraft.network.client.SetCameraView;
 import net.geforcemods.securitycraft.network.client.SetTrophySystemTarget;
-import net.geforcemods.securitycraft.network.client.ToggleAlarmSound;
 import net.geforcemods.securitycraft.network.client.UpdateLaserColors;
 import net.geforcemods.securitycraft.network.client.UpdateLogger;
+import net.geforcemods.securitycraft.network.server.AssembleBlockPocket;
 import net.geforcemods.securitycraft.network.server.CheckBriefcasePasscode;
 import net.geforcemods.securitycraft.network.server.CheckPasscode;
 import net.geforcemods.securitycraft.network.server.ClearChangeDetectorServer;
@@ -40,7 +40,6 @@ import net.geforcemods.securitycraft.network.server.RemoveCameraTag;
 import net.geforcemods.securitycraft.network.server.RemoveMineFromMRAT;
 import net.geforcemods.securitycraft.network.server.RemovePositionFromSSS;
 import net.geforcemods.securitycraft.network.server.RemoveSentryFromSRAT;
-import net.geforcemods.securitycraft.network.server.RequestSecureTradingStationTransactions;
 import net.geforcemods.securitycraft.network.server.SetBriefcasePasscodeAndOwner;
 import net.geforcemods.securitycraft.network.server.SetCameraPowered;
 import net.geforcemods.securitycraft.network.server.SetDefaultCameraViewingDirection;
@@ -78,7 +77,6 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTab.TabVisibility;
@@ -137,7 +135,7 @@ public class RegistrationHandler {
 						SCItemGroup group = field.getAnnotation(Reinforced.class).itemGroup();
 						DeferredBlock<Block> deferredBlock = (DeferredBlock<Block>) field.get(null);
 						Block block = deferredBlock.get();
-						Item blockItem = new BlockItem(block, SCContent.setId(deferredBlock.getKey().identifier().getPath(), new Item.Properties().fireResistant(), true));
+						Item blockItem = new BlockItem(block, SCContent.setId(deferredBlock.getKey().location().getPath(), new Item.Properties().fireResistant(), true));
 
 						Registry.register(BuiltInRegistries.ITEM, Utils.getRegistryName(block), blockItem);
 
@@ -148,7 +146,7 @@ public class RegistrationHandler {
 						SCItemGroup group = field.getAnnotation(RegisterItemBlock.class).value();
 						DeferredBlock<Block> deferredBlock = (DeferredBlock<Block>) field.get(null);
 						Block block = deferredBlock.get();
-						Item blockItem = new BlockItem(block, SCContent.setId(deferredBlock.getKey().identifier().getPath(), new Item.Properties(), true));
+						Item blockItem = new BlockItem(block, SCContent.setId(deferredBlock.getKey().location().getPath(), new Item.Properties(), true));
 
 						Registry.register(BuiltInRegistries.ITEM, Utils.getRegistryName(block), blockItem);
 
@@ -173,7 +171,6 @@ public class RegistrationHandler {
 
 	public static void init() {
 		FabricDefaultAttributeRegistry.register(SCContent.SENTRY_ENTITY.get(), Mob.createMobAttributes());
-		onExtendPoiTypes();
 		onRegisterPayloadHandlers();
 		onRegisterCapabilities();
 
@@ -184,40 +181,24 @@ public class RegistrationHandler {
 		registerBrewingRecipes();
 	}
 
-	private static void onExtendPoiTypes() {
-		addBlockToPoi(PoiTypes.LIGHTNING_ROD, SCContent.REINFORCED_LIGHTNING_ROD.get());
-		addBlockToPoi(PoiTypes.LIGHTNING_ROD, SCContent.REINFORCED_EXPOSED_LIGHTNING_ROD.get());
-		addBlockToPoi(PoiTypes.LIGHTNING_ROD, SCContent.REINFORCED_WEATHERED_LIGHTNING_ROD.get());
-		addBlockToPoi(PoiTypes.LIGHTNING_ROD, SCContent.REINFORCED_OXIDIZED_LIGHTNING_ROD.get());
-	}
 
-	@SuppressWarnings("unchecked")
-	private static void addBlockToPoi(ResourceKey<PoiType> poiKey, Block block) {
-		Holder<PoiType> poi = BuiltInRegistries.POINT_OF_INTEREST_TYPE.getOrThrow(poiKey);
-		Set<BlockState> states = new HashSet<>(poi.value().matchingStates);
-
-		for (BlockState state : block.getStateDefinition().getPossibleStates()) {
-			states.add(state);
-			((java.util.Map<BlockState, Holder<PoiType>>) PoiTypes.TYPE_BY_STATE).put(state, poi);
-		}
-
-		poi.value().matchingStates = Set.copyOf(states);
-	}
 
 	private static void onRegisterPayloadHandlers() {
 		Registrar registrar = new Registrar();
 
 		registrar.playToClient(MenuDataPayload.TYPE, MenuDataPayload.STREAM_CODEC);
 
+		registrar.playToClient(BlockPocketManagerFailedActivation.TYPE, BlockPocketManagerFailedActivation.STREAM_CODEC);
 		registrar.playToClient(InteractWithFrame.TYPE, InteractWithFrame.STREAM_CODEC);
 		registrar.playToClient(OpenScreen.TYPE, OpenScreen.STREAM_CODEC);
+		registrar.playToClient(PlayAlarmSound.TYPE, PlayAlarmSound.STREAM_CODEC);
 		registrar.playToClient(RefreshDisguisableModel.TYPE, RefreshDisguisableModel.STREAM_CODEC);
 		registrar.playToClient(SendManualPages.TYPE, SendManualPages.STREAM_CODEC);
 		registrar.playToClient(SetCameraView.TYPE, SetCameraView.STREAM_CODEC);
 		registrar.playToClient(SetTrophySystemTarget.TYPE, SetTrophySystemTarget.STREAM_CODEC);
-		registrar.playToClient(ToggleAlarmSound.TYPE, ToggleAlarmSound.STREAM_CODEC);
 		registrar.playToClient(UpdateLaserColors.TYPE, UpdateLaserColors.STREAM_CODEC);
 		registrar.playToClient(UpdateLogger.TYPE, UpdateLogger.STREAM_CODEC);
+		registrar.playToServer(AssembleBlockPocket.TYPE, AssembleBlockPocket.STREAM_CODEC, AssembleBlockPocket::handle);
 		registrar.playToServer(CheckBriefcasePasscode.TYPE, CheckBriefcasePasscode.STREAM_CODEC, CheckBriefcasePasscode::handle);
 		registrar.playToServer(CheckPasscode.TYPE, CheckPasscode.STREAM_CODEC, CheckPasscode::handle);
 		registrar.playToServer(ClearChangeDetectorServer.TYPE, ClearChangeDetectorServer.STREAM_CODEC, ClearChangeDetectorServer::handle);
@@ -229,7 +210,6 @@ public class RegistrationHandler {
 		registrar.playToServer(RemoveMineFromMRAT.TYPE, RemoveMineFromMRAT.STREAM_CODEC, RemoveMineFromMRAT::handle);
 		registrar.playToServer(RemovePositionFromSSS.TYPE, RemovePositionFromSSS.STREAM_CODEC, RemovePositionFromSSS::handle);
 		registrar.playToServer(RemoveSentryFromSRAT.TYPE, RemoveSentryFromSRAT.STREAM_CODEC, RemoveSentryFromSRAT::handle);
-		registrar.playToServer(RequestSecureTradingStationTransactions.TYPE, RequestSecureTradingStationTransactions.STREAM_CODEC, RequestSecureTradingStationTransactions::handle);
 		registrar.playToServer(SetBriefcasePasscodeAndOwner.TYPE, SetBriefcasePasscodeAndOwner.STREAM_CODEC, SetBriefcasePasscodeAndOwner::handle);
 		registrar.playToServer(SetCameraPowered.TYPE, SetCameraPowered.STREAM_CODEC, SetCameraPowered::handle);
 		registrar.playToServer(SetDefaultCameraViewingDirection.TYPE, SetDefaultCameraViewingDirection.STREAM_CODEC, SetDefaultCameraViewingDirection::handle);
@@ -289,10 +269,8 @@ public class RegistrationHandler {
 		registerItemStorage(TrophySystemBlockEntity::getCapability, SCContent.TROPHY_SYSTEM_BLOCK_ENTITY.get());
 		registerItemStorage(ReinforcedChiseledBookshelfBlockEntity::getCapability, SCContent.REINFORCED_CHISELED_BOOKSHELF_BLOCK_ENTITY.get());
 		registerItemStorage(ReinforcedDispenserBlockEntity::getCapability, SCContent.REINFORCED_DISPENSER_BLOCK_ENTITY.get());
-		registerItemStorage(ReinforcedShelfBlockEntity::getCapability, SCContent.REINFORCED_SHELF_BLOCK_ENTITY.get());
 		registerItemStorage(ReinforcedDropperBlockEntity::getCapability, SCContent.REINFORCED_DROPPER_BLOCK_ENTITY.get());
 		registerItemStorage(SecurityCameraBlockEntity::getCapability, SCContent.SECURITY_CAMERA_BLOCK_ENTITY.get());
-		registerItemStorage(SecureTradingStationBlockEntity::getCapability, SCContent.SECURE_TRADING_STATION_BLOCK_ENTITY.get());
 		ItemStorage.SIDED.registerForBlocks((level, pos, state, be, dir) -> {
 			BlockEntityApiProvider<Storage<ItemVariant>, Direction> provider = be == null ? null : ITEM_STORAGE_PROVIDERS.get(be.getType());
 

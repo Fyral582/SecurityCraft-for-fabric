@@ -30,14 +30,12 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.input.InputWithModifiers;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.Rect2i;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
-import net.minecraft.util.CommonColors;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerListener;
@@ -48,7 +46,7 @@ import net.geforcemods.securitycraft.platform.gui.ScrollPanel;
 import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
 public class BlockChangeDetectorScreen extends AbstractContainerScreen<BlockChangeDetectorMenu> implements ContainerListener, IHasExtraAreas {
-	private static final Identifier TEXTURE = SecurityCraft.resLoc("textures/gui/container/block_change_detector.png");
+	private static final ResourceLocation TEXTURE = SecurityCraft.resLoc("textures/gui/container/block_change_detector.png");
 	private BlockChangeDetectorBlockEntity be;
 	private ChangeEntryList changeEntryList;
 	private TextHoverChecker smartModuleHoverChecker;
@@ -93,7 +91,13 @@ public class BlockChangeDetectorScreen extends AbstractContainerScreen<BlockChan
 		}));
 		showAllCheckbox = addRenderableWidget(new CallbackCheckbox(settingsX, topPos + 65, 20, 20, Component.empty(), false, isSelected -> changeEntryList.updateFilteredEntries(), 0));
 		highlightInWorldCheckbox = addRenderableWidget(new CallbackCheckbox(settingsX, topPos + 90, 20, 20, Component.empty(), be.isShowingHighlights(), be::showHighlights, 0));
-		colorChooser = new ColorChooser(Component.empty(), settingsX, topPos + 135, previousColor, be::setColor);
+		colorChooser = addRenderableWidget(new ColorChooser(Component.empty(), settingsX, topPos + 135, previousColor) {
+			@Override
+			public void onColorChange() {
+				be.setColor(getRGBColor());
+			}
+		});
+		colorChooser.init(minecraft, width, height);
 		colorChooserButton = addRenderableWidget(new ColorChooserButton(settingsX, topPos + 115, 20, 20, colorChooser));
 
 		clearButton.setTooltip(Tooltip.create(Utils.localize("gui.securitycraft:editModule.clear")));
@@ -132,7 +136,7 @@ public class BlockChangeDetectorScreen extends AbstractContainerScreen<BlockChan
 
 	@Override
 	protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-		guiGraphics.drawString(font, title, imageWidth / 2 - font.width(title) / 2, 6, CommonColors.DARK_GRAY, false);
+		guiGraphics.drawString(font, title, imageWidth / 2 - font.width(title) / 2, 6, 0x404040, false);
 	}
 
 	@Override
@@ -140,18 +144,21 @@ public class BlockChangeDetectorScreen extends AbstractContainerScreen<BlockChan
 		super.render(guiGraphics, mouseX, mouseY, partialTick);
 
 		if (smartModuleHoverChecker != null && smartModuleHoverChecker.checkHover(mouseX, mouseY) && !be.isModuleEnabled(ModuleType.SMART))
-			guiGraphics.setComponentTooltipForNextFrame(font, smartModuleHoverChecker.getLines(), mouseX, mouseY);
+			guiGraphics.renderComponentTooltip(font, smartModuleHoverChecker.getLines(), mouseX, mouseY);
 
 		renderTooltip(guiGraphics, mouseX, mouseY);
 	}
 
 	@Override
 	protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
-		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
+		guiGraphics.blit(RenderType::guiTextured, TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
 	}
 
 	@Override
 	protected void containerTick() {
+		if (colorChooser != null)
+			colorChooser.tick();
+
 		if (changeEntryList != null)
 			changeEntryList.tick();
 	}
@@ -165,29 +172,55 @@ public class BlockChangeDetectorScreen extends AbstractContainerScreen<BlockChan
 	}
 
 	@Override
-	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+	public boolean mouseClicked(double mouseX, double mouseY, int button) {
 		if (minecraft.player.isSpectator())
 			return false;
 		else if (changeEntryList != null)
-			changeEntryList.mouseClicked(event, doubleClick);
+			changeEntryList.mouseClicked(mouseX, mouseY, button);
 
-		return super.mouseClicked(event, doubleClick);
+		return super.mouseClicked(mouseX, mouseY, button);
 	}
 
 	@Override
-	public boolean mouseReleased(MouseButtonEvent event) {
+	public boolean mouseReleased(double mouseX, double mouseY, int button) {
 		if (changeEntryList != null)
-			changeEntryList.mouseReleased(event);
+			changeEntryList.mouseReleased(mouseX, mouseY, button);
 
-		return super.mouseReleased(event);
+		if (colorChooser != null)
+			colorChooser.mouseReleased(mouseX, mouseY, button);
+
+		return super.mouseReleased(mouseX, mouseY, button);
 	}
 
 	@Override
-	public boolean mouseDragged(MouseButtonEvent event, double deltaX, double deltaY) {
+	public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
 		if (changeEntryList != null)
-			changeEntryList.mouseDragged(event, deltaX, deltaY);
+			changeEntryList.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
 
-		return super.mouseDragged(event, deltaX, deltaY);
+		if (colorChooser != null)
+			colorChooser.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+
+		return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+	}
+
+	@Override
+	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+		if (colorChooser != null) {
+			colorChooser.keyPressed(keyCode, scanCode, modifiers);
+
+			if (!colorChooser.getRgbHexBox().isFocused())
+				return super.keyPressed(keyCode, scanCode, modifiers);
+		}
+
+		return true;
+	}
+
+	@Override
+	public boolean charTyped(char codePoint, int modifiers) {
+		if (colorChooser != null && colorChooser.charTyped(codePoint, modifiers))
+			return true;
+
+		return super.charTyped(codePoint, modifiers);
 	}
 
 	@Override
@@ -348,21 +381,19 @@ public class BlockChangeDetectorScreen extends AbstractContainerScreen<BlockChan
 		}
 
 		@Override
-		public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-			double mouseY = event.y();
-
+		public boolean mouseClicked(double mouseX, double mouseY, int button) {
 			if (mouseY < top || mouseY > bottom)
 				return false;
 
-			return super.mouseClicked(event, doubleClick);
+			return super.mouseClicked(mouseX, mouseY, button);
 		}
 
 		@Override
-		public boolean mouseDragged(MouseButtonEvent event, double deltaX, double deltaY) {
+		public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
 			if (getContentHeight() < height)
 				return false;
 
-			return super.mouseDragged(event, deltaX, deltaY);
+			return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
 		}
 
 		@Override
@@ -382,7 +413,7 @@ public class BlockChangeDetectorScreen extends AbstractContainerScreen<BlockChan
 		public void updateNarration(NarrationElementOutput narrationElementOutput) {}
 	}
 
-	class ModeButton extends Button.Plain implements IToggleableButton {
+	class ModeButton extends Button implements IToggleableButton {
 		private final ItemStack ironPickaxe = new ItemStack(Items.IRON_PICKAXE);
 		private final ItemStack grassBlock = new ItemStack(Blocks.GRASS_BLOCK);
 		private final int toggleCount;
@@ -395,27 +426,27 @@ public class BlockChangeDetectorScreen extends AbstractContainerScreen<BlockChan
 		}
 
 		@Override
-		public void renderContents(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-			super.renderContents(guiGraphics, mouseX, mouseY, partialTick);
+		public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+			super.renderWidget(guiGraphics, mouseX, mouseY, partialTick);
 
 			if (currentIndex == DetectionMode.BREAK.ordinal())
 				guiGraphics.renderItem(ironPickaxe, getX() + 2, getY() + 2);
 			else if (currentIndex == DetectionMode.PLACE.ordinal())
 				guiGraphics.renderItem(grassBlock, getX() + 2, getY() + 2);
 			else if (currentIndex == DetectionMode.BOTH.ordinal()) {
-				guiGraphics.renderItem(grassBlock, getX() + 2, getY() + 2);
+				guiGraphics.renderItem(grassBlock, getX() + 2, getY() + 2, 0, -100);
 				guiGraphics.renderItem(ironPickaxe, getX() + 2, getY() + 2);
 			}
 		}
 
 		@Override
-		public void onPress(InputWithModifiers input) {
-			if (Minecraft.getInstance().hasShiftDown())
+		public void onClick(double mouseX, double mouseY) {
+			if (Screen.hasShiftDown())
 				setCurrentIndex(currentIndex - 1);
 			else
 				setCurrentIndex(currentIndex + 1);
 
-			super.onPress(input);
+			super.onClick(mouseX, mouseY);
 		}
 
 		@Override

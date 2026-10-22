@@ -18,7 +18,7 @@ import net.minecraft.client.renderer.GameRenderer;
  */
 @Mixin(GameRenderer.class)
 public class ScreenLayersGameRendererMixin {
-	@WrapOperation(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/Screen;renderWithTooltipAndSubtitles(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"))
+	@WrapOperation(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/Screen;renderWithTooltip(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"))
 	private void securitycraft$renderLayers(Screen screen, GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick, Operation<Void> original) {
 		ScreenLayers.renderLayers(guiGraphics, partialTick);
 		original.call(screen, guiGraphics, mouseX, mouseY, partialTick);

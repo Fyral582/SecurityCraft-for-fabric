@@ -7,14 +7,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.joml.Vector3f;
+import org.joml.Vector4f;
+
 import com.google.common.util.concurrent.AtomicDouble;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 
 import net.geforcemods.securitycraft.ConfigHandler;
 import net.geforcemods.securitycraft.blockentities.FrameBlockEntity;
-import net.minecraft.client.renderer.chunk.CompiledSectionMesh;
-import net.minecraft.client.renderer.chunk.SectionMesh;
+import net.minecraft.client.renderer.chunk.SectionRenderDispatcher.CompiledSection;
 import net.minecraft.client.renderer.chunk.SectionRenderDispatcher.RenderSection;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.core.BlockPos;
@@ -22,7 +24,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.server.level.ChunkTrackingView;
-import net.minecraft.world.attribute.EnvironmentAttributeProbe;
 import net.minecraft.world.phys.AABB;
 
 public class CameraFeed {
@@ -32,11 +33,9 @@ public class CameraFeed {
 	private final Set<Long> sectionsInRangePositions = new HashSet<>();
 	private final List<RenderSection> visibleSections = new ArrayList<>();
 	private final List<RenderSection> compilingSectionsQueue = new ArrayList<>();
-	private final EnvironmentAttributeProbe frameAttributeProbe = new EnvironmentAttributeProbe();
 	private final RenderTarget renderTarget;
-	private Frustum cameraFrustum;
+	private Vector3f backgroundColor = new Vector3f();
 	private boolean requiresFrustumUpdate = false;
-	private boolean hasFrameInFrustum = false;
 
 	public CameraFeed(GlobalPos globalPos, RenderSection startingSection) {
 		int resolution = ConfigHandler.CLIENT.frameFeedResolution.get();
@@ -65,9 +64,9 @@ public class CameraFeed {
 		while (!queueToCheck.isEmpty()) {
 			RenderSection currentSection = queueToCheck.poll();
 			BlockPos origin = currentSection.getRenderOrigin();
-			SectionMesh sectionMesh = currentSection.getSectionMesh();
+			CompiledSection currentCompiledSection = currentSection.getCompiled();
 
-			if (sectionMesh == CompiledSectionMesh.UNCOMPILED) {
+			if (currentCompiledSection == CompiledSection.UNCOMPILED) {
 				compilingSectionsQueue.add(currentSection);
 				continue;
 			}
@@ -84,7 +83,7 @@ public class CameraFeed {
 					if (neighbourSection != null) {
 						long neighbourPosAsLong = neighbourSection.getRenderOrigin().asLong();
 
-						if (!sectionsInRangePositions.contains(neighbourPosAsLong) && canSeeNeighborFace(sectionMesh, dir)) {
+						if (!sectionsInRangePositions.contains(neighbourPosAsLong) && canSeeNeighborFace(currentCompiledSection, dir)) {
 							sectionsInRange.add(neighbourSection); //Yet uncompiled render sections are added to the sections-in-range list, so Minecraft will schedule to compile them
 							sectionsInRangePositions.add(neighbourSection.getRenderOrigin().asLong());
 							compilingSectionsQueue.add(neighbourSection);
@@ -96,9 +95,9 @@ public class CameraFeed {
 		}
 	}
 
-	private boolean canSeeNeighborFace(SectionMesh sectionMesh, Direction dir) {
+	private boolean canSeeNeighborFace(CompiledSection currentCompiledSection, Direction dir) {
 		for (int j = 0; j < Direction.values().length; j++) {
-			if (sectionMesh.facesCanSeeEachother(Direction.values()[j].getOpposite(), dir))
+			if (currentCompiledSection.facesCanSeeEachother(Direction.values()[j].getOpposite(), dir))
 				return true;
 		}
 
@@ -124,19 +123,13 @@ public class CameraFeed {
 		return !visibleSections.isEmpty();
 	}
 
-	public void updateHasFrameInFrustum(Frustum frustum) {
-		hasFrameInFrustum = false;
-
+	public boolean hasFrameInFrustum(Frustum frustum) {
 		for (BlockPos framePos : linkedFrames) {
-			if (frustum.isVisible(new AABB(framePos))) {
-				hasFrameInFrustum = true;
-				break;
-			}
+			if (frustum.isVisible(new AABB(framePos)))
+				return true;
 		}
-	}
 
-	public boolean hasFrameInFrustum() {
-		return hasFrameInFrustum;
+		return false;
 	}
 
 	public void linkFrame(FrameBlockEntity be) {
@@ -163,19 +156,15 @@ public class CameraFeed {
 		return lastActiveTime;
 	}
 
-	public EnvironmentAttributeProbe attributeProbe() {
-		return frameAttributeProbe;
-	}
-
 	public RenderTarget renderTarget() {
 		return renderTarget;
 	}
 
-	public void setCameraFrustum(Frustum cameraFrustum) {
-		this.cameraFrustum = cameraFrustum;
+	public void setBackgroundColor(Vector4f backgroundColor) {
+		backgroundColor.xyz(this.backgroundColor);
 	}
 
-	public Frustum getCameraFrustum() {
-		return cameraFrustum;
+	public Vector3f backgroundColor() {
+		return backgroundColor;
 	}
 }

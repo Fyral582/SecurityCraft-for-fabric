@@ -130,7 +130,12 @@ public class CustomizeBlockMenu extends AbstractContainerMenu {
 
 	@Override
 	public boolean stillValid(Player player) {
-		return stillValid(worldPosCallable, player, ((BlockEntity) moduleInv).getBlockState().getBlock());
+		return worldPosCallable.evaluate((level, pos) -> {
+			if (moduleInv instanceof BlockEntity be && !level.getBlockState(pos).is(be.getBlockState().getBlock()))
+				return false;
+
+			return player.canInteractWithBlock(pos, 4.0D);
+		}, true);
 	}
 
 	public int getMaxSlots() {

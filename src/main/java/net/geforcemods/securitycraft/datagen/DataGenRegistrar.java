@@ -2,22 +2,30 @@ package net.geforcemods.securitycraft.datagen;
 
 import net.geforcemods.securitycraft.platform.SCPlatform;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import net.geforcemods.securitycraft.SecurityCraft;
+import net.minecraft.DetectedVersion;
 import net.minecraft.client.data.models.BlockModelGenerators;
 import net.minecraft.client.data.models.ItemModelGenerators;
 import net.minecraft.client.data.models.ModelProvider;
 import net.minecraft.data.loot.LootTableProvider;
 import net.minecraft.data.loot.LootTableProvider.SubProviderEntry;
+import net.minecraft.data.metadata.PackMetadataGenerator;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.server.packs.metadata.pack.PackMetadataSection;
+import net.minecraft.util.InclusiveRange;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.common.EventBusSubscriber.Bus;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
 import net.neoforged.neoforge.data.event.GatherDataEvent.DataProviderFromOutputLookup;
 
-@EventBusSubscriber(modid = SecurityCraft.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = SecurityCraft.MODID, bus = Bus.MOD, value = Dist.CLIENT)
 public class DataGenRegistrar {
 	private DataGenRegistrar() {}
 
@@ -36,9 +44,16 @@ public class DataGenRegistrar {
 			}
 		});
 		event.createBlockAndItemTags(BlockTagGenerator::new, ItemTagGenerator::new);
-		event.createProvider(RecipeGenerator.Runner::new);
 
 		//		if (SCPlatform.isModLoaded("projecte"))
 		//			generator.addProvider(event.includeServer(), new ProjectECompatConversionProvider(generator));
+
+		//@formatter:off
+		event.createProvider(output -> new PackMetadataGenerator(output)
+                .add(PackMetadataSection.TYPE, new PackMetadataSection(Component.literal("SecurityCraft resources & data"),
+                        DetectedVersion.BUILT_IN.getPackVersion(PackType.CLIENT_RESOURCES),
+                        Optional.of(new InclusiveRange<>(0, Integer.MAX_VALUE)))));
+		//@formatter:on
+		event.createProvider(RecipeGenerator.Runner::new);
 	}
 }

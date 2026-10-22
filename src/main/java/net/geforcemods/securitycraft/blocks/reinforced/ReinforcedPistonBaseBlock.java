@@ -19,9 +19,11 @@ import net.geforcemods.securitycraft.blocks.ElectrifiedIronFenceGateBlock;
 import net.geforcemods.securitycraft.blocks.OwnableBlock;
 import net.geforcemods.securitycraft.misc.OwnershipEvent;
 import net.geforcemods.securitycraft.util.BlockUtils;
+import net.geforcemods.securitycraft.util.IPistonMoveListener;
 import net.geforcemods.securitycraft.util.ReinforcedPistonStructureResolver;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -69,7 +71,7 @@ public class ReinforcedPistonBaseBlock extends PistonBaseBlock implements IReinf
 
 	@Override
 	protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
-		if (!oldState.is(state.getBlock()) && !level.isClientSide() && level.getBlockEntity(pos) instanceof ValidationOwnableBlockEntity)
+		if (!oldState.is(state.getBlock()) && !level.isClientSide && level.getBlockEntity(pos) instanceof ValidationOwnableBlockEntity)
 			checkIfExtend(level, pos, state);
 	}
 
@@ -124,7 +126,7 @@ public class ReinforcedPistonBaseBlock extends PistonBaseBlock implements IReinf
 		Direction direction = state.getValue(FACING);
 		BlockState extendedState = state.setValue(EXTENDED, true);
 
-		if (!level.isClientSide()) {
+		if (!level.isClientSide) {
 			boolean isPowered = getNeighborSignal(level, pos, direction);
 
 			if (isPowered && (id == 1 || id == 2)) {
@@ -158,7 +160,7 @@ public class ReinforcedPistonBaseBlock extends PistonBaseBlock implements IReinf
 			BlockState movingPiston = SCContent.REINFORCED_MOVING_PISTON.get().defaultBlockState().setValue(FACING, direction).setValue(MovingPistonBlock.TYPE, isSticky ? PistonType.STICKY : PistonType.DEFAULT);
 
 			level.setBlock(pos, movingPiston, 276);
-			level.setBlockEntity(new ReinforcedPistonMovingBlockEntity(level, pos, movingPiston, defaultBlockState().setValue(FACING, Direction.from3DDataValue(param & 7)), be, direction, false, true));
+			level.setBlockEntity(ReinforcedMovingPistonBlock.newMovingBlockEntity(pos, movingPiston, defaultBlockState().setValue(FACING, Direction.from3DDataValue(param & 7)), be != null ? be.getUpdateTag(level.registryAccess()) : null, direction, false, true));
 			level.updateNeighborsAt(pos, movingPiston.getBlock());
 			movingPiston.updateNeighbourShapes(level, pos, 2);
 
@@ -265,7 +267,7 @@ public class ReinforcedPistonBaseBlock extends PistonBaseBlock implements IReinf
 
 				dropResources(stateToDestroy, level, posToDestroy, beToDestroy);
 
-				if (!stateToDestroy.is(BlockTags.FIRE) && level.isClientSide())
+				if (!stateToDestroy.is(BlockTags.FIRE) && level.isClientSide)
 					level.levelEvent(2001, posToDestroy, getId(stateToDestroy));
 
 				level.setBlock(posToDestroy, Blocks.AIR.defaultBlockState(), 18);
@@ -278,11 +280,23 @@ public class ReinforcedPistonBaseBlock extends PistonBaseBlock implements IReinf
 				BlockState stateToMove = level.getBlockState(posToMove);
 				BlockState movingPiston = SCContent.REINFORCED_MOVING_PISTON.get().defaultBlockState().setValue(FACING, direction);
 				BlockEntity beToMove = level.getBlockEntity(posToMove);
+				CompoundTag tag = null;
 
 				posToMove = posToMove.relative(direction);
+
+				if (beToMove != null) {
+					tag = beToMove.saveWithoutMetadata(level.registryAccess());
+					tag.putInt("x", posToMove.getX());
+					tag.putInt("y", posToMove.getY());
+					tag.putInt("z", posToMove.getZ());
+
+					if (beToMove instanceof IPistonMoveListener listener)
+						listener.prePistonPushSideEffects(posToMove, stateToMove);
+				}
+
 				stateToPosMap.remove(posToMove);
 				level.setBlock(posToMove, SCContent.REINFORCED_MOVING_PISTON.get().defaultBlockState().setValue(FACING, facing), 324);
-				level.setBlockEntity(new ReinforcedPistonMovingBlockEntity(level, posToMove, movingPiston, statesToMove.get(l), beToMove, facing, extending, false));
+				level.setBlockEntity(ReinforcedMovingPistonBlock.newMovingBlockEntity(posToMove, movingPiston, statesToMove.get(l), tag, facing, extending, false));
 				updatedBlocks[j++] = stateToMove;
 			}
 
@@ -297,7 +311,7 @@ public class ReinforcedPistonBaseBlock extends PistonBaseBlock implements IReinf
 
 				stateToPosMap.remove(frontPos);
 				level.setBlock(frontPos, movingPiston, 324);
-				level.setBlockEntity(new ReinforcedPistonMovingBlockEntity(level, frontPos, movingPiston, pistonHead, headBe, facing, true, true));
+				level.setBlockEntity(ReinforcedMovingPistonBlock.newMovingBlockEntity(frontPos, movingPiston, pistonHead, headBe.getUpdateTag(level.registryAccess()), facing, true, true));
 			}
 
 			BlockState air = Blocks.AIR.defaultBlockState();

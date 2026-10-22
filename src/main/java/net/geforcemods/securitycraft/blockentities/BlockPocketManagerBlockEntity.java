@@ -13,7 +13,6 @@ import net.geforcemods.securitycraft.SCContent;
 import net.geforcemods.securitycraft.api.CustomizableBlockEntity;
 import net.geforcemods.securitycraft.api.ILockable;
 import net.geforcemods.securitycraft.api.IModuleInventory;
-import net.geforcemods.securitycraft.api.IOwnable;
 import net.geforcemods.securitycraft.api.Option;
 import net.geforcemods.securitycraft.api.OwnableBlockEntity;
 import net.geforcemods.securitycraft.blocks.BlockPocketManagerBlock;
@@ -32,7 +31,9 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -53,8 +54,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.gameevent.GameEvent;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 
 public class BlockPocketManagerBlockEntity extends CustomizableBlockEntity implements MenuProvider, ITickingBlockEntity, ILockable {
 	private static final int BLOCK_PLACEMENTS_PER_TICK = 4;
@@ -67,9 +66,8 @@ public class BlockPocketManagerBlockEntity extends CustomizableBlockEntity imple
 	private List<BlockPos> walls = new ArrayList<>();
 	private List<BlockPos> floor = new ArrayList<>();
 	protected NonNullList<ItemStack> storage = NonNullList.withSize(56, ItemStack.EMPTY);
-	private List<Pair<BlockPos, BlockState>> multiblockModifyQueue = new ArrayList<>();
+	private List<Pair<BlockPos, BlockState>> placeQueue = new ArrayList<>();
 	private boolean shouldPlaceBlocks = false;
-	private boolean shouldDestroyBlocks = false;
 
 	public BlockPocketManagerBlockEntity(BlockPos pos, BlockState state) {
 		super(SCContent.BLOCK_POCKET_MANAGER_BLOCK_ENTITY.get(), pos, state);
@@ -77,12 +75,12 @@ public class BlockPocketManagerBlockEntity extends CustomizableBlockEntity imple
 
 	@Override
 	public void tick(Level level, BlockPos pos, BlockState state) {
-		if (shouldPlaceBlocks || shouldDestroyBlocks) {
+		if (shouldPlaceBlocks) {
 			Player owner = PlayerUtils.getPlayerFromName(getOwner().getName());
 
 			//if the owner left the server, stop building the block pocket
-			if (shouldPlaceBlocks && owner == null) {
-				multiblockModifyQueue.clear();
+			if (owner == null) {
+				placeQueue.clear();
 				shouldPlaceBlocks = false;
 				return;
 			}
@@ -90,35 +88,31 @@ public class BlockPocketManagerBlockEntity extends CustomizableBlockEntity imple
 			boolean isCreative = owner.isCreative();
 			boolean placed4Blocks = true;
 
-			//modify 4 blocks per tick
-			//when placing blocks, only place the next block if the previous one was placed
+			//place 4 blocks per tick
+			//only place the next block if the previous one was placed
 			//if any block failed to place, either the end was reached, or a block was in the way
 			placeLoop:
 			for (int i = 0; i < BLOCK_PLACEMENTS_PER_TICK; i++) {
 				Pair<BlockPos, BlockState> toPlace;
-				BlockState stateInLevel, stateToPlace;
-				BlockPos placeLocation;
+				BlockState stateInLevel;
 
 				do {
-					if (multiblockModifyQueue.isEmpty()) {
+					if (placeQueue.isEmpty()) {
 						placed4Blocks = false;
 						break placeLoop;
 					}
 
-					toPlace = multiblockModifyQueue.remove(0);
-					stateInLevel = level.getBlockState(toPlace.getLeft());
-					stateToPlace = toPlace.getRight();
-					placeLocation = toPlace.getLeft();
+					toPlace = placeQueue.remove(0);
 
-					if (stateToPlace != null && !(stateToPlace.getBlock() instanceof IBlockPocket))
+					if (!(toPlace.getRight().getBlock() instanceof IBlockPocket))
 						throw new IllegalStateException(String.format("Tried to automatically place non-block pocket block \"%s\"! This mustn't happen!", toPlace.getRight().getBlock().getDescriptionId()));
 				}
-				//In placement mode: Repeat grabbing the next position to place if the state to be placed is already in the world
-				while (stateToPlace != null && stateInLevel == stateToPlace);
+				//reach the next block that is missing for the block pocket
+				while ((stateInLevel = level.getBlockState(toPlace.getLeft())) == toPlace.getRight());
 
-				if (stateToPlace == null) //Destruction mode
-					level.destroyBlock(placeLocation, true);
-				else if (stateInLevel.canBeReplaced()) { //Placement mode
+				if (stateInLevel.canBeReplaced()) {
+					BlockPos placeLocation = toPlace.getLeft();
+					BlockState stateToPlace = toPlace.getRight();
 					SoundType soundType = stateToPlace.getSoundType();
 					BlockEntity placedBe;
 
@@ -153,16 +147,14 @@ public class BlockPocketManagerBlockEntity extends CustomizableBlockEntity imple
 			}
 
 			if (!placed4Blocks) {
-				if (!multiblockModifyQueue.isEmpty()) //Placement mode: There are still blocks left to place, so a different block is blocking (heh) a space
-					multiblockModifyQueue.clear();
-				else if (shouldPlaceBlocks) { //no more blocks left to place, assembling must be done
+				if (!placeQueue.isEmpty()) //there are still blocks left to place, so a different block is blocking (heh) a space
+					placeQueue.clear();
+				else { //no more blocks left to place, assembling must be done
 					setWalls(!isModuleEnabled(ModuleType.DISGUISE));
 					PlayerUtils.sendMessageToPlayer(owner, Utils.localize(SCContent.BLOCK_POCKET_MANAGER.get().getDescriptionId()), Component.translatable("messages.securitycraft:blockpocket.assembled"), ChatFormatting.DARK_AQUA);
 				}
-				else if (shouldDestroyBlocks)
-					PlayerUtils.sendMessageToPlayer(owner, Utils.localize(SCContent.BLOCK_POCKET_MANAGER.get().getDescriptionId()), Component.translatable("messages.securitycraft:blockpocket.disassembled"), ChatFormatting.DARK_AQUA);
 
-				shouldPlaceBlocks = shouldDestroyBlocks = false;
+				shouldPlaceBlocks = false;
 			}
 		}
 	}
@@ -332,8 +324,8 @@ public class BlockPocketManagerBlockEntity extends CustomizableBlockEntity imple
 	 * @return The feedback message. null if none should be sent.
 	 */
 	public MutableComponent autoAssembleMultiblock() {
-		if (level.isClientSide())
-			return Component.literal("autoAssembleMultiblock called on client! Send a ToggleBlockPocketManager packet instead.");
+		if (level.isClientSide)
+			return Component.translatable("autoAssembleMultiblock called on client! Send an AssembleBlockPocket packet instead.");
 
 		if (!isEnabled()) {
 			final Direction managerFacing = getBlockState().getValue(BlockPocketManagerBlock.FACING);
@@ -471,28 +463,28 @@ public class BlockPocketManagerBlockEntity extends CustomizableBlockEntity imple
 						if ((yi == lowest && !currentPos.equals(getBlockPos())) || yi == highest) {
 							//placing the corners
 							if (((xi == lowest && zi == lowest) || (xi == lowest && zi == highest) || (xi == highest && zi == lowest) || (xi == highest && zi == highest)))
-								multiblockModifyQueue.add(Pair.of(currentPos, SCContent.REINFORCED_CHISELED_CRYSTAL_QUARTZ.get().defaultBlockState()));
+								placeQueue.add(Pair.of(currentPos, SCContent.REINFORCED_CHISELED_CRYSTAL_QUARTZ.get().defaultBlockState()));
 							else if ((zi == lowest || zi == highest) && xi > lowest && xi < highest) { //placing the sides parallel to the block pocket manager
 								Axis typeToPlace = managerFacing == Direction.NORTH || managerFacing == Direction.SOUTH ? Axis.X : Axis.Z;
 
-								multiblockModifyQueue.add(Pair.of(currentPos, SCContent.REINFORCED_CRYSTAL_QUARTZ_PILLAR.get().defaultBlockState().setValue(ReinforcedRotatedPillarBlock.AXIS, typeToPlace)));
+								placeQueue.add(Pair.of(currentPos, SCContent.REINFORCED_CRYSTAL_QUARTZ_PILLAR.get().defaultBlockState().setValue(ReinforcedRotatedPillarBlock.AXIS, typeToPlace)));
 							}
 							//placing the sides orthogonal to the block pocket manager
 							else if ((xi == lowest || xi == highest) && zi > lowest && zi < highest) {
 								Axis typeToPlace = managerFacing == Direction.NORTH || managerFacing == Direction.SOUTH ? Axis.Z : Axis.X;
 
-								multiblockModifyQueue.add(Pair.of(currentPos, SCContent.REINFORCED_CRYSTAL_QUARTZ_PILLAR.get().defaultBlockState().setValue(ReinforcedRotatedPillarBlock.AXIS, typeToPlace)));
+								placeQueue.add(Pair.of(currentPos, SCContent.REINFORCED_CRYSTAL_QUARTZ_PILLAR.get().defaultBlockState().setValue(ReinforcedRotatedPillarBlock.AXIS, typeToPlace)));
 							}
 							//placing the middle plane
 							else if (xi > lowest && zi > lowest && xi < highest && zi < highest)
-								multiblockModifyQueue.add(Pair.of(currentPos, SCContent.BLOCK_POCKET_WALL.get().defaultBlockState()));
+								placeQueue.add(Pair.of(currentPos, SCContent.BLOCK_POCKET_WALL.get().defaultBlockState()));
 						}
 						//placing the corner edges
 						else if (yi != lowest && yi != highest && ((xi == lowest && zi == lowest) || (xi == lowest && zi == highest) || (xi == highest && zi == lowest) || (xi == highest && zi == highest)))
-							multiblockModifyQueue.add(Pair.of(currentPos, SCContent.REINFORCED_CRYSTAL_QUARTZ_PILLAR.get().defaultBlockState().setValue(ReinforcedRotatedPillarBlock.AXIS, Axis.Y)));
-							//placing the walls parallel and orthogonal to the block pocket manager
+							placeQueue.add(Pair.of(currentPos, SCContent.REINFORCED_CRYSTAL_QUARTZ_PILLAR.get().defaultBlockState().setValue(ReinforcedRotatedPillarBlock.AXIS, Axis.Y)));
+						//placing the walls parallel and orthogonal to the block pocket manager
 						else if (yi > lowest && yi < highest && (((zi == lowest || zi == highest) && xi > lowest && xi < highest) || ((xi == lowest || xi == highest) && zi > lowest && zi < highest)))
-							multiblockModifyQueue.add(Pair.of(currentPos, SCContent.BLOCK_POCKET_WALL.get().defaultBlockState()));
+							placeQueue.add(Pair.of(currentPos, SCContent.BLOCK_POCKET_WALL.get().defaultBlockState()));
 
 						xi++;
 					}
@@ -542,33 +534,6 @@ public class BlockPocketManagerBlockEntity extends CustomizableBlockEntity imple
 			setChanged();
 			level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 2);
 			return Utils.localize("messages.securitycraft:blockpocket.deactivated");
-		}
-
-		return null;
-	}
-
-	public MutableComponent disassembleMultiblock() {
-		if (level.isClientSide())
-			return Component.literal("disassembleMultiblock called on client! Send a ToggleBlockPocketManager packet instead.");
-
-		if (isEnabled()) {
-			setEnabled(false);
-
-			for (int i = blocks.size() - 1; i >= 0; i--) { //Reverse order to disassemble the block pocket from top to bottom
-				BlockPos pos = blocks.get(i);
-				BlockEntity be = level.getBlockEntity(pos);
-				BlockState state = be.getBlockState();
-
-				if (state.getBlock() instanceof IBlockPocket && be instanceof IOwnable ownable && getOwner().owns(ownable))
-					multiblockModifyQueue.add(Pair.of(pos, null));
-			}
-
-			shouldDestroyBlocks = true;
-			blocks.clear();
-			walls.clear();
-			floor.clear();
-			setChanged();
-			level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), Block.UPDATE_ALL);
 		}
 
 		return null;
@@ -631,7 +596,7 @@ public class BlockPocketManagerBlockEntity extends CustomizableBlockEntity imple
 		Storage<ItemVariant> resourceHandler = InventoryStorage.of(Utils.createContainerFromList(be.storage), null);
 
 		//prevent extracting while auto building the block pocket
-		if (!be.isModifyingBlocks() && BlockUtils.isAllowedToExtractFromProtectedObject(side, be))
+		if (!be.isPlacingBlocks() && BlockUtils.isAllowedToExtractFromProtectedObject(side, be))
 			return new ValidityCheckResourceHandler(resourceHandler);
 		else
 			return new ValidityCheckInsertOnlyResourceHandler(resourceHandler);
@@ -660,13 +625,13 @@ public class BlockPocketManagerBlockEntity extends CustomizableBlockEntity imple
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
+	public void saveAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
 		tag.putBoolean("BlockPocketEnabled", isEnabled());
 		tag.putBoolean("ShowOutline", showsOutline());
 		tag.putInt("Size", getSize());
 		tag.putInt("AutoBuildOffset", getAutoBuildOffset());
 		tag.putInt("Color", color);
-		ContainerHelper.saveAllItems(tag, storage);
+		ContainerHelper.saveAllItems(tag, storage, lookupProvider);
 
 		for (int i = 0; i < blocks.size(); i++) {
 			tag.putLong("BlocksList" + i, blocks.get(i).asLong());
@@ -680,36 +645,36 @@ public class BlockPocketManagerBlockEntity extends CustomizableBlockEntity imple
 			tag.putLong("FloorList" + i, floor.get(i).asLong());
 		}
 
-		super.saveAdditional(tag);
+		super.saveAdditional(tag, lookupProvider);
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
+	public void loadAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
 		int i = 0;
 
-		super.loadAdditional(tag);
+		super.loadAdditional(tag, lookupProvider);
 		setEnabled(tag.getBooleanOr("BlockPocketEnabled", false));
 		setShowOutline(tag.getBooleanOr("ShowOutline", false));
 		setSize(tag.getIntOr("Size", 5));
 		setAutoBuildOffset(tag.getIntOr("AutoBuildOffset", 0));
 		setColor(tag.getIntOr("Color", 0xFF0000FF));
-		ContainerHelper.loadAllItems(tag, storage);
+		ContainerHelper.loadAllItems(tag, storage, lookupProvider);
 
-		while (tag.getLong("BlocksList" + i).isPresent()) {
+		while (tag.contains("BlocksList" + i)) {
 			blocks.add(BlockPos.of(tag.getLongOr("BlocksList" + i, 0)));
 			i++;
 		}
 
 		i = 0;
 
-		while (tag.getLong("WallsList" + i).isPresent()) {
+		while (tag.contains("WallsList" + i)) {
 			walls.add(BlockPos.of(tag.getLongOr("WallsList" + i, 0)));
 			i++;
 		}
 
 		i = 0;
 
-		while (tag.getLong("FloorList" + i).isPresent()) {
+		while (tag.contains("FloorList" + i)) {
 			floor.add(BlockPos.of(tag.getLongOr("FloorList" + i, 0)));
 			i++;
 		}
@@ -758,8 +723,8 @@ public class BlockPocketManagerBlockEntity extends CustomizableBlockEntity imple
 		return super.getDisplayName();
 	}
 
-	public boolean isModifyingBlocks() {
-		return shouldPlaceBlocks || shouldDestroyBlocks;
+	public boolean isPlacingBlocks() {
+		return shouldPlaceBlocks;
 	}
 
 	public static boolean isItemValid(ItemStack stack) {
@@ -773,7 +738,7 @@ public class BlockPocketManagerBlockEntity extends CustomizableBlockEntity imple
 	}
 
 	public void setColor(int color) {
-		this.color = Mth.clamp(color | 0xFF000000, 0xFF000000, 0xFFFFFFFF);
+		this.color = Mth.clamp(color, 0xFF000000, 0xFFFFFFFF);
 	}
 
 	public int getColor() {

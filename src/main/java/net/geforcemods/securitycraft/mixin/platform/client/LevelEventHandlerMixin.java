@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
-import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.world.level.Level;
 import net.minecraft.client.renderer.LevelEventHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.SoundType;
@@ -21,7 +21,7 @@ import net.minecraft.world.level.block.state.BlockState;
 public class LevelEventHandlerMixin {
 	@Shadow
 	@Final
-	private ClientLevel level;
+	private Level level;
 
 	@WrapOperation(method = "levelEvent", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/state/BlockState;getSoundType()Lnet/minecraft/world/level/block/SoundType;"))
 	private SoundType securitycraft$getBreakSoundType(BlockState state, Operation<SoundType> original, int type, BlockPos pos, int data) {

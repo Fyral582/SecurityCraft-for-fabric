@@ -10,7 +10,6 @@ import net.geforcemods.securitycraft.blocks.SecurityCameraBlock;
 import net.geforcemods.securitycraft.components.NamedPositions;
 import net.geforcemods.securitycraft.misc.CameraRedstoneModuleState;
 import net.geforcemods.securitycraft.misc.ModuleType;
-import net.geforcemods.securitycraft.misc.StillValid;
 import net.geforcemods.securitycraft.screen.components.SmallButton;
 import net.geforcemods.securitycraft.util.Utils;
 import net.minecraft.client.Minecraft;
@@ -18,19 +17,17 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
-import net.minecraft.util.CommonColors;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
-public abstract class CameraSelectScreen extends Screen implements StillValid {
-	private static final Identifier TEXTURE = SecurityCraft.resLoc("textures/gui/container/blank.png");
+public class CameraSelectScreen extends Screen {
+	private static final ResourceLocation TEXTURE = SecurityCraft.resLoc("textures/gui/container/blank.png");
 	private final List<NamedPositions.Entry> cameras;
 	protected final boolean readOnly;
 	private final Button[] cameraButtons = new Button[10];
@@ -55,14 +52,14 @@ public abstract class CameraSelectScreen extends Screen implements StillValid {
 		leftPos = (width - xSize) / 2;
 		topPos = (height - ySize) / 2;
 
-		Button prevPageButton = addRenderableWidget(Button.builder(Component.literal("<"), b -> {
+		Button prevPageButton = addRenderableWidget(new Button(width / 2 - 25, height / 2 + 57, 20, 20, Component.literal("<"), b -> {
 			page--;
 			rebuildWidgets();
-		}).pos(width / 2 - 25, height / 2 + 57).size(20, 20).build());
-		Button nextPageButton = addRenderableWidget(Button.builder(Component.literal(">"), b -> {
+		}, Button.DEFAULT_NARRATION));
+		Button nextPageButton = addRenderableWidget(new Button(width / 2 + 5, height / 2 + 57, 20, 20, Component.literal(">"), b -> {
 			page++;
 			rebuildWidgets();
-		}).pos(width / 2 + 5, height / 2 + 57).size(20, 20).build());
+		}, Button.DEFAULT_NARRATION));
 		Level level = Minecraft.getInstance().level;
 		LocalPlayer player = Minecraft.getInstance().player;
 
@@ -73,7 +70,7 @@ public abstract class CameraSelectScreen extends Screen implements StillValid {
 			int y = topPos + 30 + (i / 5) * 55;
 			int aboveCameraButton = y - 8;
 			NamedPositions.Entry view = cameras.get(camID - 1);
-			Button cameraButton = addRenderableWidget(Button.builder(Component.empty(), button -> cameraButtonClicked(button, view.globalPos())).pos(x, y).size(20, 20).build());
+			Button cameraButton = addRenderableWidget(new Button(x, y, 20, 20, Component.empty(), button -> cameraButtonClicked(button, view.globalPos()), Button.DEFAULT_NARRATION));
 
 			if (!readOnly)
 				addRenderableWidget(SmallButton.createWithX(x + 19, aboveCameraButton, button -> unbindButtonClicked(button, view.globalPos(), camID))).active = view != null;
@@ -99,7 +96,9 @@ public abstract class CameraSelectScreen extends Screen implements StillValid {
 						cameraName = cameraBe.getCustomName().getString();
 
 					if (state.getSignal(level, pos, state.getValue(SecurityCameraBlock.FACING)) == 0) {
-						if (cameraBe.isModuleEnabled(ModuleType.REDSTONE))
+						if (!cameraBe.isModuleEnabled(ModuleType.REDSTONE))
+							redstoneModuleStates[i] = CameraRedstoneModuleState.NOT_INSTALLED;
+						else
 							redstoneModuleStates[i] = CameraRedstoneModuleState.DEACTIVATED;
 					}
 					else
@@ -112,7 +111,7 @@ public abstract class CameraSelectScreen extends Screen implements StillValid {
 				//op check is done on the server through the command
 				if (player.isCreative()) {
 					Button tpButton = addRenderableWidget(SmallButton.create(x, aboveCameraButton, Component.empty(), b -> {
-						player.connection.sendCommand(String.format("execute in %s run tp %s %s %s", globalPos.dimension().identifier(), pos.getX(), pos.getY(), pos.getZ()));
+						player.connection.sendUnsignedCommand(String.format("execute in %s run tp %s %s %s", globalPos.dimension().location(), pos.getX(), pos.getY(), pos.getZ()));
 						minecraft.setScreen(null);
 					}));
 
@@ -139,13 +138,13 @@ public abstract class CameraSelectScreen extends Screen implements StillValid {
 				redstoneModuleState.render(guiGraphics, button.getX() + 4, button.getY() + 25);
 		}
 
-		guiGraphics.drawString(font, title, leftPos + xSize / 2 - font.width(title) / 2, topPos + 6, CommonColors.DARK_GRAY, false);
+		guiGraphics.drawString(font, title, leftPos + xSize / 2 - font.width(title) / 2, topPos + 6, 4210752, false);
 	}
 
 	@Override
 	public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
 		renderTransparentBackground(guiGraphics);
-		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, leftPos, topPos, 0.0F, 0.0F, xSize, ySize, 256, 256);
+		guiGraphics.blit(RenderType::guiTextured, TEXTURE, leftPos, topPos, 0.0F, 0.0F, xSize, ySize, 256, 256);
 	}
 
 	private void cameraButtonClicked(Button button, GlobalPos camera) {
@@ -179,13 +178,13 @@ public abstract class CameraSelectScreen extends Screen implements StillValid {
 	protected void unbindCamera(GlobalPos cameraPos) {}
 
 	@Override
-	public boolean keyPressed(KeyEvent event) {
-		if (minecraft.options.keyInventory.isActiveAndMatches(InputConstants.getKey(event))) {
+	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+		if (minecraft.options.keyInventory.isActiveAndMatches(InputConstants.getKey(keyCode, scanCode))) {
 			onClose();
 			return true;
 		}
 
-		return super.keyPressed(event);
+		return super.keyPressed(keyCode, scanCode, modifiers);
 	}
 
 	@Override

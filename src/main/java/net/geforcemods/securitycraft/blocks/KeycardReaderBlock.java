@@ -38,13 +38,12 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
 public class KeycardReaderBlock extends DisguisableBlock {
-	public static final EnumProperty<Direction> FACING = BlockStateProperties.FACING;
-	public static final EnumProperty<Direction> ROTATION = EnumProperty.create("rotation", Direction.class, Direction.Plane.HORIZONTAL);
+	public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
 	public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
 
 	public KeycardReaderBlock(BlockBehaviour.Properties properties) {
 		super(properties);
-		registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(ROTATION, Direction.NORTH).setValue(POWERED, false).setValue(WATERLOGGED, false));
+		registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(POWERED, false).setValue(WATERLOGGED, false));
 	}
 
 	@Override
@@ -57,7 +56,7 @@ public class KeycardReaderBlock extends DisguisableBlock {
 	}
 
 	public static <BE extends KeycardReaderBlockEntity> InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, Consumer<BE> noKeycardRightclick) {
-		if (!level.isClientSide()) {
+		if (!level.isClientSide) {
 			BE be = (BE) level.getBlockEntity(pos);
 
 			if (be.isDisabled())
@@ -136,18 +135,12 @@ public class KeycardReaderBlock extends DisguisableBlock {
 
 	@Override
 	public BlockState getStateForPlacement(BlockPlaceContext ctx) {
-		Direction facing = ctx.getNearestLookingDirection().getOpposite();
-		BlockState state = super.getStateForPlacement(ctx).setValue(FACING, facing);
-
-		if (facing == Direction.UP || facing == Direction.DOWN)
-			return state.setValue(ROTATION, ctx.getHorizontalDirection().getOpposite());
-		else
-			return state.setValue(ROTATION, facing);
+		return super.getStateForPlacement(ctx).setValue(FACING, ctx.getHorizontalDirection().getOpposite()).setValue(POWERED, false);
 	}
 
 	@Override
 	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-		builder.add(FACING, ROTATION, POWERED, WATERLOGGED);
+		builder.add(FACING, POWERED, WATERLOGGED);
 	}
 
 	@Override
@@ -157,7 +150,7 @@ public class KeycardReaderBlock extends DisguisableBlock {
 
 	@Override
 	public BlockState rotate(BlockState state, Rotation rot) {
-		return state.setValue(FACING, rot.rotate(state.getValue(FACING))).setValue(ROTATION, rot.rotate(state.getValue(ROTATION)));
+		return state.setValue(FACING, rot.rotate(state.getValue(FACING)));
 	}
 
 	@Override

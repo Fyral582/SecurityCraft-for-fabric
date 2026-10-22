@@ -3,7 +3,6 @@ package net.geforcemods.securitycraft.inventory;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.Container;
-import net.minecraft.world.entity.ContainerUser;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -102,10 +101,10 @@ public class ItemContainer implements Container {
 	}
 
 	@Override
-	public void startOpen(ContainerUser player) {}
+	public void startOpen(Player player) {}
 
 	@Override
-	public void stopOpen(ContainerUser player) {
+	public void stopOpen(Player player) {
 		save();
 	}
 

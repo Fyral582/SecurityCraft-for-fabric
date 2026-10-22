@@ -8,7 +8,6 @@ import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import net.geforcemods.securitycraft.api.IPasscodeConvertible;
 import net.geforcemods.securitycraft.api.IReinforcedBlock;
 import net.geforcemods.securitycraft.api.SecurityCraftAPI;
-import net.geforcemods.securitycraft.items.UniversalBlockReinforcerItem;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
@@ -16,10 +15,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.commands.FillCommand;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.geforcemods.securitycraft.platform.util.TriPredicate;
 
@@ -32,7 +31,7 @@ public class ConvertCommand {
 	public static ArgumentBuilder<CommandSourceStack, ?> register() {
 		//@formatter:off
 		return Commands.literal("convert")
-                .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                .requires(ctx -> ctx.hasPermission(2))
                 .then(Commands.argument("mode", LowercasedEnumArgument.enumArgument(ConversionMode.class))
                 		.then(Commands.literal("set")
                 				.then(Commands.argument("pos", BlockPosArgument.blockPos())
@@ -60,10 +59,10 @@ public class ConvertCommand {
 		CommandSourceStack source = ctx.getSource();
 		ServerLevel level = source.getLevel();
 		int blockCount = area.getXSpan() * area.getYSpan() * area.getZSpan();
-		int maxBlockModifications = level.getGameRules().get(GameRules.MAX_BLOCK_MODIFICATIONS);
+		int commandModificationBlockLimit = level.getGameRules().getInt(GameRules.RULE_COMMAND_MODIFICATION_BLOCK_LIMIT);
 
-		if (blockCount > maxBlockModifications)
-			throw FillCommand.ERROR_AREA_TOO_LARGE.create(maxBlockModifications, blockCount);
+		if (blockCount > commandModificationBlockLimit)
+			throw FillCommand.ERROR_AREA_TOO_LARGE.create(commandModificationBlockLimit, blockCount);
 		else {
 			int blocksModified = 0;
 
@@ -90,7 +89,7 @@ public class ConvertCommand {
 			Block block = state.getBlock();
 
 			if (IReinforcedBlock.VANILLA_TO_SECURITYCRAFT.containsKey(block)) {
-				UniversalBlockReinforcerItem.convertStateWhileRetainingData(level, pos, ((IReinforcedBlock) IReinforcedBlock.VANILLA_TO_SECURITYCRAFT.get(block)).convertToReinforced(level, pos, state));
+				level.setBlockAndUpdate(pos, ((IReinforcedBlock) IReinforcedBlock.VANILLA_TO_SECURITYCRAFT.get(block)).convertToReinforced(level, pos, state));
 				return true;
 			}
 
@@ -100,7 +99,7 @@ public class ConvertCommand {
 			Block block = state.getBlock();
 
 			if (IReinforcedBlock.SECURITYCRAFT_TO_VANILLA.containsKey(block)) {
-				UniversalBlockReinforcerItem.convertStateWhileRetainingData(level, pos, ((IReinforcedBlock) block).convertToVanilla(level, pos, state));
+				level.setBlockAndUpdate(pos, ((IReinforcedBlock) block).convertToVanilla(level, pos, state));
 				return true;
 			}
 

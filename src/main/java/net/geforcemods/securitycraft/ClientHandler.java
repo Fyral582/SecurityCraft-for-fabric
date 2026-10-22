@@ -1,5 +1,16 @@
 package net.geforcemods.securitycraft;
 
+import net.geforcemods.securitycraft.util.ClientUtils;
+import net.geforcemods.securitycraft.network.client.UpdateLogger;
+import net.geforcemods.securitycraft.network.client.UpdateLaserColors;
+import net.geforcemods.securitycraft.network.client.SetTrophySystemTarget;
+import net.geforcemods.securitycraft.network.client.SetCameraView;
+import net.geforcemods.securitycraft.network.client.SendManualPages;
+import net.geforcemods.securitycraft.network.client.RefreshDisguisableModel;
+import net.geforcemods.securitycraft.network.client.PlayAlarmSound;
+import net.geforcemods.securitycraft.network.client.OpenScreen;
+import net.geforcemods.securitycraft.network.client.InteractWithFrame;
+import net.geforcemods.securitycraft.network.client.BlockPocketManagerFailedActivation;
 import net.fabricmc.fabric.api.client.model.loading.v1.ExtraModelKey;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
 import net.fabricmc.fabric.api.client.model.loading.v1.SimpleUnbakedExtraModel;
@@ -7,8 +18,6 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
-import net.fabricmc.fabric.api.client.rendering.v1.SpecialGuiElementRegistry;
-import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.geforcemods.securitycraft.platform.menu.MenuDataPayload;
 import net.minecraft.client.color.item.ItemTintSources;
 import net.minecraft.client.gui.screens.MenuScreens;
@@ -18,11 +27,13 @@ import net.minecraft.client.renderer.item.properties.numeric.RangeSelectItemMode
 import net.minecraft.client.renderer.item.properties.select.SelectItemModelProperties;
 import net.minecraft.client.renderer.special.SpecialModelRenderers;
 
-import net.fabricmc.fabric.api.client.rendering.v1.BlockRenderLayerMap;
+import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
+import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.OptionalDouble;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -30,10 +41,8 @@ import java.util.function.UnaryOperator;
 
 import com.google.common.base.Suppliers;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.OctahedralGroup;
 
 import net.geforcemods.securitycraft.api.IDisguisable;
-import net.geforcemods.securitycraft.api.IOwnable;
 import net.geforcemods.securitycraft.api.IPasscodeProtected;
 import net.geforcemods.securitycraft.api.IReinforcedBlock;
 import net.geforcemods.securitycraft.blockentities.AlarmBlockEntity;
@@ -41,6 +50,8 @@ import net.geforcemods.securitycraft.blockentities.FrameBlockEntity;
 import net.geforcemods.securitycraft.blockentities.InventoryScannerBlockEntity;
 import net.geforcemods.securitycraft.blockentities.LaserBlockBlockEntity;
 import net.geforcemods.securitycraft.blockentities.RiftStabilizerBlockEntity;
+import net.geforcemods.securitycraft.blockentities.SecretHangingSignBlockEntity;
+import net.geforcemods.securitycraft.blockentities.SecretSignBlockEntity;
 import net.geforcemods.securitycraft.blockentities.SecureRedstoneInterfaceBlockEntity;
 import net.geforcemods.securitycraft.blockentities.SonicSecuritySystemBlockEntity;
 import net.geforcemods.securitycraft.blockentities.UsernameLoggerBlockEntity;
@@ -55,7 +66,6 @@ import net.geforcemods.securitycraft.items.properties.KeycardCount;
 import net.geforcemods.securitycraft.items.properties.ReinforcedTint;
 import net.geforcemods.securitycraft.items.properties.SentryLinked;
 import net.geforcemods.securitycraft.misc.LayerToggleHandler;
-import net.geforcemods.securitycraft.misc.TintMode;
 import net.geforcemods.securitycraft.models.BulletModel;
 import net.geforcemods.securitycraft.models.DisguisableBlockStateModel;
 import net.geforcemods.securitycraft.models.DisplayCaseModel;
@@ -65,15 +75,6 @@ import net.geforcemods.securitycraft.models.SecureRedstoneInterfaceDishModel;
 import net.geforcemods.securitycraft.models.SecurityCameraModel;
 import net.geforcemods.securitycraft.models.SentryModel;
 import net.geforcemods.securitycraft.models.SonicSecuritySystemModel;
-import net.geforcemods.securitycraft.network.client.InteractWithFrame;
-import net.geforcemods.securitycraft.network.client.OpenScreen;
-import net.geforcemods.securitycraft.network.client.RefreshDisguisableModel;
-import net.geforcemods.securitycraft.network.client.SendManualPages;
-import net.geforcemods.securitycraft.network.client.SetCameraView;
-import net.geforcemods.securitycraft.network.client.SetTrophySystemTarget;
-import net.geforcemods.securitycraft.network.client.ToggleAlarmSound;
-import net.geforcemods.securitycraft.network.client.UpdateLaserColors;
-import net.geforcemods.securitycraft.network.client.UpdateLogger;
 import net.geforcemods.securitycraft.particle.FloorTrapCloudParticle;
 import net.geforcemods.securitycraft.particle.InterfaceHighlightParticle;
 import net.geforcemods.securitycraft.renderers.BlockPocketManagerRenderer;
@@ -92,7 +93,6 @@ import net.geforcemods.securitycraft.renderers.RetinalScannerRenderer;
 import net.geforcemods.securitycraft.renderers.SecretHangingSignRenderer;
 import net.geforcemods.securitycraft.renderers.SecretSignRenderer;
 import net.geforcemods.securitycraft.renderers.SecureRedstoneInterfaceRenderer;
-import net.geforcemods.securitycraft.renderers.SecureTradingStationRenderer;
 import net.geforcemods.securitycraft.renderers.SecurityCameraRenderer;
 import net.geforcemods.securitycraft.renderers.SecurityCameraSpecialRenderer;
 import net.geforcemods.securitycraft.renderers.SecuritySeaBoatRenderer;
@@ -126,20 +126,19 @@ import net.geforcemods.securitycraft.screen.RiftStabilizerScreen;
 import net.geforcemods.securitycraft.screen.SCManualScreen;
 import net.geforcemods.securitycraft.screen.SSSItemScreen;
 import net.geforcemods.securitycraft.screen.SecureRedstoneInterfaceScreen;
-import net.geforcemods.securitycraft.screen.SecureTradingStationScreen;
 import net.geforcemods.securitycraft.screen.SentryRemoteAccessToolScreen;
 import net.geforcemods.securitycraft.screen.SetPasscodeScreen;
 import net.geforcemods.securitycraft.screen.SingleLensScreen;
 import net.geforcemods.securitycraft.screen.SonicSecuritySystemScreen;
 import net.geforcemods.securitycraft.screen.TrophySystemScreen;
 import net.geforcemods.securitycraft.screen.UsernameLoggerScreen;
-import net.geforcemods.securitycraft.screen.components.GuiBlockModelRenderState;
-import net.geforcemods.securitycraft.screen.components.GuiBlockModelRenderer;
 import net.geforcemods.securitycraft.util.BlockEntityRenderDelegate;
-import net.geforcemods.securitycraft.util.ClientUtils;
 import net.geforcemods.securitycraft.util.Reinforced;
+import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.block.BlockColor;
+import net.minecraft.client.gui.screens.inventory.HangingSignEditScreen;
+import net.minecraft.client.gui.screens.inventory.SignEditScreen;
 import net.minecraft.client.model.HumanoidModel.ArmPose;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelLayers;
@@ -148,24 +147,19 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderStateShard;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.blockentity.LecternRenderer;
-import net.minecraft.client.renderer.blockentity.ShelfRenderer;
-import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.entity.NoopRenderer;
-import net.minecraft.client.renderer.rendertype.LayeringTransform;
-import net.minecraft.client.renderer.rendertype.OutputTarget;
-import net.minecraft.client.renderer.rendertype.RenderSetup;
-import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.resources.model.BlockModelRotation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.BlockPos.MutableBlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ARGB;
-import net.minecraft.util.Util;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.Nameable;
 import net.minecraft.world.entity.Entity;
@@ -193,7 +187,7 @@ public class ClientHandler {
 	public static final ModelLayerLocation SONIC_SECURITY_SYSTEM_LOCATION = new ModelLayerLocation(SecurityCraft.resLoc("sonic_security_system"), "main");
 	public static final BlockEntityRenderDelegate DISGUISED_BLOCK_RENDER_DELEGATE = new BlockEntityRenderDelegate();
 	public static final BlockEntityRenderDelegate PROJECTOR_RENDER_DELEGATE = new BlockEntityRenderDelegate();
-	public static final Identifier CAMERA_LAYER = SecurityCraft.resLoc("camera_overlay");
+	public static final ResourceLocation CAMERA_LAYER = SecurityCraft.resLoc("camera_overlay");
 	private static Map<Block, Integer> blocksWithReinforcedTint = new HashMap<>();
 	private static Map<Block, Integer> blocksWithCustomTint = new HashMap<>();
 	//@formatter:off
@@ -222,7 +216,6 @@ public class ClientHandler {
 			SCContent.RIFT_STABILIZER.get(),
 			SCContent.SCANNER_DOOR.get(),
 			SCContent.SCANNER_TRAPDOOR.get(),
-			SCContent.SECURE_TRADING_STATION.get(),
 			SCContent.SECURITY_CAMERA.get(),
 			//Excluded because it has its own custom block state model
 			//SCContent.SECURE_REDSTONE_INTERFACE.get(),
@@ -232,9 +225,9 @@ public class ClientHandler {
 			SCContent.USERNAME_LOGGER.get()
 	});
 	//@formatter:on
-	private static final Identifier SRI_BASE_MODEL_LOCATION = SecurityCraft.resLoc("block/secure_redstone_interface");
-	private static final Identifier SRI_SENDER_ON_MODEL_LOCATION = SRI_BASE_MODEL_LOCATION.withSuffix("_sender_on");
-	private static final Identifier SRI_RECEIVER_ON_MODEL_LOCATION = SRI_BASE_MODEL_LOCATION.withSuffix("_receiver_on");
+	private static final ResourceLocation SRI_BASE_MODEL_LOCATION = SecurityCraft.resLoc("block/secure_redstone_interface");
+	private static final ResourceLocation SRI_SENDER_ON_MODEL_LOCATION = SRI_BASE_MODEL_LOCATION.withSuffix("_sender_on");
+	private static final ResourceLocation SRI_RECEIVER_ON_MODEL_LOCATION = SRI_BASE_MODEL_LOCATION.withSuffix("_receiver_on");
 	private static final Map<SRIKey, ExtraModelKey<BlockStateModel>> SRI_MODEL_KEYS = Util.make(new HashMap<>(), map -> {
 		Arrays.stream(Direction.values()).forEach(direction -> {
 			map.put(new SRIKey(true, direction), ExtraModelKey.create(() -> SRI_SENDER_ON_MODEL_LOCATION + "$" + direction.getName()));
@@ -242,12 +235,15 @@ public class ClientHandler {
 		});
 	});
 	//@formatter:off
-    public static final RenderType OVERLAY_LINES = RenderType.create(
+    public static final RenderType.CompositeRenderType OVERLAY_LINES = RenderType.create(
 			"overlay_lines",
-			RenderSetup.builder(RenderPipelines.LINES)
-					.setLayeringTransform(LayeringTransform.VIEW_OFFSET_Z_LAYERING)
-					.setOutputTarget(OutputTarget.OUTLINE_TARGET)
-					.createRenderSetup());
+			1536,
+			RenderPipelines.LINES,
+			RenderType.CompositeState.builder()
+				.setLineState(new RenderStateShard.LineStateShard(OptionalDouble.empty()))
+				.setLayeringState(RenderStateShard.VIEW_OFFSET_Z_LAYERING)
+				.setOutputState(RenderStateShard.OUTLINE_TARGET)
+				.createCompositeState(false));
 	//@formatter:on
 
 	private ClientHandler() {}
@@ -260,9 +256,7 @@ public class ClientHandler {
 		onRegisterItemTintSources();
 		onFMLClientSetup();
 		registerMenuScreens();
-		LayerToggleHandler.init();
 		registerGuiLayers();
-		registerPipRenderers();
 		registerEntityRenderers();
 		registerLayerDefinitions();
 		registerParticleProviders();
@@ -319,56 +313,49 @@ public class ClientHandler {
 	}
 
 	private static void onFMLClientSetup() {
-		ChunkSectionLayer cutout = ChunkSectionLayer.CUTOUT;
-		ChunkSectionLayer translucent = ChunkSectionLayer.TRANSLUCENT;
+		RenderType cutout = RenderType.cutout();
+		RenderType cutoutMipped = RenderType.cutoutMipped();
+		RenderType translucent = RenderType.translucent();
 
-		BlockRenderLayerMap.putFluid(SCContent.FAKE_WATER.get(), translucent);
-		BlockRenderLayerMap.putFluid(SCContent.FLOWING_FAKE_WATER.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_COPPER_BARS.get(), cutout);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_EXPOSED_COPPER_BARS.get(), cutout);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_WEATHERED_COPPER_BARS.get(), cutout);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_OXIDIZED_COPPER_BARS.get(), cutout);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_IRON_BARS.get(), cutout);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_LIGHTNING_ROD.get(), cutout);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_EXPOSED_LIGHTNING_ROD.get(), cutout);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_WEATHERED_LIGHTNING_ROD.get(), cutout);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_OXIDIZED_LIGHTNING_ROD.get(), cutout);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_WHITE_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_ORANGE_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_MAGENTA_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_LIGHT_BLUE_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_YELLOW_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_LIME_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_PINK_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_GRAY_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_LIGHT_GRAY_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_CYAN_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_PURPLE_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_BLUE_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_BROWN_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_GREEN_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_RED_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_BLACK_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_WHITE_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_ORANGE_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_MAGENTA_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_LIGHT_BLUE_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_YELLOW_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_LIME_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_PINK_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_GRAY_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_LIGHT_GRAY_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_CYAN_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_PURPLE_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_BLUE_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_BROWN_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_GREEN_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_RED_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_BLACK_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_PALE_MOSS_CARPET.get(), cutout);
-		BlockRenderLayerMap.putBlock(SCContent.TRACK_MINE.get(), cutout);
+		BlockRenderLayerMap.INSTANCE.putFluid(SCContent.FAKE_WATER.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putFluid(SCContent.FLOWING_FAKE_WATER.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_GLASS.get(), cutout);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_GLASS_PANE.get(), cutoutMipped);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_IRON_BARS.get(), cutoutMipped);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_WHITE_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_ORANGE_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_MAGENTA_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_LIGHT_BLUE_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_YELLOW_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_LIME_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_PINK_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_GRAY_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_LIGHT_GRAY_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_CYAN_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_PURPLE_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_BLUE_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_BROWN_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_GREEN_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_RED_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_BLACK_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_WHITE_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_ORANGE_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_MAGENTA_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_LIGHT_BLUE_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_YELLOW_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_LIME_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_PINK_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_GRAY_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_LIGHT_GRAY_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_CYAN_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_PURPLE_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_BLUE_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_BROWN_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_GREEN_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_RED_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_BLACK_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_PALE_MOSS_CARPET.get(), cutout);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.TRACK_MINE.get(), cutout);
 	}
 
 	private static void registerMenuScreens() {
@@ -390,34 +377,30 @@ public class ClientHandler {
 		MenuScreens.register(SCContent.SINGLE_LENS_MENU.get(), SingleLensScreen::new);
 		MenuScreens.register(SCContent.LASER_BLOCK_MENU.get(), LaserBlockScreen::new);
 		MenuScreens.register(SCContent.REINFORCED_LECTERN_MENU.get(), ReinforcedLecternScreen::new);
-		MenuScreens.register(SCContent.SECURE_TRADING_STATION_MENU.get(), SecureTradingStationScreen::new);
 	}
 
 	private static void registerGuiLayers() {
-		HudElementRegistry.addLast(CAMERA_LAYER, LayerToggleHandler.wrap(CAMERA_LAYER, SCClientEventHandler::cameraOverlay));
+		LayerToggleHandler.init(CAMERA_LAYER, SCClientEventHandler::cameraOverlay);
 		LayerToggleHandler.disable(CAMERA_LAYER);
 	}
 
-	private static void registerPipRenderers() {
-		SpecialGuiElementRegistry.register(ctx -> new GuiBlockModelRenderer(ctx.vertexConsumers()));
-	}
 
 	private static void registerEntityRenderers() {
-		EntityRenderers.register(SCContent.BOUNCING_BETTY_ENTITY.get(), BouncingBettyRenderer::new);
-		EntityRenderers.register(SCContent.IMS_BOMB_ENTITY.get(), IMSBombRenderer::new);
-		EntityRenderers.register(SCContent.SECURITY_CAMERA_ENTITY.get(), NoopRenderer::new);
-		EntityRenderers.register(SCContent.SENTRY_ENTITY.get(), SentryRenderer::new);
-		EntityRenderers.register(SCContent.BULLET_ENTITY.get(), BulletRenderer::new);
-		EntityRenderers.register(SCContent.OAK_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.OAK_CHEST_BOAT));
-		EntityRenderers.register(SCContent.SPRUCE_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.SPRUCE_CHEST_BOAT));
-		EntityRenderers.register(SCContent.BIRCH_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.BIRCH_CHEST_BOAT));
-		EntityRenderers.register(SCContent.JUNGLE_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.JUNGLE_CHEST_BOAT));
-		EntityRenderers.register(SCContent.ACACIA_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.ACACIA_CHEST_BOAT));
-		EntityRenderers.register(SCContent.DARK_OAK_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.DARK_OAK_CHEST_BOAT));
-		EntityRenderers.register(SCContent.MANGROVE_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.MANGROVE_CHEST_BOAT));
-		EntityRenderers.register(SCContent.CHERRY_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.CHERRY_CHEST_BOAT));
-		EntityRenderers.register(SCContent.PALE_OAK_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.PALE_OAK_CHEST_BOAT));
-		EntityRenderers.register(SCContent.BAMBOO_SECURITY_SEA_RAFT_ENTITY.get(), ctx -> new SecuritySeaRaftRenderer(ctx, ModelLayers.BAMBOO_CHEST_RAFT));
+		EntityRendererRegistry.register(SCContent.BOUNCING_BETTY_ENTITY.get(), BouncingBettyRenderer::new);
+		EntityRendererRegistry.register(SCContent.IMS_BOMB_ENTITY.get(), IMSBombRenderer::new);
+		EntityRendererRegistry.register(SCContent.SECURITY_CAMERA_ENTITY.get(), NoopRenderer::new);
+		EntityRendererRegistry.register(SCContent.SENTRY_ENTITY.get(), SentryRenderer::new);
+		EntityRendererRegistry.register(SCContent.BULLET_ENTITY.get(), BulletRenderer::new);
+		EntityRendererRegistry.register(SCContent.OAK_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.OAK_CHEST_BOAT));
+		EntityRendererRegistry.register(SCContent.SPRUCE_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.SPRUCE_CHEST_BOAT));
+		EntityRendererRegistry.register(SCContent.BIRCH_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.BIRCH_CHEST_BOAT));
+		EntityRendererRegistry.register(SCContent.JUNGLE_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.JUNGLE_CHEST_BOAT));
+		EntityRendererRegistry.register(SCContent.ACACIA_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.ACACIA_CHEST_BOAT));
+		EntityRendererRegistry.register(SCContent.DARK_OAK_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.DARK_OAK_CHEST_BOAT));
+		EntityRendererRegistry.register(SCContent.MANGROVE_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.MANGROVE_CHEST_BOAT));
+		EntityRendererRegistry.register(SCContent.CHERRY_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.CHERRY_CHEST_BOAT));
+		EntityRendererRegistry.register(SCContent.PALE_OAK_SECURITY_SEA_BOAT_ENTITY.get(), ctx -> new SecuritySeaBoatRenderer(ctx, ModelLayers.PALE_OAK_CHEST_BOAT));
+		EntityRendererRegistry.register(SCContent.BAMBOO_SECURITY_SEA_RAFT_ENTITY.get(), ctx -> new SecuritySeaRaftRenderer(ctx, ModelLayers.BAMBOO_CHEST_RAFT));
 		//normal renderers
 		BlockEntityRenderers.register(SCContent.BLOCK_POCKET_MANAGER_BLOCK_ENTITY.get(), BlockPocketManagerRenderer::new);
 		BlockEntityRenderers.register(SCContent.CLAYMORE_BLOCK_ENTITY.get(), ClaymoreRenderer::new);
@@ -428,10 +411,8 @@ public class ClientHandler {
 		BlockEntityRenderers.register(SCContent.REINFORCED_LECTERN_BLOCK_ENTITY.get(), LecternRenderer::new);
 		BlockEntityRenderers.register(SCContent.PROJECTOR_BLOCK_ENTITY.get(), ProjectorRenderer::new);
 		BlockEntityRenderers.register(SCContent.REINFORCED_PISTON_BLOCK_ENTITY.get(), ReinforcedPistonHeadRenderer::new);
-		BlockEntityRenderers.register(SCContent.REINFORCED_SHELF_BLOCK_ENTITY.get(), ShelfRenderer::new);
 		BlockEntityRenderers.register(SCContent.RETINAL_SCANNER_BLOCK_ENTITY.get(), RetinalScannerRenderer::new);
 		BlockEntityRenderers.register(SCContent.SECURE_REDSTONE_INTERFACE_BLOCK_ENTITY.get(), SecureRedstoneInterfaceRenderer::new);
-		BlockEntityRenderers.register(SCContent.SECURE_TRADING_STATION_BLOCK_ENTITY.get(), SecureTradingStationRenderer::new);
 		BlockEntityRenderers.register(SCContent.SECURITY_CAMERA_BLOCK_ENTITY.get(), SecurityCameraRenderer::new);
 		BlockEntityRenderers.register(SCContent.SECRET_HANGING_SIGN_BLOCK_ENTITY.get(), SecretHangingSignRenderer::new);
 		BlockEntityRenderers.register(SCContent.SECRET_SIGN_BLOCK_ENTITY.get(), SecretSignRenderer::new);
@@ -480,13 +461,14 @@ public class ClientHandler {
 
 	private static void onRegisterClientPayloadsHandlers() {
 		ClientPlayNetworking.registerGlobalReceiver(MenuDataPayload.TYPE, (payload, context) -> payload.handle());
+		ClientPlayNetworking.registerGlobalReceiver(BlockPocketManagerFailedActivation.TYPE, (payload, context) -> payload.handle(context::player));
+		ClientPlayNetworking.registerGlobalReceiver(PlayAlarmSound.TYPE, (payload, context) -> payload.handle(context::player));
 		ClientPlayNetworking.registerGlobalReceiver(InteractWithFrame.TYPE, (payload, context) -> payload.handle(context::player));
 		ClientPlayNetworking.registerGlobalReceiver(OpenScreen.TYPE, (payload, context) -> payload.handle(context::player));
 		ClientPlayNetworking.registerGlobalReceiver(RefreshDisguisableModel.TYPE, (payload, context) -> payload.handle(context::player));
 		ClientPlayNetworking.registerGlobalReceiver(SendManualPages.TYPE, (payload, context) -> payload.handle(context::player));
 		ClientPlayNetworking.registerGlobalReceiver(SetCameraView.TYPE, (payload, context) -> payload.handle(context::player));
 		ClientPlayNetworking.registerGlobalReceiver(SetTrophySystemTarget.TYPE, (payload, context) -> payload.handle(context::player));
-		ClientPlayNetworking.registerGlobalReceiver(ToggleAlarmSound.TYPE, (payload, context) -> payload.handle(context::player));
 		ClientPlayNetworking.registerGlobalReceiver(UpdateLaserColors.TYPE, (payload, context) -> payload.handle(context::player));
 		ClientPlayNetworking.registerGlobalReceiver(UpdateLogger.TYPE, (payload, context) -> payload.handle(context::player));
 	}
@@ -526,7 +508,7 @@ public class ClientHandler {
 		initTint();
 		blocksWithReinforcedTint.forEach((block, tint) -> ColorProviderRegistry.BLOCK.register((state, level, pos, tintIndex) -> {
 			if (tintIndex == 0)
-				return mixWithReinforcedTintIfEnabled(tint, safeGetBlockEntity(level, pos) instanceof IOwnable ownable ? ownable : null);
+				return mixWithReinforcedTintIfEnabled(tint);
 			else
 				return 0xFFFFFFFF;
 		}, block));
@@ -549,7 +531,7 @@ public class ClientHandler {
 			}
 
 			if (block instanceof IReinforcedBlock)
-				return mixWithReinforcedTintIfEnabled(0xFFFFFFFF, safeGetBlockEntity(level, pos) instanceof IOwnable ownable ? ownable : null);
+				return mixWithReinforcedTintIfEnabled(0xFFFFFFFF);
 			else
 				return 0xFFFFFFFF;
 		};
@@ -560,16 +542,16 @@ public class ClientHandler {
 			if (tintIndex == 1 && !state.getValue(SnowyDirtBlock.SNOWY)) {
 				int grassTint = level != null && pos != null ? BiomeColors.getAverageGrassColor(level, pos) : GrassColor.get(0.5D, 1.0D);
 
-				return mixWithReinforcedTintIfEnabled(grassTint, safeGetBlockEntity(level, pos) instanceof IOwnable ownable ? ownable : null);
+				return mixWithReinforcedTintIfEnabled(grassTint);
 			}
 
-			return mixWithReinforcedTintIfEnabled(0xFFFFFFFF, safeGetBlockEntity(level, pos) instanceof IOwnable ownable ? ownable : null);
+			return mixWithReinforcedTintIfEnabled(0xFFFFFFFF);
 		}, SCContent.REINFORCED_GRASS_BLOCK.get());
 		ColorProviderRegistry.BLOCK.register((state, level, pos, tintIndex) -> {
 			if (tintIndex == 1)
 				return level != null && pos != null ? BiomeColors.getAverageWaterColor(level, pos) : -1;
 
-			return mixWithReinforcedTintIfEnabled(0xFFFFFFFF, safeGetBlockEntity(level, pos) instanceof IOwnable ownable ? ownable : null);
+			return mixWithReinforcedTintIfEnabled(0xFFFFFFFF);
 		}, SCContent.REINFORCED_WATER_CAULDRON.get());
 		ColorProviderRegistry.BLOCK.register((state, level, pos, tintIndex) -> {
 			Direction direction = LaserFieldBlock.getFieldDirection(state);
@@ -584,18 +566,16 @@ public class ClientHandler {
 	}
 
 	public static int iterateFields(BlockAndTintGetter level, BlockPos pos, Direction direction, int range, Block block, Predicate<BlockEntity> beTest, Function<BlockEntity, ItemStack> lensGetter) {
-		if (level != null && pos != null) {
+		try {
+			return iterateFieldsInternal(level, pos, direction, range, block, beTest, lensGetter);
+		}
+		catch (Exception e1) {
+			direction = direction.getOpposite();
+
 			try {
 				return iterateFieldsInternal(level, pos, direction, range, block, beTest, lensGetter);
 			}
-			catch (Exception e1) {
-				direction = direction.getOpposite();
-
-				try {
-					return iterateFieldsInternal(level, pos, direction, range, block, beTest, lensGetter);
-				}
-				catch (Exception e2) {}
-			}
+			catch (Exception e2) {}
 		}
 
 		return -1;
@@ -624,11 +604,15 @@ public class ClientHandler {
 		return -1;
 	}
 
-	public static int mixWithReinforcedTintIfEnabled(int tint, IOwnable ownable) {
-		if (ownable == null)
-			return ARGB.multiply(tint, 0xFF000000 | TintMode.color());
+	public static int mixWithReinforcedTintIfEnabled(int tint) {
+		boolean tintReinforcedBlocks;
 
-		return TintMode.tint(Minecraft.getInstance().player, tint, ownable);
+		if (Minecraft.getInstance().level == null)
+			tintReinforcedBlocks = ConfigHandler.CLIENT.reinforcedBlockTint.get();
+		else
+			tintReinforcedBlocks = ConfigHandler.SERVER.forceReinforcedBlockTint.get() ? ConfigHandler.SERVER.reinforcedBlockTint.get() : ConfigHandler.CLIENT.reinforcedBlockTint.get();
+
+		return tintReinforcedBlocks ? ARGB.multiply(tint, 0xFF000000 | ConfigHandler.CLIENT.reinforcedBlockTintColor.get()) : tint;
 	}
 
 	public static Player getClientPlayer() {
@@ -661,6 +645,14 @@ public class ClientHandler {
 
 	public static void displaySCManualScreen() {
 		Minecraft.getInstance().setScreen(new SCManualScreen());
+	}
+
+	public static void displayEditSecretSignScreen(SecretSignBlockEntity be, boolean isFront) {
+		Minecraft.getInstance().setScreen(new SignEditScreen(be, isFront, Minecraft.getInstance().isTextFilteringEnabled()));
+	}
+
+	public static void displayEditSecretHangingSignScreen(SecretHangingSignBlockEntity be, boolean isFront) {
+		Minecraft.getInstance().setScreen(new HangingSignEditScreen(be, isFront, Minecraft.getInstance().isTextFilteringEnabled()));
 	}
 
 	public static void displaySonicSecuritySystemScreen(SonicSecuritySystemBlockEntity be) {
@@ -730,7 +722,7 @@ public class ClientHandler {
 	}
 
 	public static boolean isPlayerMountedOnCamera() {
-		return Minecraft.getInstance().getCameraEntity() instanceof SecurityCamera;
+		return Minecraft.getInstance().cameraEntity instanceof SecurityCamera;
 	}
 
 	public static void putDisguisedBeRenderer(BlockEntity disguisableBlockEntity, ItemStack stack) {
@@ -742,26 +734,19 @@ public class ClientHandler {
 	}
 
 	private record SRIKey(boolean sender, Direction direction) {
-		public Identifier location() {
+		public ResourceLocation location() {
 			return sender ? SRI_SENDER_ON_MODEL_LOCATION : SRI_RECEIVER_ON_MODEL_LOCATION;
 		}
 
 		public BlockModelRotation modelRotation() {
-			return BlockModelRotation.get(switch (direction) {
-				case DOWN -> OctahedralGroup.BLOCK_ROT_X_180;
-				case UP -> OctahedralGroup.IDENTITY;
-				case NORTH -> OctahedralGroup.BLOCK_ROT_X_90;
-				case SOUTH -> OctahedralGroup.BLOCK_ROT_X_90.compose(OctahedralGroup.BLOCK_ROT_Y_180);
-				case WEST -> OctahedralGroup.BLOCK_ROT_X_90.compose(OctahedralGroup.BLOCK_ROT_Y_270);
-				case EAST -> OctahedralGroup.BLOCK_ROT_X_90.compose(OctahedralGroup.BLOCK_ROT_Y_90);
-			});
+			return switch (direction) {
+				case DOWN -> BlockModelRotation.X180_Y0;
+				case UP -> BlockModelRotation.X0_Y0;
+				case NORTH -> BlockModelRotation.X90_Y0;
+				case SOUTH -> BlockModelRotation.X90_Y180;
+				case WEST -> BlockModelRotation.X90_Y270;
+				case EAST -> BlockModelRotation.X90_Y90;
+			};
 		}
-	}
-
-	private static BlockEntity safeGetBlockEntity(BlockAndTintGetter level, BlockPos pos) {
-		if (level != null && pos != null)
-			return level.getBlockEntity(pos);
-		else
-			return null;
 	}
 }

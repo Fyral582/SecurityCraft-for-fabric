@@ -36,12 +36,10 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.geforcemods.securitycraft.platform.ext.AuxiliaryLightManager;
 
 public class ReinforcedHopperBlock extends HopperBlock implements IReinforcedBlock, IOverlayDisplay, IDisguisable {
-	private final VoxelShape SUPPORT_SHAPE_ADDITION = Block.column(12, 11, 16);
 	private final float destroyTimeForOwner;
 
 	public ReinforcedHopperBlock(BlockBehaviour.Properties properties) {
@@ -65,14 +63,14 @@ public class ReinforcedHopperBlock extends HopperBlock implements IReinforcedBlo
 	@Override
 	public InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
 		//only allow the owner or players on the allowlist to access a reinforced hopper
-		if (!level.isClientSide() && level.getBlockEntity(pos) instanceof ReinforcedHopperBlockEntity be && (be.isOwnedBy(player) || be.isAllowed(player)))
+		if (!level.isClientSide && level.getBlockEntity(pos) instanceof ReinforcedHopperBlockEntity be && (be.isOwnedBy(player) || be.isAllowed(player)))
 			player.openMenu(be);
 
 		return InteractionResult.SUCCESS;
 	}
 
 	@Override
-	public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity, InsideBlockEffectApplier effectApplier, boolean stillInside) {
+	public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity, InsideBlockEffectApplier effectApplier) {
 		if (level.getBlockEntity(pos) instanceof ReinforcedHopperBlockEntity be)
 			HopperBlockEntity.entityInside(level, pos, state, entity, be);
 	}
@@ -84,7 +82,7 @@ public class ReinforcedHopperBlock extends HopperBlock implements IReinforcedBlo
 
 	@Override
 	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-		return level.isClientSide() ? null : createTickerHelper(type, SCContent.REINFORCED_HOPPER_BLOCK_ENTITY.get(), ReinforcedHopperBlockEntity::pushItemsTick);
+		return level.isClientSide ? null : createTickerHelper(type, SCContent.REINFORCED_HOPPER_BLOCK_ENTITY.get(), ReinforcedHopperBlockEntity::pushItemsTick);
 	}
 
 	@Override
@@ -100,16 +98,6 @@ public class ReinforcedHopperBlock extends HopperBlock implements IReinforcedBlo
 			return disguisedState.getShape(level, pos, ctx);
 		else
 			return super.getShape(state, level, pos, ctx);
-	}
-
-	@Override
-	protected VoxelShape getBlockSupportShape(BlockState state, BlockGetter level, BlockPos pos) {
-		BlockState disguisedState = IDisguisable.getDisguisedBlockState(level.getBlockEntity(pos)).orElse(state);
-
-		if (disguisedState.getBlock() != this)
-			return disguisedState.getBlockSupportShape(level, pos);
-		else //Fill in the hopper's top hole, to allow redstone to be placed on top of reinforced hoppers. The vanilla hopper currently doesn't need this because of hardcoding within RedStoneWireBlock
-			return Shapes.or(super.getBlockSupportShape(state, level, pos), SUPPORT_SHAPE_ADDITION);
 	}
 
 	@Override

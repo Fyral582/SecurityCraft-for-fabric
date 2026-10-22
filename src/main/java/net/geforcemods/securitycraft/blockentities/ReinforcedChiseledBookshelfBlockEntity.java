@@ -25,8 +25,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.entity.ChiseledBookShelfBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 
 public class ReinforcedChiseledBookshelfBlockEntity extends ChiseledBookShelfBlockEntity implements IOwnable, IModuleInventory, IPistonMoveListener {
 	private NonNullList<ItemStack> modules = NonNullList.withSize(getMaxNumberOfModules(), ItemStack.EMPTY);
@@ -54,27 +52,27 @@ public class ReinforcedChiseledBookshelfBlockEntity extends ChiseledBookShelfBlo
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
+	public void loadAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.loadAdditional(tag, lookupProvider);
 
 		owner.load(tag);
-		readModuleInventory(modules, tag);
+		modules = readModuleInventory(tag, lookupProvider);
 		moduleStates = readModuleStates(tag);
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
-		super.saveAdditional(tag);
+	public void saveAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.saveAdditional(tag, lookupProvider);
 
 		if (owner != null)
 			owner.save(tag, needsValidation());
 
-		writeModuleInventory(tag);
+		writeModuleInventory(tag, lookupProvider);
 		writeModuleStates(tag);
 	}
 
 	@Override
-	public void prePistonPushSideEffects(BlockPos pos) {
+	public void prePistonPushSideEffects(BlockPos pos, BlockState state) {
 		clearContent(); //Clear the books from the block before it is moved by a piston to prevent book duplication
 	}
 

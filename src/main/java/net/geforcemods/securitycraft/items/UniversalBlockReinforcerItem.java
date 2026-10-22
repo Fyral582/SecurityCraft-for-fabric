@@ -1,7 +1,6 @@
 package net.geforcemods.securitycraft.items;
 
 import net.geforcemods.securitycraft.SCContent;
-import net.geforcemods.securitycraft.SecurityCraft;
 import net.geforcemods.securitycraft.api.IModuleInventory;
 import net.geforcemods.securitycraft.api.IOwnable;
 import net.geforcemods.securitycraft.api.IReinforcedBlock;
@@ -19,11 +18,11 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.ProblemReporter;
-import net.minecraft.world.Clearable;
+import net.minecraft.world.Container;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -36,8 +35,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.DispenserBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.LecternBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.TagValueInput;
 
 public class UniversalBlockReinforcerItem extends Item {
 	public UniversalBlockReinforcerItem(Item.Properties properties) {
@@ -72,7 +71,7 @@ public class UniversalBlockReinforcerItem extends Item {
 	public InteractionResult use(Level level, Player player, InteractionHand hand) {
 		ItemStack heldItem = player.getItemInHand(hand);
 
-		if (!level.isClientSide()) {
+		if (!level.isClientSide) {
 			maybeRemoveMending(level.registryAccess(), heldItem);
 			player.openMenu(new MenuProvider() {
 				@Override
@@ -100,8 +99,8 @@ public class UniversalBlockReinforcerItem extends Item {
 		if (!player.isCreative() && level.mayInteract(player, pos)) {
 			boolean result = convertBlock(state, level, stack, pos, player, new Owner(player));
 
-			if (result && !level.isClientSide())
-				stack.hurtAndBreak(1, player, player.getUsedItemHand().asEquipmentSlot());
+			if (result && !level.isClientSide)
+				stack.hurtAndBreak(1, player, LivingEntity.getSlotForHand(player.getUsedItemHand()));
 
 			return result;
 		}
@@ -121,44 +120,41 @@ public class UniversalBlockReinforcerItem extends Item {
 			convertedState = rb.convertToVanilla(level, pos, state);
 
 		if (convertedState != null) {
-			if (level.getBlockEntity(pos) instanceof IOwnable ownable && ((player != null && !ownable.isOwnedBy(player)) || !ownable.isOwnedBy(owner)))
+			BlockEntity be = level.getBlockEntity(pos);
+			CompoundTag tag = null;
+
+			if (be instanceof IOwnable ownable && ((player != null && !ownable.isOwnedBy(player)) || !ownable.isOwnedBy(owner)))
 				return false;
 
-			if (!level.isClientSide()) {
-				convertStateWhileRetainingData(level, pos, convertedState);
+			if (!level.isClientSide) {
+				if (be != null) {
+					tag = be.saveWithoutMetadata(level.registryAccess());
 
-				if (isReinforcing && level.getBlockEntity(pos) instanceof IOwnable ownable)
-					ownable.setOwner(owner.getUUID(), owner.getName());
+					if (be instanceof IModuleInventory inv)
+						inv.dropAllModules();
+
+					if (be instanceof Container container)
+						container.clearContent();
+					else if (be instanceof LecternBlockEntity lectern)
+						lectern.clearContent();
+				}
+
+				level.setBlockAndUpdate(pos, convertedState);
+				be = level.getBlockEntity(pos);
+
+				if (be != null) { //in case the converted block gets removed immediately after it's set
+					if (tag != null)
+						be.loadWithComponents(tag, level.registryAccess());
+
+					if (isReinforcing)
+						((IOwnable) be).setOwner(owner.getUUID(), owner.getName());
+				}
 			}
 
 			return true;
 		}
 
 		return false;
-	}
-
-	public static void convertStateWhileRetainingData(Level level, BlockPos pos, BlockState convertedState) {
-		BlockEntity be = level.getBlockEntity(pos);
-		CompoundTag tag = null;
-
-		if (be != null) {
-			tag = be.saveWithoutMetadata(level.registryAccess());
-
-			if (be instanceof IModuleInventory inv)
-				inv.dropAllModules();
-
-			if (be instanceof Clearable clearable)
-				clearable.clearContent();
-		}
-
-		level.setBlockAndUpdate(pos, convertedState);
-		be = level.getBlockEntity(pos);
-
-		if (be != null && tag != null) { //In case the converted block gets removed immediately after it's set
-			try (ProblemReporter.ScopedCollector problemReporter = new ProblemReporter.ScopedCollector(be.problemPath(), SecurityCraft.LOGGER)) {
-				be.loadWithComponents(TagValueInput.create(problemReporter, level.registryAccess(), tag));
-			}
-		}
 	}
 
 	public static boolean isReinforcing(ItemStack stack) {

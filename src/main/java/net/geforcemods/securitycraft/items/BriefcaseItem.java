@@ -2,14 +2,12 @@ package net.geforcemods.securitycraft.items;
 
 import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
 import net.geforcemods.securitycraft.SCContent;
-import net.geforcemods.securitycraft.api.Owner;
 import net.geforcemods.securitycraft.components.OwnerData;
 import net.geforcemods.securitycraft.components.PasscodeData;
 import net.geforcemods.securitycraft.inventory.BriefcaseMenu;
 import net.geforcemods.securitycraft.inventory.ItemContainer;
 import net.geforcemods.securitycraft.network.client.OpenScreen;
 import net.geforcemods.securitycraft.util.PasscodeUtils;
-import net.geforcemods.securitycraft.util.PlayerUtils;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -48,7 +46,7 @@ public class BriefcaseItem extends Item {
 	}
 
 	private void handle(ItemStack stack, Level level, Player player) {
-		if (!level.isClientSide())
+		if (!level.isClientSide)
 			PacketDistributor.sendToPlayer((ServerPlayer) player, new OpenScreen(stack.has(SCContent.PASSCODE_DATA) ? OpenScreen.DataType.CHECK_PASSCODE_FOR_BRIEFCASE : OpenScreen.DataType.SET_PASSCODE_FOR_BRIEFCASE));
 	}
 
@@ -73,12 +71,13 @@ public class BriefcaseItem extends Item {
 	}
 
 	public static boolean isOwnedBy(ItemStack briefcase, Player player) {
-		OwnerData ownerData = briefcase.get(SCContent.OWNER_DATA);
+		OwnerData owner = briefcase.get(SCContent.OWNER_DATA);
 
-		if (ownerData != null) {
-			Owner briefcaseOwner = ownerData.toOwner();
+		if (owner != null) {
+			String ownerName = owner.name();
+			String ownerUUID = owner.uuid();
 
-			return ownerData.name().isEmpty() || (briefcaseOwner.isTreatedTheSameAs(new Owner(player)) && briefcaseOwner.isTreatedTheSameAs(PlayerUtils.getOwnerFromPlayerOrMask(player)));
+			return ownerName.isEmpty() || ownerUUID.equals(player.getUUID().toString()) || (ownerUUID.equals("ownerUUID") && ownerName.equals(player.getName().getString()));
 		}
 
 		return false;

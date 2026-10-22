@@ -9,7 +9,6 @@ import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.util.RandomSource;
 
 public class InterfaceHighlightParticle extends DustParticleBase<InterfaceHighlightParticleOptions> {
 	private final TextureAtlasSprite permanentSprite;
@@ -17,11 +16,11 @@ public class InterfaceHighlightParticle extends DustParticleBase<InterfaceHighli
 	protected InterfaceHighlightParticle(ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed, InterfaceHighlightParticleOptions options, SpriteSet sprites) {
 		super(level, x, y, z, xSpeed, ySpeed, zSpeed, options, sprites);
 		float colorChangeMultiplier = random.nextFloat() * 0.4F + 0.6F;
-		Vector3f color = options.getColor().mul(randomizeColor(1.0F, colorChangeMultiplier), new Vector3f());
+		Vector3f color = options.getColor().mul(randomizeColor(1.0F, colorChangeMultiplier));
 
 		hasPhysics = false;
-		setColor(color.x(), color.y(), color.z());
-		setParticleSpeed(options.getDirection().x(), options.getDirection().y(), options.getDirection().z());
+		setColor(color.x, color.y, color.z);
+		setParticleSpeed(options.getDirection().x, options.getDirection().y, options.getDirection().z);
 		permanentSprite = sprites.get(random);
 		setSprite(permanentSprite);
 		lifetime = (int) (20.0D / (random.nextDouble() * 0.3D + 0.7D)) - 5;
@@ -46,7 +45,7 @@ public class InterfaceHighlightParticle extends DustParticleBase<InterfaceHighli
 		}
 
 		@Override
-		public Particle createParticle(InterfaceHighlightParticleOptions options, ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed, RandomSource random) {
+		public Particle createParticle(InterfaceHighlightParticleOptions options, ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
 			return new InterfaceHighlightParticle(level, x, y, z, xSpeed, ySpeed, zSpeed, options, sprites);
 		}
 	}

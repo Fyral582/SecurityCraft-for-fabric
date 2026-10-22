@@ -71,6 +71,6 @@ public class ServerPlayerGameModeMixin {
 	private boolean securitycraft$onDestroyedByPlayer(ServerLevel level, BlockPos pos, boolean isMoving, Operation<Boolean> original, @Local(ordinal = 0) BlockState state) {
 		boolean canHarvest = SCEventHandler.onPlayerHarvestCheck(level, pos, player.hasCorrectToolForDrops(state));
 
-		return state.onDestroyedByPlayer(level, pos, player, player.getMainHandItem(), canHarvest, level.getFluidState(pos));
+		return state.onDestroyedByPlayer(level, pos, player, canHarvest, level.getFluidState(pos));
 	}
 }

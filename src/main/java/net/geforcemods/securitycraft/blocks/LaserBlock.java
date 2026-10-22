@@ -49,9 +49,7 @@ public class LaserBlock extends DisguisableBlock {
 	@Override
 	public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity entity, ItemStack stack) {
 		super.setPlacedBy(level, pos, state, entity, stack);
-
-		if (!level.isClientSide())
-			setLaser(level, pos, entity instanceof Player player ? player : null);
+		setLaser(level, pos, entity instanceof Player player ? player : null);
 	}
 
 	@Override
@@ -59,7 +57,7 @@ public class LaserBlock extends DisguisableBlock {
 		LaserBlockBlockEntity be = (LaserBlockBlockEntity) level.getBlockEntity(pos);
 
 		if (be.isOwnedBy(player)) {
-			if (!level.isClientSide()) {
+			if (!level.isClientSide) {
 				if (!be.isEnabled())
 					player.displayClientMessage(Utils.localize("gui.securitycraft:scManual.disabled"), true);
 				else
@@ -183,7 +181,7 @@ public class LaserBlock extends DisguisableBlock {
 
 	@Override
 	public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
-		if (!level.isClientSide() && state.getValue(POWERED)) {
+		if (!level.isClientSide && state.getValue(POWERED)) {
 			level.setBlockAndUpdate(pos, state.setValue(POWERED, false));
 			BlockUtils.updateIndirectNeighbors(level, pos, SCContent.LASER_BLOCK.get());
 		}

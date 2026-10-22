@@ -9,13 +9,12 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.InputWithModifiers;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
 
-public class CollapsibleTextList extends Button.Plain {
+public class CollapsibleTextList extends Button {
 	private static final Component PLUS = Component.literal("+ ");
 	private static final Component MINUS = Component.literal("- ");
 	private final int threeDotsWidth = Minecraft.getInstance().font.width("...");
@@ -60,13 +59,13 @@ public class CollapsibleTextList extends Button.Plain {
 	}
 
 	@Override
-	public void renderContents(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+	public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
 		isHovered &= extraHoverCheck.test(mouseX, mouseY);
 
 		Font font = Minecraft.getInstance().font;
 		int heightOffset = (height - 8) / 2;
 
-		guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, SPRITES.get(active, isHoveredOrFocused()), getX(), getY(), getWidth(), getHeight());
+		guiGraphics.blitSprite(RenderType::guiTextured, SPRITES.get(active, isHoveredOrFocused()), getX(), getY(), getWidth(), getHeight());
 		guiGraphics.drawCenteredString(font, getMessage(), getX() + font.width(getMessage()) / 2 + 3, getY() + heightOffset, getFGColor());
 
 		int renderedLines = 0;
@@ -100,7 +99,7 @@ public class CollapsibleTextList extends Button.Plain {
 			Screen currentScreen = Minecraft.getInstance().screen;
 
 			if (currentScreen != null)
-				guiGraphics.setTooltipForNextFrame(font, originalDisplayString, getX() + 1, getY() + height + 2);
+				guiGraphics.renderTooltip(font, originalDisplayString, getX() + 1, getY() + height + 2);
 		}
 	}
 
@@ -128,9 +127,9 @@ public class CollapsibleTextList extends Button.Plain {
 	}
 
 	@Override
-	public void onPress(InputWithModifiers input) {
+	public void onPress() {
 		switchOpenStatus();
-		super.onPress(input);
+		super.onPress();
 	}
 
 	@Override

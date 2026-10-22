@@ -27,8 +27,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.entity.HopperBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import net.geforcemods.securitycraft.platform.model.ModelData;
 
 public class ReinforcedHopperBlockEntity extends HopperBlockEntity implements IOwnable, IModuleInventory, IPistonMoveListener {
@@ -51,27 +49,27 @@ public class ReinforcedHopperBlockEntity extends HopperBlockEntity implements IO
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
+	public void loadAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.loadAdditional(tag, lookupProvider);
 
 		owner.load(tag);
-		readModuleInventory(modules, tag);
+		modules = readModuleInventory(tag, lookupProvider);
 		moduleStates = readModuleStates(tag);
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
-		super.saveAdditional(tag);
+	public void saveAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.saveAdditional(tag, lookupProvider);
 
 		if (owner != null)
 			owner.save(tag, needsValidation());
 
-		writeModuleInventory(tag);
+		writeModuleInventory(tag, lookupProvider);
 		writeModuleStates(tag);
 	}
 
 	@Override
-	public void prePistonPushSideEffects(BlockPos pos) {
+	public void prePistonPushSideEffects(BlockPos pos, BlockState state) {
 		clearContent(); //Clear the items from the block before it is moved by a piston to prevent duplication
 	}
 
@@ -86,8 +84,8 @@ public class ReinforcedHopperBlockEntity extends HopperBlockEntity implements IO
 	}
 
 	@Override
-	public void onDataPacket(Connection net, ValueInput tag) {
-		super.onDataPacket(net, tag);
+	public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet, HolderLookup.Provider lookupProvider) {
+		super.onDataPacket(net, packet, lookupProvider);
 		DisguisableBlockEntity.onHandleUpdateTag(this);
 	}
 

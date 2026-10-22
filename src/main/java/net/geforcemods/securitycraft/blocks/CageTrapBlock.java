@@ -1,11 +1,15 @@
 package net.geforcemods.securitycraft.blocks;
 
+import java.util.function.Consumer;
+
 import net.geforcemods.securitycraft.SCContent;
+import net.geforcemods.securitycraft.api.IOwnable;
+import net.geforcemods.securitycraft.api.Owner;
 import net.geforcemods.securitycraft.blockentities.CageTrapBlockEntity;
 import net.geforcemods.securitycraft.blockentities.DisguisableBlockEntity;
+import net.geforcemods.securitycraft.blockentities.ReinforcedIronBarsBlockEntity;
 import net.geforcemods.securitycraft.items.ModuleItem;
 import net.geforcemods.securitycraft.misc.ModuleType;
-import net.geforcemods.securitycraft.util.LevelUtils;
 import net.geforcemods.securitycraft.util.PlayerUtils;
 import net.geforcemods.securitycraft.util.Utils;
 import net.minecraft.ChatFormatting;
@@ -16,6 +20,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.InsideBlockEffectApplier;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -27,12 +32,11 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityTicker;
-import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -82,12 +86,13 @@ public class CageTrapBlock extends DisguisableBlock {
 	}
 
 	@Override
-	public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity, InsideBlockEffectApplier effectApplier, boolean stillInside) {
-		if (!level.isClientSide() && level.getBlockEntity(pos) instanceof CageTrapBlockEntity cageTrap) {
+	public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity, InsideBlockEffectApplier effectApplier) {
+		if (!level.isClientSide) {
+			CageTrapBlockEntity cageTrap = (CageTrapBlockEntity) level.getBlockEntity(pos);
+
 			if (cageTrap.isDisabled())
 				return;
 
-			String ownerName = cageTrap.getOwner().getName();
 			boolean isPlayer = entity instanceof Player;
 
 			if (isPlayer || (entity instanceof Mob && cageTrap.capturesMobs())) {
@@ -100,7 +105,30 @@ public class CageTrapBlock extends DisguisableBlock {
 				if (state.getValue(DEACTIVATED))
 					return;
 
-				cageTrap.assembleIronBars();
+				BlockPos topMiddle = pos.above(4);
+				Owner owner = cageTrap.getOwner();
+				String ownerUUID = owner.getUUID();
+				String ownerName = owner.getName();
+
+				loopIronBarPositions(pos.mutable(), barPos -> {
+					if (level.isEmptyBlock(barPos) || level.getBlockState(barPos).canBeReplaced()) {
+						if (barPos.equals(topMiddle))
+							level.setBlockAndUpdate(barPos, SCContent.HORIZONTAL_REINFORCED_IRON_BARS.get().defaultBlockState());
+						else
+							level.setBlockAndUpdate(barPos, SCContent.REINFORCED_IRON_BARS.get().getStateForPlacement(level, barPos));
+
+						BlockEntity barBe = level.getBlockEntity(barPos);
+
+						if (barBe instanceof IOwnable ownable)
+							ownable.setOwner(ownerUUID, ownerName);
+
+						if (barBe instanceof ReinforcedIronBarsBlockEntity ironBarsBe)
+							ironBarsBe.setCanDrop(false);
+					}
+				});
+				level.setBlockAndUpdate(pos, state.setValue(DEACTIVATED, true));
+				level.playSound(null, pos, SoundEvents.ANVIL_USE, SoundSource.BLOCKS, 3.0F, 1.0F);
+				level.gameEvent(null, GameEvent.BLOCK_PLACE, pos);
 
 				if (isPlayer && PlayerUtils.isPlayerOnline(ownerName))
 					PlayerUtils.sendMessageToPlayer(ownerName, Utils.localize(SCContent.CAGE_TRAP.get().getDescriptionId()), Utils.localize("messages.securitycraft:cageTrap.captured", ((Player) entity).getName(), Utils.getFormattedCoordinates(pos)), ChatFormatting.BLACK);
@@ -115,7 +143,7 @@ public class CageTrapBlock extends DisguisableBlock {
 				level.setBlockAndUpdate(pos, state.setValue(DEACTIVATED, true));
 
 				if (!player.isCreative())
-					stack.hurtAndBreak(1, player, hand.asEquipmentSlot());
+					stack.hurtAndBreak(1, player, LivingEntity.getSlotForHand(hand));
 
 				level.playSound(null, pos, SoundEvents.SHEEP_SHEAR, SoundSource.BLOCKS, 1.0F, 1.0F);
 				return InteractionResult.SUCCESS;
@@ -150,15 +178,43 @@ public class CageTrapBlock extends DisguisableBlock {
 	}
 
 	@Override
-	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-		return !level.isClientSide() ? createTickerHelper(type, SCContent.CAGE_TRAP_BLOCK_ENTITY.get(), LevelUtils::blockEntityTicker) : null;
+	public boolean onDestroyedByPlayer(BlockState state, Level level, BlockPos pos, Player player, boolean willHarvest, FluidState fluid) {
+		disassembleIronBars(state, level, pos, level.getBlockEntity(pos) instanceof CageTrapBlockEntity be ? be.getOwner() : null);
+		return super.onDestroyedByPlayer(state, level, pos, player, willHarvest, fluid);
 	}
 
-	@Override
-	public boolean onDestroyedByPlayer(BlockState state, Level level, BlockPos pos, Player player, ItemStack stack, boolean willHarvest, FluidState fluid) {
-		if (!level.isClientSide() && level.getBlockEntity(pos) instanceof CageTrapBlockEntity be)
-			be.disassembleIronBars();
+	public static void disassembleIronBars(BlockState state, Level level, BlockPos cageTrapPos, Owner cageTrapOwner) {
+		if (cageTrapOwner != null && !level.isClientSide && state.getValue(CageTrapBlock.DEACTIVATED)) {
+			loopIronBarPositions(cageTrapPos.mutable(), barPos -> {
+				BlockEntity barBe = level.getBlockEntity(barPos);
 
-		return super.onDestroyedByPlayer(state, level, pos, player, stack, willHarvest, fluid);
+				if (barBe instanceof IOwnable ownableBar && cageTrapOwner.owns(ownableBar)) {
+					Block barBlock = level.getBlockState(barPos).getBlock();
+
+					if (barBlock == SCContent.REINFORCED_IRON_BARS.get() || barBlock == SCContent.HORIZONTAL_REINFORCED_IRON_BARS.get())
+						level.destroyBlock(barPos, false);
+				}
+			});
+		}
+	}
+
+	public static void loopIronBarPositions(BlockPos.MutableBlockPos pos, Consumer<BlockPos.MutableBlockPos> positionAction) {
+		pos.move(-1, 1, -1);
+
+		for (int y = 0; y < 4; y++) {
+			for (int x = 0; x < 3; x++) {
+				for (int z = 0; z < 3; z++) {
+					//skip the middle column above the cage trap, but not the place where the horizontal iron bars are
+					if (!(x == 1 && z == 1 && y != 3))
+						positionAction.accept(pos);
+
+					pos.move(0, 0, 1);
+				}
+
+				pos.move(1, 0, -3);
+			}
+
+			pos.move(-3, 1, 0);
+		}
 	}
 }

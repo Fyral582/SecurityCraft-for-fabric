@@ -7,6 +7,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import net.geforcemods.securitycraft.SCClientEventHandler;
+import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.GameRenderer;
 
 /**
@@ -15,7 +16,7 @@ import net.minecraft.client.renderer.GameRenderer;
 @Mixin(GameRenderer.class)
 public class GameRendererHandMixin {
 	@Inject(method = "renderItemInHand", at = @At("HEAD"), cancellable = true)
-	private void securitycraft$onRenderHand(float partialTick, boolean sleeping, Matrix4f projectionMatrix, CallbackInfo ci) {
+	private void securitycraft$onRenderHand(Camera camera, float partialTick, Matrix4f projectionMatrix, CallbackInfo ci) {
 		if (SCClientEventHandler.renderHandEvent())
 			ci.cancel();
 	}

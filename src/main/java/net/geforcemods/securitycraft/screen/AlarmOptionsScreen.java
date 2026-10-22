@@ -18,16 +18,14 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
-import net.minecraft.util.CommonColors;
+import net.minecraft.resources.ResourceLocation;
 
 public class AlarmOptionsScreen extends Screen {
-	private static final Identifier GUI_TEXTURE = SecurityCraft.resLoc("textures/gui/container/alarm_options.png");
-	private static final Identifier RESET_SPRITE = SecurityCraft.resLoc("widget/reset");
-	private static final Identifier RESET_INACTIVE_SPRITE = SecurityCraft.resLoc("widget/reset_inactive");
+	private static final ResourceLocation GUI_TEXTURE = SecurityCraft.resLoc("textures/gui/container/alarm_options.png");
+	private static final ResourceLocation RESET_SPRITE = SecurityCraft.resLoc("widget/reset");
+	private static final ResourceLocation RESET_INACTIVE_SPRITE = SecurityCraft.resLoc("widget/reset_inactive");
 	private final Component soundLengthText = Component.translatable("gui.securitycraft:alarm.sound_length").withStyle(ChatFormatting.UNDERLINE);
 	private final AlarmScreen alarmScreen;
 	private int imageWidth = 226, imageHeight = 112, leftPos, topPos;
@@ -57,13 +55,13 @@ public class AlarmOptionsScreen extends Screen {
 		soundLengthTextXPosition = width / 2 - combinedTextAndBoxWidth / 2;
 		soundLengthEditBox = addRenderableWidget(new SoundLengthEditBox(font, soundLengthTextXPosition + soundLengthTextWidthPlusBuffer, buttonY - 15, timeEditBoxWidth, 12, Component.empty()));
 		soundLengthEditBox.setFilter(string -> string.matches("[0-9:]*"));
-		minusMinute = addRenderableWidget(Button.builder(Component.translatable("gui.securitycraft:alarm.minus_one_minute"), b -> changeSoundLength(-60)).pos(buttonsX, buttonY).size(32, buttonHeight).build());
-		minusTenSeconds = addRenderableWidget(Button.builder(Component.translatable("gui.securitycraft:alarm.minus_ten_seconds"), b -> changeSoundLength(-10)).pos(buttonsX + 34, buttonY).size(32, buttonHeight).build());
-		minusSecond = addRenderableWidget(Button.builder(Component.translatable("gui.securitycraft:alarm.minus_one_second"), b -> changeSoundLength(-1)).pos(buttonsX + 68, buttonY).size(32, buttonHeight).build());
+		minusMinute = addRenderableWidget(new Button(buttonsX, buttonY, 32, buttonHeight, Component.translatable("gui.securitycraft:alarm.minus_one_minute"), b -> changeSoundLength(-60), Button.DEFAULT_NARRATION));
+		minusTenSeconds = addRenderableWidget(new Button(buttonsX + 34, buttonY, 32, buttonHeight, Component.translatable("gui.securitycraft:alarm.minus_ten_seconds"), b -> changeSoundLength(-10), Button.DEFAULT_NARRATION));
+		minusSecond = addRenderableWidget(new Button(buttonsX + 68, buttonY, 32, buttonHeight, Component.translatable("gui.securitycraft:alarm.minus_one_second"), b -> changeSoundLength(-1), Button.DEFAULT_NARRATION));
 		reset = addRenderableWidget(new ActiveBasedTextureButton(buttonsX + 102, buttonY, 12, buttonHeight, RESET_SPRITE, RESET_INACTIVE_SPRITE, 1, 2, 10, 10, b -> changeSoundLength(0)));
-		plusSecond = addRenderableWidget(Button.builder(Component.translatable("gui.securitycraft:alarm.plus_one_second"), b -> changeSoundLength(1)).pos(buttonsX + 116, buttonY).size(32, buttonHeight).build());
-		plusTenSeconds = addRenderableWidget(Button.builder(Component.translatable("gui.securitycraft:alarm.plus_ten_seconds"), b -> changeSoundLength(10)).pos(buttonsX + 150, buttonY).size(32, buttonHeight).build());
-		plusMinute = addRenderableWidget(Button.builder(Component.translatable("gui.securitycraft:alarm.plus_one_minute"), b -> changeSoundLength(60)).pos(buttonsX + 184, buttonY).size(32, buttonHeight).build());
+		plusSecond = addRenderableWidget(new Button(buttonsX + 116, buttonY, 32, buttonHeight, Component.translatable("gui.securitycraft:alarm.plus_one_second"), b -> changeSoundLength(1), Button.DEFAULT_NARRATION));
+		plusTenSeconds = addRenderableWidget(new Button(buttonsX + 150, buttonY, 32, buttonHeight, Component.translatable("gui.securitycraft:alarm.plus_ten_seconds"), b -> changeSoundLength(10), Button.DEFAULT_NARRATION));
+		plusMinute = addRenderableWidget(new Button(buttonsX + 184, buttonY, 32, buttonHeight, Component.translatable("gui.securitycraft:alarm.plus_one_minute"), b -> changeSoundLength(60), Button.DEFAULT_NARRATION));
 		setSoundLength(alarmScreen.soundLength);
 		addRenderableWidget(new CallbackSlider(leftPos + imageWidth / 2 - 50, buttonY + 25, 100, 20, Utils.localize("gui.securitycraft:alarm.pitch", ""), Component.empty(), 0.5D, 2.0D, alarmScreen.pitch, 0.05D, 0, true, slider -> alarmScreen.pitch = (float) slider.getValue())).setFGColor(0xE0E0E0);
 	}
@@ -71,20 +69,20 @@ public class AlarmOptionsScreen extends Screen {
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
 		super.render(guiGraphics, mouseX, mouseY, partialTick);
-		guiGraphics.drawString(font, title, width / 2 - font.width(title) / 2, topPos + 6, CommonColors.DARK_GRAY, false);
-		guiGraphics.drawString(font, soundLengthText, soundLengthTextXPosition, topPos + 27, CommonColors.DARK_GRAY, false);
+		guiGraphics.drawString(font, title, width / 2 - font.width(title) / 2, topPos + 6, 0x404040, false);
+		guiGraphics.drawString(font, soundLengthText, soundLengthTextXPosition, topPos + 27, 0x404040, false);
 
 		if (alarmScreen.be.isPowered() && !alarmScreen.be.isDisabled()) {
 			int cooldownSeconds = (alarmScreen.be.getCooldown() - 1) / 20;
 			Component nextSoundText = Utils.localize("gui.securitycraft:alarm.nextSound", String.format("%02d:%02d", cooldownSeconds / 60, cooldownSeconds % 60 + 1));
 
-			guiGraphics.drawString(font, nextSoundText, width / 2 - font.width(nextSoundText) / 2, topPos + 95, CommonColors.DARK_GRAY, false);
+			guiGraphics.drawString(font, nextSoundText, width / 2 - font.width(nextSoundText) / 2, topPos + 95, 0x404040, false);
 		}
 	}
 
 	@Override
 	public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, GUI_TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
+		guiGraphics.blit(RenderType::guiTextured, GUI_TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
 	}
 
 	public void setSoundLength(int newSoundLength) {
@@ -119,13 +117,13 @@ public class AlarmOptionsScreen extends Screen {
 	}
 
 	@Override
-	public boolean keyPressed(KeyEvent event) {
-		if (minecraft.options.keyInventory.isActiveAndMatches(InputConstants.getKey(event))) {
+	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+		if (minecraft.options.keyInventory.isActiveAndMatches(InputConstants.getKey(keyCode, scanCode))) {
 			onClose();
 			return true;
 		}
 
-		return super.keyPressed(event);
+		return super.keyPressed(keyCode, scanCode, modifiers);
 	}
 
 	@Override
@@ -151,11 +149,11 @@ public class AlarmOptionsScreen extends Screen {
 		}
 
 		@Override
-		public boolean keyPressed(KeyEvent event) {
-			if (event.key() == GLFW.GLFW_KEY_ENTER || event.key() == GLFW.GLFW_KEY_KP_ENTER)
+		public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+			if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER)
 				checkAndProcessInput();
 
-			return super.keyPressed(event);
+			return super.keyPressed(keyCode, scanCode, modifiers);
 		}
 
 		@Override

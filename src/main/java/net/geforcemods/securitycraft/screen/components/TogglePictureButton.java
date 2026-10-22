@@ -1,22 +1,21 @@
 package net.geforcemods.securitycraft.screen.components;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.input.InputWithModifiers;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
-public class TogglePictureButton extends Button.Plain implements IToggleableButton {
-	private final Identifier[] sprites;
+public class TogglePictureButton extends Button implements IToggleableButton {
+	private final ResourceLocation[] sprites;
 	private final int toggleCount;
 	private final int drawOffset;
 	private final int drawWidth;
 	private final int drawHeight;
 	private int currentIndex = 0;
 
-	public TogglePictureButton(int xPos, int yPos, int width, int height, int drawOffset, int drawWidth, int drawHeight, int toggleCount, OnPress onPress, Identifier... sprites) {
+	public TogglePictureButton(int xPos, int yPos, int width, int height, int drawOffset, int drawWidth, int drawHeight, int toggleCount, OnPress onPress, ResourceLocation... sprites) {
 		super(xPos, yPos, width, height, Component.empty(), onPress, DEFAULT_NARRATION);
 
 		if (sprites.length != toggleCount)
@@ -30,23 +29,26 @@ public class TogglePictureButton extends Button.Plain implements IToggleableButt
 	}
 
 	@Override
-	public void renderContents(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		super.renderContents(guiGraphics, mouseX, mouseX, partialTicks);
+	public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+		if (visible) {
+			ResourceLocation sprite = getCurrentSprite();
 
-		Identifier sprite = getCurrentSprite();
+			isHovered = mouseX >= getX() && mouseY >= getY() && mouseX < getX() + width && mouseY < getY() + height;
+			guiGraphics.blitSprite(RenderType::guiTextured, SPRITES.get(active, isHoveredOrFocused()), getX(), getY(), getWidth(), getHeight());
 
-		if (sprite != null)
-			guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, getX() + drawOffset, getY() + drawOffset, drawWidth, drawHeight);
+			if (sprite != null)
+				guiGraphics.blitSprite(RenderType::guiTextured, sprite, getX() + drawOffset, getY() + drawOffset, drawWidth, drawHeight);
+		}
 	}
 
 	@Override
-	public void onPress(InputWithModifiers input) {
-		if (Minecraft.getInstance().hasShiftDown())
+	public void onPress() {
+		if (Screen.hasShiftDown())
 			setCurrentIndex(currentIndex - 1);
 		else
 			setCurrentIndex(currentIndex + 1);
 
-		super.onPress(input);
+		super.onPress();
 	}
 
 	@Override
@@ -66,7 +68,7 @@ public class TogglePictureButton extends Button.Plain implements IToggleableButt
 		currentIndex = Math.floorMod(newIndex, toggleCount);
 	}
 
-	public Identifier getCurrentSprite() {
+	public ResourceLocation getCurrentSprite() {
 		return sprites[getCurrentIndex()];
 	}
 }

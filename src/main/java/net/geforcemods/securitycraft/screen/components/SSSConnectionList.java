@@ -2,6 +2,7 @@ package net.geforcemods.securitycraft.screen.components;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import net.geforcemods.securitycraft.SecurityCraft;
 import net.geforcemods.securitycraft.screen.components.SSSConnectionList.ConnectionAccessor;
@@ -11,21 +12,19 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.util.CommonColors;
 import net.minecraft.world.Nameable;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.geforcemods.securitycraft.platform.gui.ScrollPanel;
 
 public class SSSConnectionList<T extends Screen & ConnectionAccessor> extends ScrollPanel {
-	private static final Identifier CANCEL_SPRITE = SecurityCraft.mcResLoc("container/beacon/cancel");
+	private static final ResourceLocation CANCEL_SPRITE = SecurityCraft.mcResLoc("container/beacon/cancel");
 	private static final int SLOT_HEIGHT = 12;
 	private final T parent;
 	private final List<ConnectionInfo> connectionInfo = new ArrayList<>();
@@ -91,7 +90,7 @@ public class SSSConnectionList<T extends Screen & ConnectionAccessor> extends Sc
 
 			guiGraphics.fill(min, slotTop - 2, max, slotTop + slotBuffer + 2, 0xFF808080);
 			guiGraphics.fill(min + 1, slotTop - 1, max - 1, slotTop + slotBuffer + 1, 0xFF000000);
-			guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, CANCEL_SPRITE, left + 2, slotTop - 2, 11, 11);
+			guiGraphics.blitSprite(RenderType::guiTextured, CANCEL_SPRITE, left + 2, slotTop - 2, 11, 11);
 		}
 
 		int i = 0;
@@ -99,12 +98,15 @@ public class SSSConnectionList<T extends Screen & ConnectionAccessor> extends Sc
 		for (ConnectionInfo info : connectionInfo) {
 			int yStart = relativeY + (SLOT_HEIGHT * i++);
 
-			guiGraphics.drawString(font, info.blockName, left + 13, yStart, 0xFFC6C6C6, false);
+			guiGraphics.drawString(font, info.blockName, left + 13, yStart, 0xC6C6C6, false);
 		}
+
+		guiGraphics.flush();
 	}
 
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+		guiGraphics.flush();
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
 
 		//draw tooltip for long block names
@@ -117,14 +119,14 @@ public class SSSConnectionList<T extends Screen & ConnectionAccessor> extends Sc
 			int baseY = top + border - (int) scrollDistance;
 
 			if (length + 13 >= width - 6) //6 = barWidth
-				guiGraphics.setTooltipForNextFrame(font, blockName, left + 1, baseY + (SLOT_HEIGHT * slotIndex + SLOT_HEIGHT));
+				guiGraphics.renderTooltip(font, List.of(blockName), Optional.empty(), left + 1, baseY + (SLOT_HEIGHT * slotIndex + SLOT_HEIGHT));
 
-			guiGraphics.drawString(font, Utils.getFormattedCoordinates(connectionInfo.get(slotIndex).globalPos.pos()), left + 13, top + height + 5, CommonColors.DARK_GRAY, false);
+			guiGraphics.drawString(font, Utils.getFormattedCoordinates(connectionInfo.get(slotIndex).globalPos.pos()), left + 13, top + height + 5, 4210752, false);
 		}
 	}
 
 	@Override
-	protected boolean clickPanel(double mouseX, double mouseY, MouseButtonEvent event) {
+	protected boolean clickPanel(double mouseX, double mouseY, int button) {
 		int slotIndex = (int) (mouseY + (border / 2)) / SLOT_HEIGHT;
 
 		if (slotIndex >= 0 && slotIndex < connectionInfo.size()) {

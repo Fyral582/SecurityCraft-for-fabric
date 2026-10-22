@@ -4,12 +4,10 @@ import net.geforcemods.securitycraft.SCEventHandler;
 import java.util.Optional;
 
 import net.geforcemods.securitycraft.SCContent;
-import net.geforcemods.securitycraft.SecurityCraft;
 import net.geforcemods.securitycraft.api.IDisguisable;
 import net.geforcemods.securitycraft.api.IModuleInventory;
 import net.geforcemods.securitycraft.api.IOwnable;
 import net.geforcemods.securitycraft.api.IPasscodeConvertible;
-import net.geforcemods.securitycraft.api.Option;
 import net.geforcemods.securitycraft.blockentities.KeypadChestBlockEntity;
 import net.geforcemods.securitycraft.compat.IOverlayDisplay;
 import net.geforcemods.securitycraft.misc.ModuleType;
@@ -25,10 +23,8 @@ import net.minecraft.core.Holder.Reference;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.stats.Stats;
 import net.minecraft.util.Mth;
-import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.CompoundContainer;
 import net.minecraft.world.Container;
 import net.minecraft.world.InteractionResult;
@@ -59,8 +55,6 @@ import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.ChestType;
-import net.minecraft.world.level.material.Fluids;
-import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -112,7 +106,7 @@ public class KeypadChestBlock extends ChestBlock implements IOverlayDisplay, IDi
 	private final float destroyTimeForOwner;
 
 	public KeypadChestBlock(BlockBehaviour.Properties properties) {
-		super(SCContent.KEYPAD_CHEST_BLOCK_ENTITY, SoundEvents.CHEST_OPEN, SoundEvents.CHEST_CLOSE, OwnableBlock.withReinforcedDestroyTime(properties));
+		super(SCContent.KEYPAD_CHEST_BLOCK_ENTITY, OwnableBlock.withReinforcedDestroyTime(properties));
 		destroyTimeForOwner = OwnableBlock.getStoredDestroyTime();
 	}
 
@@ -123,7 +117,7 @@ public class KeypadChestBlock extends ChestBlock implements IOverlayDisplay, IDi
 
 	@Override
 	public InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-		if (!level.isClientSide() && !isBlocked(level, pos)) {
+		if (!level.isClientSide && !isBlocked(level, pos)) {
 			KeypadChestBlockEntity be = (KeypadChestBlockEntity) level.getBlockEntity(pos);
 
 			if (be.verifyPasscodeSet(level, pos, be, player)) {
@@ -146,7 +140,7 @@ public class KeypadChestBlock extends ChestBlock implements IOverlayDisplay, IDi
 	}
 
 	public void activate(BlockState state, Level level, BlockPos pos, Player player) {
-		if (!level.isClientSide()) {
+		if (!level.isClientSide) {
 			KeypadChestBlock block = (KeypadChestBlock) state.getBlock();
 			MenuProvider menuProvider = block.getMenuProvider(state, level, pos);
 
@@ -157,9 +151,6 @@ public class KeypadChestBlock extends ChestBlock implements IOverlayDisplay, IDi
 		}
 	}
 
-	@SuppressWarnings({
-			"rawtypes", "unchecked"
-	})
 	@Override
 	public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity entity, ItemStack stack) {
 		super.setPlacedBy(level, pos, state, entity, stack);
@@ -176,13 +167,7 @@ public class KeypadChestBlock extends ChestBlock implements IOverlayDisplay, IDi
 						thisBe.insertModule(be.getModule(type), false);
 					}
 
-					//safe, because both blocks are the same and thus have the same options
-					Option[] options = be.customOptions();
-					Option[] thisOptions = thisBe.customOptions();
-
-					for (int i = 0; i < options.length; i++) {
-						thisOptions[i].setValue(options[i].get());
-					}
+					thisBe.readOptions(be.writeOptions(new CompoundTag()));
 
 					if (be.getSaltKey() != null)
 						thisBe.setSaltKey(SaltData.copySaltToNewKey(be.getSaltKey()));
@@ -194,38 +179,11 @@ public class KeypadChestBlock extends ChestBlock implements IOverlayDisplay, IDi
 	}
 
 	@Override
-	public BlockState getStateForPlacement(BlockPlaceContext ctx) {
-		ChestType type = ChestType.SINGLE;
-		Direction chestFacing = ctx.getHorizontalDirection().getOpposite();
-		Level level = ctx.getLevel();
-		BlockPos clickedPos = ctx.getClickedPos();
-		boolean isSneaking = ctx.isSecondaryUseActive();
-		Direction clickedFace = ctx.getClickedFace();
-
-		if (clickedFace.getAxis().isHorizontal() && isSneaking) {
-			Direction neighborChestFacing = candidatePartnerFacing(level, clickedPos, clickedFace.getOpposite(), ctx.getPlayer());
-
-			if (neighborChestFacing != null && neighborChestFacing.getAxis() != clickedFace.getAxis()) {
-				chestFacing = neighborChestFacing;
-				type = neighborChestFacing.getCounterClockWise() == clickedFace.getOpposite() ? ChestType.RIGHT : ChestType.LEFT;
-			}
-		}
-
-		if (type == ChestType.SINGLE && !isSneaking) {
-			if (chestFacing == candidatePartnerFacing(level, clickedPos, chestFacing.getClockWise(), ctx.getPlayer()))
-				type = ChestType.LEFT;
-			else
-				type = chestFacing == candidatePartnerFacing(level, clickedPos, chestFacing.getCounterClockWise(), ctx.getPlayer()) ? ChestType.RIGHT : ChestType.SINGLE;
-		}
-
-		return defaultBlockState().setValue(FACING, chestFacing).setValue(TYPE, type).setValue(WATERLOGGED, level.getFluidState(clickedPos).getType() == Fluids.WATER);
-	}
-
-	public Direction candidatePartnerFacing(Level level, BlockPos pos, Direction dir, Player player) {
-		Direction returnValue = super.candidatePartnerFacing(level, pos, dir);
+	public Direction candidatePartnerFacing(BlockPlaceContext ctx, Direction dir) {
+		Direction returnValue = super.candidatePartnerFacing(ctx, dir);
 
 		//only connect to chests which have the same owner
-		if (returnValue != null && level.getBlockEntity(pos.relative(dir)) instanceof IOwnable ownable && ownable.isOwnedBy(player))
+		if (returnValue != null && ctx.getLevel().getBlockEntity(ctx.getClickedPos().relative(dir)) instanceof IOwnable ownable && ownable.isOwnedBy(ctx.getPlayer()))
 			return returnValue;
 
 		return null;
@@ -269,7 +227,7 @@ public class KeypadChestBlock extends ChestBlock implements IOverlayDisplay, IDi
 
 	@Override
 	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-		return level.isClientSide() ? createTickerHelper(type, SCContent.KEYPAD_CHEST_BLOCK_ENTITY.get(), KeypadChestBlockEntity::lidAnimateTick) : null;
+		return level.isClientSide ? createTickerHelper(type, SCContent.KEYPAD_CHEST_BLOCK_ENTITY.get(), KeypadChestBlockEntity::lidAnimateTick) : null;
 	}
 
 	public static boolean isBlocked(Level level, BlockPos pos) {
@@ -420,10 +378,7 @@ public class KeypadChestBlock extends ChestBlock implements IOverlayDisplay, IDi
 			chest.clearContent();
 			level.setBlockAndUpdate(pos, convertedBlock.defaultBlockState().setValue(FACING, facing).setValue(TYPE, type));
 			chest = (ChestBlockEntity) level.getBlockEntity(pos);
-
-			try (ProblemReporter.ScopedCollector problemReporter = new ProblemReporter.ScopedCollector(chest.problemPath(), SecurityCraft.LOGGER)) {
-				chest.loadWithComponents(TagValueInput.create(problemReporter, level.registryAccess(), tag));
-			}
+			chest.loadWithComponents(tag, level.registryAccess());
 
 			if (protect) {
 				if (player != null)

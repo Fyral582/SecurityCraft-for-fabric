@@ -10,7 +10,9 @@ import net.geforcemods.securitycraft.misc.ModuleType;
 import net.geforcemods.securitycraft.models.DisguisableBlockStateModel;
 import net.geforcemods.securitycraft.network.client.RefreshDisguisableModel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
@@ -21,7 +23,6 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.material.Fluids;
-import net.minecraft.world.level.storage.ValueInput;
 import net.geforcemods.securitycraft.platform.ext.AuxiliaryLightManager;
 import net.geforcemods.securitycraft.platform.model.ModelData;
 import net.geforcemods.securitycraft.platform.network.PacketDistributor;
@@ -49,7 +50,7 @@ public class DisguisableBlockEntity extends CustomizableBlockEntity {
 		BlockPos worldPosition = be.getBlockPos();
 		int newLight = IDisguisable.getDisguisedBlockStateFromStack(stack).map(s -> s.getLightEmission(level, worldPosition)).orElse(0);
 
-		if (!level.isClientSide()) {
+		if (!level.isClientSide) {
 			PacketDistributor.sendToPlayersTrackingChunk((ServerLevel) level, new ChunkPos(worldPosition), new RefreshDisguisableModel(worldPosition, true, stack, toggled));
 
 			if (state.hasProperty(BlockStateProperties.WATERLOGGED) && state.getValue(BlockStateProperties.WATERLOGGED)) {
@@ -81,7 +82,7 @@ public class DisguisableBlockEntity extends CustomizableBlockEntity {
 		Level level = be.getLevel();
 		BlockPos worldPosition = be.getBlockPos();
 
-		if (!level.isClientSide()) {
+		if (!level.isClientSide) {
 			PacketDistributor.sendToPlayersTrackingChunk((ServerLevel) level, new ChunkPos(worldPosition), new RefreshDisguisableModel(worldPosition, false, stack, toggled));
 
 			if (state.hasProperty(BlockStateProperties.WATERLOGGED) && state.getValue(BlockStateProperties.WATERLOGGED)) {
@@ -99,8 +100,8 @@ public class DisguisableBlockEntity extends CustomizableBlockEntity {
 	}
 
 	@Override
-	public void onDataPacket(Connection net, ValueInput tag) {
-		super.onDataPacket(net, tag);
+	public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet, HolderLookup.Provider lookupProvider) {
+		super.onDataPacket(net, packet, lookupProvider);
 		onHandleUpdateTag(this);
 	}
 
@@ -113,7 +114,7 @@ public class DisguisableBlockEntity extends CustomizableBlockEntity {
 	public static <T extends BlockEntity & IModuleInventory> void onHandleUpdateTag(T be) {
 		Level level = be.getLevel();
 
-		if (level != null && level.isClientSide()) {
+		if (level != null && level.isClientSide) {
 			ItemStack stack = be.getModule(ModuleType.DISGUISE);
 
 			if (!stack.isEmpty())
@@ -132,7 +133,7 @@ public class DisguisableBlockEntity extends CustomizableBlockEntity {
 	}
 
 	public static void onSetRemoved(BlockEntity be) {
-		if (be.getLevel().isClientSide())
+		if (be.getLevel().isClientSide)
 			ClientHandler.DISGUISED_BLOCK_RENDER_DELEGATE.removeDelegateOf(be);
 	}
 

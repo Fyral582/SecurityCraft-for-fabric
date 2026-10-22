@@ -4,19 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import com.mojang.serialization.DataResult;
-
 import net.geforcemods.securitycraft.ClientHandler;
 import net.geforcemods.securitycraft.SCContent;
-import net.geforcemods.securitycraft.SecurityCraft;
 import net.geforcemods.securitycraft.misc.PageGroup;
 import net.geforcemods.securitycraft.misc.SCManualPage;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
-import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -41,7 +35,7 @@ public class SCManualItem extends Item {
 
 	@Override
 	public InteractionResult use(Level level, Player player, InteractionHand hand) {
-		if (level.isClientSide())
+		if (level.isClientSide)
 			ClientHandler.displaySCManualScreen();
 
 		return InteractionResult.CONSUME;
@@ -63,7 +57,7 @@ public class SCManualItem extends Item {
 				}
 				else if (recipeHolder.value() instanceof ShapelessRecipe shapelessRecipe && safeAssemble(shapelessRecipe, dummyInput, registryAccess).is(item)) {
 					//don't show keycard reset recipes
-					if (recipeHolder.id().identifier().getPath().endsWith("_reset"))
+					if (recipeHolder.id().location().getPath().endsWith("_reset"))
 						continue;
 
 					return Optional.of(shapelessRecipe.display());
@@ -92,7 +86,7 @@ public class SCManualItem extends Item {
 
 					if (!resultItem.isEmpty() && pageItems.contains(resultItem.getItem())) {
 						//don't show keycard reset recipes
-						if (recipeHolder.id().identifier().getPath().endsWith("_reset"))
+						if (recipeHolder.id().location().getPath().endsWith("_reset"))
 							continue;
 
 						displays.addAll(shapelessRecipe.display());
@@ -110,25 +104,12 @@ public class SCManualItem extends Item {
 
 	private static ItemStack safeAssemble(CraftingRecipe recipe, CraftingInput dummyInput, HolderLookup.Provider registryAccess) {
 		try {
-			ItemStack result = recipe.assemble(dummyInput, registryAccess);
-
-			if (result != null)
-				return result;
-			else {
-				DataResult<Tag> encodedRecipe = recipe.getSerializer().codec().encoder().encodeStart(NbtOps.INSTANCE, cast(recipe));
-
-				SecurityCraft.LOGGER.warn("Recipe#assemble unexpectedly returned null for recipe {}", encodedRecipe.result().orElseGet(CompoundTag::new));
-			}
+			return recipe.assemble(dummyInput, registryAccess);
 		}
 		catch (Exception e) {
 			//If an exception is thrown, it's safe to assume that recipe assembling failed for some reason that means the recipe is not relevant for one of SC's items
 		}
 
 		return ItemStack.EMPTY;
-	}
-
-	@SuppressWarnings("unchecked")
-	private static <T extends CraftingRecipe> T cast(CraftingRecipe recipe) {
-		return (T) recipe;
 	}
 }

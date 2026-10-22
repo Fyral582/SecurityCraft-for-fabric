@@ -9,14 +9,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.google.common.collect.ImmutableList;
-
 import it.unimi.dsi.fastutil.objects.Object2BooleanArrayMap;
 import net.geforcemods.securitycraft.ConfigHandler;
 import net.geforcemods.securitycraft.SCContent;
 import net.geforcemods.securitycraft.api.ILinkedAction;
 import net.geforcemods.securitycraft.api.LinkableBlockEntity;
-import net.geforcemods.securitycraft.api.LinkedBlock;
 import net.geforcemods.securitycraft.api.Option;
 import net.geforcemods.securitycraft.api.Option.BooleanOption;
 import net.geforcemods.securitycraft.api.Option.DisabledOption;
@@ -34,14 +31,17 @@ import net.geforcemods.securitycraft.items.ModuleItem;
 import net.geforcemods.securitycraft.misc.ModuleType;
 import net.geforcemods.securitycraft.network.client.UpdateLaserColors;
 import net.geforcemods.securitycraft.util.BlockUtils;
+import net.geforcemods.securitycraft.util.Utils;
+import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.Util;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerListener;
 import net.minecraft.world.Containers;
@@ -53,13 +53,10 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import net.geforcemods.securitycraft.platform.model.ModelData;
 import net.geforcemods.securitycraft.platform.network.PacketDistributor;
 
 public class LaserBlockBlockEntity extends LinkableBlockEntity implements MenuProvider, ContainerListener {
-	protected List<LinkedBlock> linkedBlocks = new ArrayList<>();
 	private DisabledOption disabled = new DisabledOption(false) {
 		@Override
 		public void toggle() {
@@ -88,24 +85,19 @@ public class LaserBlockBlockEntity extends LinkableBlockEntity implements MenuPr
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
-		super.saveAdditional(tag);
-
-		saveSideConfig(tag.child("sideConfig"), sideConfig);
+	public void saveAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.saveAdditional(tag, lookupProvider);
+		tag.put("sideConfig", saveSideConfig(sideConfig));
 
 		for (int i = 0; i < lenses.getContainerSize(); i++) {
 			ItemStack lens = lenses.getItem(i);
 
 			if (!lens.isEmpty())
-				tag.store("lens" + i, ItemStack.CODEC, lens);
+				tag.put("lens" + i, lens.save(lookupProvider));
 		}
 	}
 
-	public static void saveSideConfig(ValueOutput sideConfigTag, Map<Direction, Boolean> sideConfig) {
-		sideConfig.forEach((dir, enabled) -> sideConfigTag.putBoolean(dir.getName(), enabled));
-	}
-
-	public static CompoundTag saveSideConfigToTag(Map<Direction, Boolean> sideConfig) {
+	public static CompoundTag saveSideConfig(Map<Direction, Boolean> sideConfig) {
 		CompoundTag sideConfigTag = new CompoundTag();
 
 		sideConfig.forEach((dir, enabled) -> sideConfigTag.putBoolean(dir.getName(), enabled));
@@ -113,28 +105,18 @@ public class LaserBlockBlockEntity extends LinkableBlockEntity implements MenuPr
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
-		sideConfig = loadSideConfig(tag.childOrEmpty("sideConfig"));
+	public void loadAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.loadAdditional(tag, lookupProvider);
+		sideConfig = loadSideConfig(tag.getCompoundOrEmpty("sideConfig"));
 
 		for (int i = 0; i < lenses.getContainerSize(); i++) {
-			lenses.setItemExclusively(i, tag.read("lens" + i, ItemStack.CODEC).orElse(ItemStack.EMPTY));
+			lenses.setItemExclusively(i, Utils.parseOptional(lookupProvider, tag.getCompoundOrEmpty("lens" + i)));
 		}
 
 		lenses.setChanged();
 	}
 
-	public static Map<Direction, Boolean> loadSideConfig(ValueInput sideConfigTag) {
-		EnumMap<Direction, Boolean> sideConfig = new EnumMap<>(Direction.class);
-
-		for (Direction dir : Direction.values()) {
-			sideConfig.put(dir, sideConfigTag.getBooleanOr(dir.getName(), true));
-		}
-
-		return sideConfig;
-	}
-
-	public static Map<Direction, Boolean> loadSideConfigFromTag(CompoundTag sideConfigTag) {
+	public static Map<Direction, Boolean> loadSideConfig(CompoundTag sideConfigTag) {
 		EnumMap<Direction, Boolean> sideConfig = new EnumMap<>(Direction.class);
 
 		for (Direction dir : Direction.values()) {
@@ -161,22 +143,7 @@ public class LaserBlockBlockEntity extends LinkableBlockEntity implements MenuPr
 	public void writeClientSideData(AbstractContainerMenu menu, RegistryFriendlyByteBuf buffer) {
 		MenuProvider.super.writeClientSideData(menu, buffer);
 		buffer.writeBlockPos(worldPosition);
-		buffer.writeNbt(saveSideConfigToTag(sideConfig));
-	}
-
-	@Override
-	protected ImmutableList<LinkedBlock> getLinkedBlocks() {
-		return ImmutableList.copyOf(linkedBlocks);
-	}
-
-	@Override
-	protected void addLinkedBlock(LinkedBlock block) {
-		linkedBlocks.add(block);
-	}
-
-	@Override
-	protected void removeLinkedBlock(LinkedBlock block) {
-		linkedBlocks.remove(block);
+		buffer.writeNbt(LaserBlockBlockEntity.saveSideConfig(sideConfig));
 	}
 
 	@Override
@@ -186,20 +153,15 @@ public class LaserBlockBlockEntity extends LinkableBlockEntity implements MenuPr
 				disabled.copy(option);
 				setLasersAccordingToDisabledOption();
 			}
-			case ILinkedAction.OptionChanged(BooleanOption option) when option.getName().equals(ignoreOwner.getName()) ->
-					ignoreOwner.copy(option);
-			case ILinkedAction.OptionChanged(BooleanOption option) when option.getName().equals(respectInvisibility.getName()) ->
-					respectInvisibility.copy(option);
+			case ILinkedAction.OptionChanged(BooleanOption option) when option.getName().equals(ignoreOwner.getName()) -> ignoreOwner.copy(option);
+			case ILinkedAction.OptionChanged(BooleanOption option) when option.getName().equals(respectInvisibility.getName()) -> respectInvisibility.copy(option);
 			case ILinkedAction.OptionChanged(IntOption option) when option.getName().equals(signalLength.getName()) -> {
 				signalLength.copy(option);
 				turnOffRedstoneOutput();
 			}
-			case ILinkedAction.OptionChanged(Option<?> option) ->
-					throw new UnsupportedOperationException("Unhandled option synchronization in laser block! " + option.getName());
-			case ILinkedAction.ModuleInserted(ItemStack stack, ModuleItem module, boolean wasModuleToggled) ->
-					insertModule(stack, wasModuleToggled);
-			case ILinkedAction.ModuleRemoved(ModuleType moduleType, boolean wasModuleToggled) ->
-					removeModule(moduleType, wasModuleToggled);
+			case ILinkedAction.OptionChanged(Option<?> option) -> throw new UnsupportedOperationException("Unhandled option synchronization in laser block! " + option.getName());
+			case ILinkedAction.ModuleInserted(ItemStack stack, ModuleItem module, boolean wasModuleToggled) -> insertModule(stack, wasModuleToggled);
+			case ILinkedAction.ModuleRemoved(ModuleType moduleType, boolean wasModuleToggled) -> removeModule(moduleType, wasModuleToggled);
 			case ILinkedAction.OwnerChanged(Owner newOwner) -> setOwner(newOwner.getUUID(), newOwner.getName());
 			case ILinkedAction.StateChanged(BooleanProperty property, Boolean oldValue, Boolean newValue) when property == LaserBlock.POWERED -> {
 				if (timeSinceLastToggle() < 500)
@@ -293,8 +255,8 @@ public class LaserBlockBlockEntity extends LinkableBlockEntity implements MenuPr
 	}
 
 	@Override
-	public void onDataPacket(Connection net, ValueInput tag) {
-		super.onDataPacket(net, tag);
+	public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet, HolderLookup.Provider lookupProvider) {
+		super.onDataPacket(net, packet, lookupProvider);
 		DisguisableBlockEntity.onHandleUpdateTag(this);
 	}
 
@@ -305,7 +267,10 @@ public class LaserBlockBlockEntity extends LinkableBlockEntity implements MenuPr
 	}
 
 	@Override
-	public void readOptions(ValueInput tag) {
+	public void readOptions(CompoundTag tag) {
+		if (tag.contains("enabled"))
+			tag.putBoolean("disabled", !tag.getBooleanOr("enabled", false)); //legacy support
+
 		for (Option<?> option : customOptions()) {
 			option.load(tag);
 		}
@@ -440,9 +405,6 @@ public class LaserBlockBlockEntity extends LinkableBlockEntity implements MenuPr
 			LaserBlock.destroyAdjacentLasers(level, worldPosition);
 	}
 
-	@SuppressWarnings({
-			"rawtypes", "unchecked"
-	})
 	public ModuleType synchronizeWith(LaserBlockBlockEntity that) {
 		if (!LinkableBlockEntity.isLinkedWith(this, that)) {
 			Map<ItemStack, Boolean> bothInsertedModules = new Object2BooleanArrayMap<>();
@@ -450,14 +412,12 @@ public class LaserBlockBlockEntity extends LinkableBlockEntity implements MenuPr
 			List<ModuleType> thatInsertedModules = that.getInsertedModules();
 
 			for (ModuleType type : thisInsertedModules) {
-				if (thatInsertedModules.contains(type) && !ItemStack.isSameItemSameComponents(getModule(type), that.getModule(type)))
+				ItemStack thisModule = getModule(type);
+
+				if (thatInsertedModules.contains(type) && !ItemStack.isSameItemSameComponents(thisModule, that.getModule(type)))
 					return type;
-			}
 
-			LinkableBlockEntity.link(this, that); //At this point, synchronizing will always succeed. Linking the block entities here prevents laser updating recursion during the module shuffling below
-
-			for (ModuleType type : thisInsertedModules) {
-				bothInsertedModules.put(getModule(type).copy(), isModuleEnabled(type));
+				bothInsertedModules.put(thisModule.copy(), isModuleEnabled(type));
 				removeModule(type, false);
 			}
 
@@ -467,13 +427,8 @@ public class LaserBlockBlockEntity extends LinkableBlockEntity implements MenuPr
 				propagate(new ILinkedAction.ModuleRemoved(type, false), that);
 			}
 
-			//safe, because both blocks are the same and thus have the same options
-			Option[] options = that.customOptions();
-			Option[] thisOptions = customOptions();
-
-			for (int i = 0; i < options.length; i++) {
-				thisOptions[i].setValue(options[i].get());
-			}
+			readOptions(that.writeOptions(new CompoundTag()));
+			LinkableBlockEntity.link(this, that);
 
 			for (Entry<ItemStack, Boolean> entry : bothInsertedModules.entrySet()) {
 				ItemStack module = entry.getKey();

@@ -16,7 +16,7 @@ import net.minecraft.client.renderer.LevelRenderer;
  */
 @Mixin(value = LevelRenderer.class, priority = 1100)
 public class LevelRendererLocalPlayerMixin {
-	@ModifyExpressionValue(method = "extractVisibleEntities", at = @At(value = "CONSTANT", args = "classValue=net/minecraft/client/player/LocalPlayer"))
+	@ModifyExpressionValue(method = "collectVisibleEntities", at = @At(value = "CONSTANT", args = "classValue=net/minecraft/client/player/LocalPlayer"))
 	private boolean securitycraft$renderLocalPlayerInCamera(boolean isLocalPlayer) {
 		return isLocalPlayer && !(ClientHandler.isPlayerMountedOnCamera() && !FrameFeedHandler.isCapturingCamera());
 	}

@@ -49,6 +49,8 @@
 	"client": [
 		"KeyMappingExtensionImplMixin",
 		"client.ClientPacketListenerMixin",
+		"client.GuiMixin",
+		"client.GuiMixin",
 		"client.LevelEventHandlerMixin",
 		"client.MultiPlayerGameModeMixin",
 		"client.MinecraftInputMixin",

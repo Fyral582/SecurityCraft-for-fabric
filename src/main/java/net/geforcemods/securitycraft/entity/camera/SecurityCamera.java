@@ -10,6 +10,7 @@ import net.geforcemods.securitycraft.blockentities.SecurityCameraBlockEntity;
 import net.geforcemods.securitycraft.network.client.SetCameraView;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
@@ -25,8 +26,6 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import net.geforcemods.securitycraft.platform.network.PacketDistributor;
 
 public class SecurityCamera extends Entity {
@@ -73,7 +72,7 @@ public class SecurityCamera extends Entity {
 	public void tick() {
 		Level level = level();
 
-		if (!level.isClientSide() && level.getBlockState(blockPosition()).getBlock() != SCContent.SECURITY_CAMERA.get())
+		if (!level.isClientSide && level.getBlockState(blockPosition()).getBlock() != SCContent.SECURITY_CAMERA.get())
 			discard();
 	}
 
@@ -129,7 +128,7 @@ public class SecurityCamera extends Entity {
 	}
 
 	public void stopViewing(ServerPlayer player) {
-		if (!level().isClientSide()) {
+		if (!level().isClientSide) {
 			discard();
 			player.camera = player;
 			PacketDistributor.sendToPlayer(player, new SetCameraView(player.getId()));
@@ -145,7 +144,7 @@ public class SecurityCamera extends Entity {
 	 */
 	@Deprecated
 	public void discardCamera() {
-		if (!level().isClientSide()) {
+		if (!level().isClientSide) {
 			if (getBlockEntity() != null && !be.isRemoved())
 				be.stopViewing();
 
@@ -166,12 +165,12 @@ public class SecurityCamera extends Entity {
 	}
 
 	@Override
-	public void addAdditionalSaveData(ValueOutput tag) {
+	public void addAdditionalSaveData(CompoundTag tag) {
 		tag.putFloat("zoom_amount", getZoomAmount());
 	}
 
 	@Override
-	public void readAdditionalSaveData(ValueInput tag) {
+	public void readAdditionalSaveData(CompoundTag tag) {
 		entityData.set(ZOOM_AMOUNT, tag.getFloatOr("zoom_amount", 1.0F));
 	}
 

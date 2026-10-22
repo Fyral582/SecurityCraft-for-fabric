@@ -4,10 +4,10 @@ import net.geforcemods.securitycraft.SCContent;
 import net.geforcemods.securitycraft.api.OwnableBlockEntity;
 import net.geforcemods.securitycraft.util.ITickingBlockEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 
 public class BlockPocketBlockEntity extends OwnableBlockEntity implements ITickingBlockEntity {
 	private BlockPocketManagerBlockEntity manager;
@@ -50,16 +50,18 @@ public class BlockPocketBlockEntity extends OwnableBlockEntity implements ITicki
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
+	public void saveAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
 		if (manager != null)
 			tag.putLong("ManagerPos", manager.getBlockPos().asLong());
 
-		super.saveAdditional(tag);
+		super.saveAdditional(tag, lookupProvider);
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
-		managerPos = BlockPos.of(tag.getLongOr("ManagerPos", 0));
+	public void loadAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.loadAdditional(tag, lookupProvider);
+
+		if (tag.contains("ManagerPos"))
+			managerPos = BlockPos.of(tag.getLongOr("ManagerPos", 0));
 	}
 }

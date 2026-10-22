@@ -22,6 +22,8 @@ import net.geforcemods.securitycraft.network.server.SyncRiftStabilizer;
 import net.geforcemods.securitycraft.util.ITickingBlockEntity;
 import net.geforcemods.securitycraft.util.IToggleableEntries;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.monster.EnderMan;
@@ -34,8 +36,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 import net.geforcemods.securitycraft.platform.event.EntityTeleportEvent;
 import net.geforcemods.securitycraft.platform.event.EntityTeleportEvent.EnderEntity;
@@ -56,7 +56,13 @@ public class RiftStabilizerBlockEntity extends DisguisableBlockEntity implements
 
 	public RiftStabilizerBlockEntity(BlockPos pos, BlockState state) {
 		super(SCContent.RIFT_STABILIZER_BLOCK_ENTITY.get(), pos, state);
-		setDefaultFilters(this);
+		//when adding new types ONLY ADD TO THE END. anything else will break saved data.
+		//ordering is done in ToggleListScreen based on the user's current language
+		teleportationFilter.put(TeleportationType.ITEM_CONSUMPTION, true);
+		teleportationFilter.put(TeleportationType.ENDER_PEARL, true);
+		teleportationFilter.put(TeleportationType.ENDERMAN, false);
+		teleportationFilter.put(TeleportationType.SHULKER, false);
+		teleportationFilter.put(TeleportationType.MODDED, false);
 	}
 
 	@Override
@@ -81,7 +87,7 @@ public class RiftStabilizerBlockEntity extends DisguisableBlockEntity implements
 			teleportationFilter.put(teleportationType, allowed);
 			setChanged();
 
-			if (level.isClientSide())
+			if (level.isClientSide)
 				ClientPacketDistributor.sendToServer(new SyncRiftStabilizer(worldPosition, teleportationType, allowed));
 
 			RiftStabilizerBlockEntity connectedBlockEntity = RiftStabilizerBlock.getConnectedBlockEntity(level, worldPosition);
@@ -114,10 +120,10 @@ public class RiftStabilizerBlockEntity extends DisguisableBlockEntity implements
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
-		super.saveAdditional(tag);
+	public void saveAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.saveAdditional(tag, lookupProvider);
 
-		ValueOutput teleportationNBT = tag.child("teleportationTypes");
+		CompoundTag teleportationNBT = new CompoundTag();
 		int i = 0;
 
 		for (boolean b : teleportationFilter.values()) {
@@ -125,6 +131,7 @@ public class RiftStabilizerBlockEntity extends DisguisableBlockEntity implements
 			i++;
 		}
 
+		tag.put("teleportationTypes", teleportationNBT);
 		tag.putDouble("lastTeleportDistance", lastTeleportDistance);
 
 		if (lastTeleportationType != null)
@@ -132,20 +139,22 @@ public class RiftStabilizerBlockEntity extends DisguisableBlockEntity implements
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
+	public void loadAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.loadAdditional(tag, lookupProvider);
 
-		ValueInput teleportationNBT = tag.childOrEmpty("teleportationTypes");
-		int i = 0;
+		if (tag.contains("teleportationTypes")) {
+			CompoundTag teleportationNBT = tag.getCompoundOrEmpty("teleportationTypes");
+			int i = 0;
 
-		for (TeleportationType teleportationType : teleportationFilter.keySet()) {
-			teleportationFilter.put(teleportationType, teleportationNBT.getBooleanOr("teleportationType" + i, teleportationFilter.get(teleportationType)));
-			i++;
+			for (TeleportationType teleportationType : teleportationFilter.keySet()) {
+				teleportationFilter.put(teleportationType, teleportationNBT.getBooleanOr("teleportationType" + i, false));
+				i++;
+			}
 		}
 
 		lastTeleportDistance = tag.getDoubleOr("lastTeleportDistance", 0.0D);
 
-		if (tag.getInt("lastTeleportationType").isPresent())
+		if (tag.contains("lastTeleportationType"))
 			lastTeleportationType = TeleportationType.values()[tag.getIntOr("lastTeleportationType", 0)];
 	}
 
@@ -182,30 +191,28 @@ public class RiftStabilizerBlockEntity extends DisguisableBlockEntity implements
 				onRemoveDisguiseModule(connectedBlockEntity);
 		}
 		else if (module == ModuleType.SMART) {
-			setDefaultFilters(this);
+			onRemoveSmartModule(this);
 
 			if (connectedBlockEntity != null)
-				setDefaultFilters(connectedBlockEntity);
+				onRemoveSmartModule(connectedBlockEntity);
 		}
 	}
 
 	private void onInsertDisguiseModule(BlockEntity be, ItemStack stack) {
-		if (!be.getLevel().isClientSide())
+		if (!be.getLevel().isClientSide)
 			be.getLevel().sendBlockUpdated(be.getBlockPos(), be.getBlockState(), be.getBlockState(), 3);
 		else
 			ClientHandler.putDisguisedBeRenderer(be, stack);
 	}
 
 	private void onRemoveDisguiseModule(BlockEntity be) {
-		if (!be.getLevel().isClientSide())
+		if (!be.getLevel().isClientSide)
 			be.getLevel().sendBlockUpdated(be.getBlockPos(), be.getBlockState(), be.getBlockState(), 3);
 		else
 			ClientHandler.DISGUISED_BLOCK_RENDER_DELEGATE.removeDelegateOf(be);
 	}
 
-	private void setDefaultFilters(RiftStabilizerBlockEntity be) {
-		//when adding new types ONLY ADD TO THE END. anything else will break saved data.
-		//ordering is done in ToggleListScreen based on the user's current language
+	private void onRemoveSmartModule(RiftStabilizerBlockEntity be) {
 		be.teleportationFilter.put(TeleportationType.ITEM_CONSUMPTION, true);
 		be.teleportationFilter.put(TeleportationType.ENDER_PEARL, true);
 		be.teleportationFilter.put(TeleportationType.ENDERMAN, false);
@@ -243,8 +250,7 @@ public class RiftStabilizerBlockEntity extends DisguisableBlockEntity implements
 				case IntOption io when option == range -> connectedBlockEntity.setRange(io.get());
 				case BooleanOption bo when option == disabled -> connectedBlockEntity.setDisabled(bo.get());
 				case BooleanOption bo when option == ignoreOwner -> connectedBlockEntity.setIgnoresOwner(bo.get());
-				default ->
-						throw new UnsupportedOperationException("Unhandled option synchronization in rift stabilizer! " + option.getName());
+				default -> throw new UnsupportedOperationException("Unhandled option synchronization in rift stabilizer! " + option.getName());
 			}
 		}
 
@@ -265,7 +271,7 @@ public class RiftStabilizerBlockEntity extends DisguisableBlockEntity implements
 		if (be != null) {
 			be.setOwner(getOwner().getUUID(), getOwner().getName());
 
-			if (!level.isClientSide())
+			if (!level.isClientSide)
 				level.getServer().getPlayerList().broadcastAll(be.getUpdatePacket());
 		}
 

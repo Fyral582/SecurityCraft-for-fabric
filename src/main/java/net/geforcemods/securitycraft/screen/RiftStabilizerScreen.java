@@ -5,22 +5,17 @@ import com.mojang.blaze3d.platform.InputConstants;
 import net.geforcemods.securitycraft.SecurityCraft;
 import net.geforcemods.securitycraft.blockentities.RiftStabilizerBlockEntity;
 import net.geforcemods.securitycraft.misc.ModuleType;
-import net.geforcemods.securitycraft.misc.StillValid;
 import net.geforcemods.securitycraft.screen.components.ToggleScrollList;
 import net.geforcemods.securitycraft.util.ClientUtils;
 import net.geforcemods.securitycraft.util.Utils;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
-import net.minecraft.util.CommonColors;
-import net.minecraft.world.Container;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.resources.ResourceLocation;
 
-public class RiftStabilizerScreen extends Screen implements StillValid {
-	private static final Identifier GUI_TEXTURE = SecurityCraft.resLoc("textures/gui/container/blank.png");
+public class RiftStabilizerScreen extends Screen {
+	private static final ResourceLocation GUI_TEXTURE = SecurityCraft.resLoc("textures/gui/container/blank.png");
 	public final Component scrollListTitle, smartModuleTooltip;
 	private int imageWidth = 176;
 	private int imageHeight = 166;
@@ -51,34 +46,29 @@ public class RiftStabilizerScreen extends Screen implements StillValid {
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
-		guiGraphics.drawString(font, title, width / 2 - font.width(title) / 2, topPos + 6, CommonColors.DARK_GRAY, false);
-		guiGraphics.drawString(font, scrollListTitle, width / 2 - font.width(scrollListTitle) / 2, topPos + 31, CommonColors.DARK_GRAY, false);
+		guiGraphics.drawString(font, title, width / 2 - font.width(title) / 2, topPos + 6, 4210752, false);
+		guiGraphics.drawString(font, scrollListTitle, width / 2 - font.width(scrollListTitle) / 2, topPos + 31, 4210752, false);
 		ClientUtils.renderModuleInfo(guiGraphics, font, ModuleType.SMART, smartModuleTooltip, hasSmartModule, leftPos + 5, topPos + 5, mouseX, mouseY);
 	}
 
 	@Override
 	public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
 		renderTransparentBackground(guiGraphics);
-		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, GUI_TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
+		guiGraphics.blit(RenderType::guiTextured, GUI_TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
 	}
 
 	@Override
-	public boolean keyPressed(KeyEvent event) {
-		if (minecraft.options.keyInventory.isActiveAndMatches(InputConstants.getKey(event))) {
+	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+		if (minecraft.options.keyInventory.isActiveAndMatches(InputConstants.getKey(keyCode, scanCode))) {
 			onClose();
 			return true;
 		}
 
-		return super.keyPressed(event);
+		return super.keyPressed(keyCode, scanCode, modifiers);
 	}
 
 	@Override
 	public boolean isPauseScreen() {
 		return false;
-	}
-
-	@Override
-	public boolean stillValid(Player player) {
-		return Container.stillValidBlockEntity(be, player);
 	}
 }

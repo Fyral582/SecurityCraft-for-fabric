@@ -59,7 +59,7 @@ public class ScannerDoorBlockEntity extends SpecialDoorBlockEntity implements IV
 			if (!(entity instanceof Player player) || (!isModuleEnabled(ModuleType.DISGUISE) && facingAxis != hitResult.getDirection().getAxis()))
 				return false;
 
-			if (!isLockedBySSS() && !isDisabled()) {
+			if (!isLocked() && !isDisabled()) {
 				Owner viewingPlayer;
 
 				if (ConfigHandler.SERVER.trickScannersWithPlayerHeads.get() && player.getItemBySlot(EquipmentSlot.HEAD).getItem() == Items.PLAYER_HEAD)
@@ -68,9 +68,7 @@ public class ScannerDoorBlockEntity extends SpecialDoorBlockEntity implements IV
 					viewingPlayer = isOwnedBy(player, true) ? PlayerUtils.getOwnerFromPlayerOrMask(player) : new Owner(player);
 
 				if (!isOwnedBy(viewingPlayer) && !isAllowed(viewingPlayer.getName())) {
-					if (sendsMessages())
-						PlayerUtils.sendMessageToPlayer(player, Utils.localize(SCContent.SCANNER_DOOR_ITEM.get().getDescriptionId()), Utils.localize("messages.securitycraft:retinalScanner.notOwner", PlayerUtils.getOwnerComponent(getOwner())), ChatFormatting.RED);
-
+					PlayerUtils.sendMessageToPlayer(player, Utils.localize(SCContent.SCANNER_DOOR_ITEM.get().getDescriptionId()), Utils.localize("messages.securitycraft:retinalScanner.notOwner", PlayerUtils.getOwnerComponent(getOwner())), ChatFormatting.RED);
 					return true;
 				}
 
@@ -89,7 +87,7 @@ public class ScannerDoorBlockEntity extends SpecialDoorBlockEntity implements IV
 					PlayerUtils.sendMessageToPlayer(player, Utils.localize(SCContent.SCANNER_DOOR_ITEM.get().getDescriptionId()), Utils.localize("messages.securitycraft:retinalScanner.hello", viewingPlayer.getName()), ChatFormatting.GREEN);
 			}
 			else {
-				if (isLockedBySSS() && sendsMessages()) {
+				if (isLocked() && sendsMessages()) {
 					MutableComponent blockName = Utils.localize(SCContent.SCANNER_DOOR_ITEM.get().getDescriptionId());
 
 					PlayerUtils.sendMessageToPlayer(player, blockName, Utils.localize("messages.securitycraft:sonic_security_system.locked", blockName), ChatFormatting.DARK_RED, false);

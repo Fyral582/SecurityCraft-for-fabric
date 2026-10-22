@@ -41,7 +41,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Container;
 import net.minecraft.world.MenuProvider;
-import net.minecraft.world.entity.ContainerUser;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
@@ -53,8 +52,6 @@ import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.entity.ContainerOpenersCounter;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import net.geforcemods.securitycraft.platform.model.ModelData;
 
 public abstract class AbstractKeypadFurnaceBlockEntity extends AbstractFurnaceBlockEntity implements IPasscodeProtected, MenuProvider, IOwnable, IModuleInventory, ICustomizable, ILockable {
@@ -113,11 +110,11 @@ public abstract class AbstractKeypadFurnaceBlockEntity extends AbstractFurnaceBl
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
+	public void saveAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
 		long cooldownLeft;
 
-		super.saveAdditional(tag);
-		writeModuleInventory(tag);
+		super.saveAdditional(tag, lookupProvider);
+		writeModuleInventory(tag, lookupProvider);
 		writeModuleStates(tag);
 		writeOptions(tag);
 		cooldownLeft = getCooldownEnd() - System.currentTimeMillis();
@@ -130,16 +127,17 @@ public abstract class AbstractKeypadFurnaceBlockEntity extends AbstractFurnaceBl
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
+	public void loadAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
 		fixBurnTimeData(tag);
+		super.loadAdditional(tag, lookupProvider);
 
-		readModuleInventory(modules, tag);
+		modules = readModuleInventory(tag, lookupProvider);
 		moduleStates = readModuleStates(tag);
 		readOptions(tag);
 		cooldownEnd = System.currentTimeMillis() + tag.getLongOr("cooldownLeft", 0);
 		owner.load(tag);
-		loadPasscodeAndSaltKey(tag);
+		loadSaltKey(tag);
+		loadPasscode(tag);
 
 		if (!tag.getBooleanOr("sendMessage", true)) {
 			sendAllowlistMessage.setValue(false);
@@ -164,8 +162,8 @@ public abstract class AbstractKeypadFurnaceBlockEntity extends AbstractFurnaceBl
 	}
 
 	@Override
-	public void onDataPacket(Connection net, ValueInput tag) {
-		super.onDataPacket(net, tag);
+	public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet, HolderLookup.Provider lookupProvider) {
+		super.onDataPacket(net, packet, lookupProvider);
 		DisguisableBlockEntity.onHandleUpdateTag(this);
 	}
 
@@ -214,15 +212,15 @@ public abstract class AbstractKeypadFurnaceBlockEntity extends AbstractFurnaceBl
 	}
 
 	@Override
-	public void startOpen(ContainerUser player) {
-		if (!remove && !player.getLivingEntity().isSpectator())
-			openersCounter.incrementOpeners(player.getLivingEntity(), getLevel(), getBlockPos(), getBlockState(), player.getContainerInteractionRange());
+	public void startOpen(Player player) {
+		if (!remove && !player.isSpectator())
+			openersCounter.incrementOpeners(player, getLevel(), getBlockPos(), getBlockState());
 	}
 
 	@Override
-	public void stopOpen(ContainerUser player) {
-		if (!remove && !player.getLivingEntity().isSpectator())
-			openersCounter.decrementOpeners(player.getLivingEntity(), getLevel(), getBlockPos(), getBlockState());
+	public void stopOpen(Player player) {
+		if (!remove && !player.isSpectator())
+			openersCounter.decrementOpeners(player, getLevel(), getBlockPos(), getBlockState());
 	}
 
 	public void recheckOpen() {
@@ -367,14 +365,14 @@ public abstract class AbstractKeypadFurnaceBlockEntity extends AbstractFurnaceBl
 		return worldPosition;
 	}
 
-	private void fixBurnTimeData(ValueInput tag) {
-		if (tag.getInt("CookTime").isPresent()) {//Pre-1.12.4 furnace burn time data
+	private void fixBurnTimeData(CompoundTag tag) {
+		if (tag.contains("CookTime")) {//Pre-1.12.4 furnace burn time data
 			int burnTime = tag.getIntOr("BurnTime", 0);
 
-			cookingTimer = tag.getIntOr("CookTime", 0);
-			cookingTotalTime = tag.getIntOr("CookTimeTotal", 0);
-			litTimeRemaining = burnTime;
-			litTotalTime = burnTime;
+			tag.putInt("cooking_time_spent", tag.getIntOr("CookTime", 0));
+			tag.putInt("cooking_total_time", tag.getIntOr("CookTimeTotal", 0));
+			tag.putInt("lit_time_remaining", burnTime);
+			tag.putInt("lit_total_time", burnTime);
 		}
 	}
 }

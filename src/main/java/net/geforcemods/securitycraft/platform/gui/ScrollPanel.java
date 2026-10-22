@@ -9,7 +9,6 @@ import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.components.events.AbstractContainerEventHandler;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.util.Mth;
 
 /**
@@ -79,7 +78,7 @@ public abstract class ScrollPanel extends AbstractContainerEventHandler implemen
 	 */
 	protected abstract void drawPanel(GuiGraphics guiGraphics, int entryRight, int relativeY, int mouseX, int mouseY);
 
-	protected boolean clickPanel(double mouseX, double mouseY, MouseButtonEvent event) {
+	protected boolean clickPanel(double mouseX, double mouseY, int button) {
 		return false;
 	}
 
@@ -121,26 +120,26 @@ public abstract class ScrollPanel extends AbstractContainerEventHandler implemen
 	}
 
 	@Override
-	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-		if (super.mouseClicked(event, doubleClick))
+	public boolean mouseClicked(double mouseX, double mouseY, int button) {
+		if (super.mouseClicked(mouseX, mouseY, button))
 			return true;
 
-		scrolling = event.button() == 0 && event.x() >= barLeft && event.x() < barLeft + barWidth;
+		scrolling = button == 0 && mouseX >= barLeft && mouseX < barLeft + barWidth;
 
 		if (scrolling)
 			return true;
 
-		int mouseListY = ((int) event.y()) - top - getContentHeight() + (int) scrollDistance - border;
+		int mouseListY = ((int) mouseY) - top - getContentHeight() + (int) scrollDistance - border;
 
-		if (event.x() >= left && event.x() <= right && mouseListY < 0)
-			return clickPanel(event.x() - left, event.y() - top + (int) scrollDistance - border, event);
+		if (mouseX >= left && mouseX <= right && mouseListY < 0)
+			return clickPanel(mouseX - left, mouseY - top + (int) scrollDistance - border, button);
 
 		return false;
 	}
 
 	@Override
-	public boolean mouseReleased(MouseButtonEvent event) {
-		if (super.mouseReleased(event))
+	public boolean mouseReleased(double mouseX, double mouseY, int button) {
+		if (super.mouseReleased(mouseX, mouseY, button))
 			return true;
 
 		boolean wasScrolling = scrolling;
@@ -162,7 +161,7 @@ public abstract class ScrollPanel extends AbstractContainerEventHandler implemen
 	}
 
 	@Override
-	public boolean mouseDragged(MouseButtonEvent event, double deltaX, double deltaY) {
+	public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
 		if (scrolling) {
 			int maxScroll = height - getBarHeight();
 			double moved = deltaY / maxScroll;

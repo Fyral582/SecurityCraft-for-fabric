@@ -7,13 +7,13 @@ import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.RenderType;
 
-public class DisplayCaseModel extends Model<Float> {
+public class DisplayCaseModel extends Model {
 	private final ModelPart door;
 
 	public DisplayCaseModel(ModelPart root) {
-		super(root, RenderTypes::entityCutout);
+		super(root, RenderType::entityCutout);
 		door = root.getChild("door");
 	}
 
@@ -40,9 +40,7 @@ public class DisplayCaseModel extends Model<Float> {
 		return LayerDefinition.create(meshDefinition, 48, 48);
 	}
 
-	@Override
-	public void setupAnim(Float openness) {
-		super.setupAnim(openness);
+	public void setUpAnim(float openness) {
 		door.yRot = -(openness * (float) (Math.PI / 2.0F));
 	}
 }
