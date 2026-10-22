@@ -8,7 +8,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
-import net.fabricmc.fabric.api.object.builder.v1.entity.FabricTrackedDataRegistry;
+import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponentType;
@@ -100,7 +100,7 @@ public class DeferredRegister<T> {
 			for (Map.Entry<DeferredHolder<T, ? extends T>, Supplier<? extends T>> entry : entries.entrySet()) {
 				T value = entry.getValue().get();
 
-				FabricTrackedDataRegistry.register(entry.getKey().getId(), (EntityDataSerializer<?>) value);
+				EntityDataSerializers.registerSerializer((EntityDataSerializer<?>) value);
 				((DeferredHolder) entry.getKey()).bindDirect(value);
 			}
 

@@ -4,11 +4,15 @@ import net.geforcemods.securitycraft.SCContent;
 import net.geforcemods.securitycraft.api.IOwnable;
 import net.geforcemods.securitycraft.api.Owner;
 import net.geforcemods.securitycraft.blocks.mines.BrushableMineBlock;
+import net.geforcemods.securitycraft.platform.nbt.ValueInput;
+import net.geforcemods.securitycraft.platform.nbt.ValueOutput;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -17,8 +21,6 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.entity.BrushableBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 
 public class BrushableMineBlockEntity extends BrushableBlockEntity implements IOwnable {
 	private Owner owner = new Owner();
@@ -28,7 +30,7 @@ public class BrushableMineBlockEntity extends BrushableBlockEntity implements IO
 	}
 
 	@Override
-	public boolean brush(long tickCount, ServerLevel level, LivingEntity player, Direction direction, ItemStack stack) {
+	public boolean brush(long tickCount, ServerLevel level, Player player, Direction direction, ItemStack stack) {
 		if (hitDirection == null)
 			hitDirection = direction;
 
@@ -88,11 +90,11 @@ public class BrushableMineBlockEntity extends BrushableBlockEntity implements IO
 	}
 
 	@Override
-	public void brushingCompleted(ServerLevel level, LivingEntity entity, ItemStack stack) {
+	public void brushingCompleted(ServerLevel level, Player player, ItemStack stack) {
 		if (level != null && level.getServer() != null) {
 			Block turnInto = Blocks.AIR;
 
-			dropContent(level, entity, stack);
+			dropContent(level, player, stack);
 			level.levelEvent(LevelEvent.PARTICLES_AND_SOUND_BRUSH_BLOCK_COMPLETE, getBlockPos(), Block.getId(getBlockState()));
 
 			if (getBlockState().getBlock() instanceof BrushableMineBlock brushableMineBlock)
@@ -113,17 +115,17 @@ public class BrushableMineBlockEntity extends BrushableBlockEntity implements IO
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
-		super.saveAdditional(tag);
+	public void saveAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.saveAdditional(tag, lookupProvider);
 
 		if (owner != null)
-			owner.save(tag, needsValidation());
+			owner.save(ValueOutput.of(tag, lookupProvider), needsValidation());
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
-		owner.load(tag);
+	public void loadAdditional(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+		super.loadAdditional(tag, lookupProvider);
+		owner.load(ValueInput.of(tag, lookupProvider));
 	}
 
 	@Override

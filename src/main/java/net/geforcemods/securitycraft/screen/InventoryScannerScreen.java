@@ -10,11 +10,10 @@ import net.geforcemods.securitycraft.util.Utils;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.CommonColors;
 import net.minecraft.world.entity.player.Inventory;
 
 public class InventoryScannerScreen extends AbstractContainerScreen<InventoryScannerMenu> {
@@ -59,8 +58,8 @@ public class InventoryScannerScreen extends AbstractContainerScreen<InventorySca
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
 
-		guiGraphics.drawWordWrap(font, infoStringRedstone, leftPos + 28, topPos + 45, 150, CommonColors.DARK_GRAY, false);
-		guiGraphics.drawWordWrap(font, infoStringStorage, leftPos + 28, topPos + 75, 150, CommonColors.DARK_GRAY, false);
+		guiGraphics.drawWordWrap(font, infoStringRedstone, leftPos + 28, topPos + 45, 150, 0xFF404040, false);
+		guiGraphics.drawWordWrap(font, infoStringStorage, leftPos + 28, topPos + 75, 150, 0xFF404040, false);
 		ClientUtils.renderModuleInfo(guiGraphics, font, ModuleType.REDSTONE, redstoneModuleTooltip, hasRedstoneModule, leftPos + 8, topPos + 45, mouseX, mouseY);
 		ClientUtils.renderModuleInfo(guiGraphics, font, ModuleType.STORAGE, storageModuleTooltip, hasStorageModule, leftPos + 8, topPos + 75, mouseX, mouseY);
 		renderTooltip(guiGraphics, mouseX, mouseY);
@@ -68,20 +67,20 @@ public class InventoryScannerScreen extends AbstractContainerScreen<InventorySca
 
 	@Override
 	protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-		guiGraphics.drawString(font, prohibitedItems, 8, 6, CommonColors.DARK_GRAY, false);
-		guiGraphics.drawString(font, be.isOwnedBy(minecraft.player) ? adminMode : viewMode, 112, 6, CommonColors.DARK_GRAY, false);
+		guiGraphics.drawString(font, prohibitedItems, 8, 6, 0xFF404040, false);
+		guiGraphics.drawString(font, be.isOwnedBy(minecraft.player) ? adminMode : viewMode, 112, 6, 0xFF404040, false);
 
 		if (hasStorageModule && owns)
-			guiGraphics.drawString(font, storage, 188, 18, CommonColors.DARK_GRAY, false);
+			guiGraphics.drawString(font, storage, 188, 18, 0xFF404040, false);
 
-		guiGraphics.drawString(font, Utils.INVENTORY_TEXT, 15, imageHeight - 93, CommonColors.DARK_GRAY, false);
+		guiGraphics.drawString(font, Utils.INVENTORY_TEXT, 15, imageHeight - 93, 0xFF404040, false);
 	}
 
 	@Override
 	protected void renderBg(GuiGraphics guiGraphics, float partialTicks, int mouseX, int mouseY) {
-		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, hasStorageModule && owns ? ENHANCED_INVENTORY : REGULAR_INVENTORY, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight + 30, 256, 256);
+		guiGraphics.blit(RenderType::guiTextured, hasStorageModule && owns ? ENHANCED_INVENTORY : REGULAR_INVENTORY, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight + 30, 256, 256);
 
 		if (be.getLensContainer().getItem(0).isEmpty())
-			guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, LENS_SLOT, leftPos + 159, topPos + 89, 16, 16);
+			guiGraphics.blitSprite(RenderType::guiTextured, LENS_SLOT, leftPos + 159, topPos + 89, 16, 16);
 	}
 }

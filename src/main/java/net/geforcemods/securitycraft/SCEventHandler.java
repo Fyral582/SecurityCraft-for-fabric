@@ -242,7 +242,7 @@ public class SCEventHandler {
 	 */
 	public static boolean onLivingAttacked(LivingEntity entity, DamageSource damageSource) {
 		if (entity instanceof ServerPlayer player) {
-			ServerLevel level = player.level();
+			ServerLevel level = player.serverLevel();
 
 			if (!player.isCreative() && damageSource.equals(level.damageSources().inWall()) && !player.isInvulnerableTo(level, damageSource) && BlockUtils.isInsideUnownedReinforcedBlocks(level, player, player.getEyePosition(), player.getBbWidth())) {
 				int reinforcedSuffocationDamage = ConfigHandler.SERVER.reinforcedSuffocationDamage.get();

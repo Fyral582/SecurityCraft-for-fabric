@@ -16,7 +16,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.InsideBlockEffectApplier;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -41,7 +40,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import net.geforcemods.securitycraft.platform.ext.AuxiliaryLightManager;
 
 public class ReinforcedHopperBlock extends HopperBlock implements IReinforcedBlock, IOverlayDisplay, IDisguisable {
-	private final VoxelShape SUPPORT_SHAPE_ADDITION = Block.column(12, 11, 16);
+	private final VoxelShape SUPPORT_SHAPE_ADDITION = Block.box(2.0D, 11.0D, 2.0D, 14.0D, 16.0D, 14.0D);
 	private final float destroyTimeForOwner;
 
 	public ReinforcedHopperBlock(BlockBehaviour.Properties properties) {
@@ -72,7 +71,7 @@ public class ReinforcedHopperBlock extends HopperBlock implements IReinforcedBlo
 	}
 
 	@Override
-	public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity, InsideBlockEffectApplier effectApplier) {
+	public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
 		if (level.getBlockEntity(pos) instanceof ReinforcedHopperBlockEntity be)
 			HopperBlockEntity.entityInside(level, pos, state, entity, be);
 	}

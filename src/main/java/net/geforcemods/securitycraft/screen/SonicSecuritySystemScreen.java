@@ -18,13 +18,12 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.CommonColors;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
@@ -158,14 +157,14 @@ public class SonicSecuritySystemScreen extends Screen implements ConnectionAcces
 		int soundTextLength = font.width(SOUND_TEXT);
 
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
-		guiGraphics.drawString(font, title, leftPos + xSize / 2 - textWidth / 2, topPos + 6, CommonColors.DARK_GRAY, false);
-		guiGraphics.drawString(font, SOUND_TEXT, soundButton.getX() - soundTextLength - 5, topPos + 141, CommonColors.DARK_GRAY, false);
+		guiGraphics.drawString(font, title, leftPos + xSize / 2 - textWidth / 2, topPos + 6, 0xFF404040, false);
+		guiGraphics.drawString(font, SOUND_TEXT, soundButton.getX() - soundTextLength - 5, topPos + 141, 0xFF404040, false);
 	}
 
 	@Override
 	public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
 		renderTransparentBackground(guiGraphics);
-		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, leftPos, topPos, 0.0F, 0.0F, xSize, ySize, 512, 512);
+		guiGraphics.blit(RenderType::guiTextured, TEXTURE, leftPos, topPos, 0.0F, 0.0F, xSize, ySize, 512, 512);
 	}
 
 	@Override

@@ -1,5 +1,7 @@
 package net.geforcemods.securitycraft.blockentities;
 
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
@@ -53,8 +55,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.gameevent.GameEvent;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
+import net.geforcemods.securitycraft.platform.nbt.ValueInput;
+import net.geforcemods.securitycraft.platform.nbt.ValueOutput;
 
 public class BlockPocketManagerBlockEntity extends CustomizableBlockEntity implements MenuProvider, ITickingBlockEntity, ILockable {
 	private static final int BLOCK_PLACEMENTS_PER_TICK = 4;
@@ -660,13 +662,15 @@ public class BlockPocketManagerBlockEntity extends CustomizableBlockEntity imple
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
+	public void saveAdditional(CompoundTag compoundTag, HolderLookup.Provider lookupProvider) {
+		ValueOutput tag = ValueOutput.of(compoundTag, lookupProvider);
+
 		tag.putBoolean("BlockPocketEnabled", isEnabled());
 		tag.putBoolean("ShowOutline", showsOutline());
 		tag.putInt("Size", getSize());
 		tag.putInt("AutoBuildOffset", getAutoBuildOffset());
 		tag.putInt("Color", color);
-		ContainerHelper.saveAllItems(tag, storage);
+		ContainerHelper.saveAllItems(tag.tag(), storage, tag.lookup());
 
 		for (int i = 0; i < blocks.size(); i++) {
 			tag.putLong("BlocksList" + i, blocks.get(i).asLong());
@@ -680,20 +684,22 @@ public class BlockPocketManagerBlockEntity extends CustomizableBlockEntity imple
 			tag.putLong("FloorList" + i, floor.get(i).asLong());
 		}
 
-		super.saveAdditional(tag);
+		super.saveAdditional(tag.tag(), tag.lookup());
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
+	public void loadAdditional(CompoundTag compoundTag, HolderLookup.Provider lookupProvider) {
+		ValueInput tag = ValueInput.of(compoundTag, lookupProvider);
+
 		int i = 0;
 
-		super.loadAdditional(tag);
+		super.loadAdditional(tag.tag(), tag.lookup());
 		setEnabled(tag.getBooleanOr("BlockPocketEnabled", false));
 		setShowOutline(tag.getBooleanOr("ShowOutline", false));
 		setSize(tag.getIntOr("Size", 5));
 		setAutoBuildOffset(tag.getIntOr("AutoBuildOffset", 0));
 		setColor(tag.getIntOr("Color", 0xFF0000FF));
-		ContainerHelper.loadAllItems(tag, storage);
+		ContainerHelper.loadAllItems(tag.tag(), storage, tag.lookup());
 
 		while (tag.getLong("BlocksList" + i).isPresent()) {
 			blocks.add(BlockPos.of(tag.getLongOr("BlocksList" + i, 0)));

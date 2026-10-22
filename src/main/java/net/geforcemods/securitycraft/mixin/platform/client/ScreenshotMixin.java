@@ -19,8 +19,8 @@ import net.minecraft.network.chat.Component;
  */
 @Mixin(Screenshot.class)
 public class ScreenshotMixin {
-	@Inject(method = "grab(Ljava/io/File;Ljava/lang/String;Lcom/mojang/blaze3d/pipeline/RenderTarget;ILjava/util/function/Consumer;)V", at = @At("HEAD"))
-	private static void securitycraft$onScreenshot(File gameDirectory, String filename, RenderTarget renderTarget, int downscaleFactor, Consumer<Component> messageConsumer, CallbackInfo ci) {
+	@Inject(method = "grab(Ljava/io/File;Ljava/lang/String;Lcom/mojang/blaze3d/pipeline/RenderTarget;Ljava/util/function/Consumer;)V", at = @At("HEAD"))
+	private static void securitycraft$onScreenshot(File gameDirectory, String filename, RenderTarget renderTarget, Consumer<Component> messageConsumer, CallbackInfo ci) {
 		CameraController.onScreenshot();
 	}
 }

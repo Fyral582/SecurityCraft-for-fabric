@@ -19,10 +19,9 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.Rect2i;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.CommonColors;
 import net.minecraft.world.entity.player.Inventory;
 import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
@@ -96,19 +95,19 @@ public class BlockReinforcerScreen extends AbstractContainerScreen<BlockReinforc
 
 	@Override
 	protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-		guiGraphics.drawString(font, title, (imageWidth - font.width(title)) / 2, 5, CommonColors.DARK_GRAY, false);
-		guiGraphics.drawString(font, Utils.INVENTORY_TEXT, 8, imageHeight - 96 + 2, CommonColors.DARK_GRAY, false);
+		guiGraphics.drawString(font, title, (imageWidth - font.width(title)) / 2, 5, 0xFF404040, false);
+		guiGraphics.drawString(font, Utils.INVENTORY_TEXT, 8, imageHeight - 96 + 2, 0xFF404040, false);
 
 		if (!menu.getResult().isEmpty())
-			guiGraphics.drawString(font, output, 128 - font.width(output), 25, CommonColors.DARK_GRAY, false);
+			guiGraphics.drawString(font, output, 128 - font.width(output), 25, 0xFF404040, false);
 
-		guiGraphics.drawString(font, mode, 8, 48, CommonColors.DARK_GRAY, false);
-		guiGraphics.drawString(font, tint, 8, 73, CommonColors.DARK_GRAY, false);
+		guiGraphics.drawString(font, mode, 8, 48, 0xFF404040, false);
+		guiGraphics.drawString(font, tint, 8, 73, 0xFF404040, false);
 	}
 
 	@Override
 	public void renderBg(GuiGraphics guiGraphics, float partialTicks, int mouseX, int mouseY) {
-		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
+		guiGraphics.blit(RenderType::guiTextured, TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
 	}
 
 	private Component updateReinforcingModeButtonText(int index) {

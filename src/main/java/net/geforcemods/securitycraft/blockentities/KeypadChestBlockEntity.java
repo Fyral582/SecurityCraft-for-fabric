@@ -50,8 +50,8 @@ import net.minecraft.world.level.block.DoubleBlockCombiner;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.ChestType;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
+import net.geforcemods.securitycraft.platform.nbt.ValueInput;
+import net.geforcemods.securitycraft.platform.nbt.ValueOutput;
 import net.geforcemods.securitycraft.platform.model.ModelData;
 
 public class KeypadChestBlockEntity extends ChestBlockEntity implements IPasscodeProtected, IOwnable, IModuleInventory, ICustomizable, ILockable, ISentryBulletContainer {
@@ -88,10 +88,12 @@ public class KeypadChestBlockEntity extends ChestBlockEntity implements IPasscod
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
+	public void saveAdditional(CompoundTag compoundTag, HolderLookup.Provider lookupProvider) {
+		ValueOutput tag = ValueOutput.of(compoundTag, lookupProvider);
+
 		long cooldownLeft;
 
-		super.saveAdditional(tag);
+		super.saveAdditional(tag.tag(), tag.lookup());
 		writeModuleInventory(tag);
 		writeModuleStates(tag);
 		writeOptions(tag);
@@ -107,8 +109,10 @@ public class KeypadChestBlockEntity extends ChestBlockEntity implements IPasscod
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
+	public void loadAdditional(CompoundTag compoundTag, HolderLookup.Provider lookupProvider) {
+		ValueInput tag = ValueInput.of(compoundTag, lookupProvider);
+
+		super.loadAdditional(tag.tag(), tag.lookup());
 
 		readModuleInventory(modules, tag);
 		moduleStates = readModuleStates(tag);

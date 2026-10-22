@@ -1,5 +1,7 @@
 package net.geforcemods.securitycraft.api;
 
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import java.util.EnumMap;
 import java.util.Map;
 
@@ -10,8 +12,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
+import net.geforcemods.securitycraft.platform.nbt.ValueInput;
+import net.geforcemods.securitycraft.platform.nbt.ValueOutput;
 
 /**
  * Extend this class in your TileEntity to make it customizable. You will be able to modify it with the various modules in
@@ -32,16 +34,20 @@ public abstract class CustomizableBlockEntity extends NamedBlockEntity implement
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
+	public void loadAdditional(CompoundTag compoundTag, HolderLookup.Provider lookupProvider) {
+		ValueInput tag = ValueInput.of(compoundTag, lookupProvider);
+
+		super.loadAdditional(tag.tag(), tag.lookup());
 		readModuleInventory(modules, tag);
 		moduleStates = readModuleStates(tag);
 		readOptions(tag);
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
-		super.saveAdditional(tag);
+	public void saveAdditional(CompoundTag compoundTag, HolderLookup.Provider lookupProvider) {
+		ValueOutput tag = ValueOutput.of(compoundTag, lookupProvider);
+
+		super.saveAdditional(tag.tag(), tag.lookup());
 		writeModuleInventory(tag);
 		writeModuleStates(tag);
 		writeOptions(tag);

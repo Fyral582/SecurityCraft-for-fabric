@@ -13,8 +13,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
+import net.geforcemods.securitycraft.platform.nbt.ValueInput;
+import net.geforcemods.securitycraft.platform.nbt.ValueOutput;
 
 public class OwnableBlockEntity extends BlockEntity implements IOwnable {
 	private Owner owner = new Owner();
@@ -28,16 +28,20 @@ public class OwnableBlockEntity extends BlockEntity implements IOwnable {
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
-		super.saveAdditional(tag);
+	public void saveAdditional(CompoundTag compoundTag, HolderLookup.Provider lookupProvider) {
+		ValueOutput tag = ValueOutput.of(compoundTag, lookupProvider);
+
+		super.saveAdditional(tag.tag(), tag.lookup());
 
 		if (owner != null)
 			owner.save(tag, needsValidation());
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
+	public void loadAdditional(CompoundTag compoundTag, HolderLookup.Provider lookupProvider) {
+		ValueInput tag = ValueInput.of(compoundTag, lookupProvider);
+
+		super.loadAdditional(tag.tag(), tag.lookup());
 
 		owner.load(tag);
 	}

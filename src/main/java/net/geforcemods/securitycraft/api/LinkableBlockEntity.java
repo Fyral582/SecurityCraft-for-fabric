@@ -1,5 +1,7 @@
 package net.geforcemods.securitycraft.api;
 
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,10 +12,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueInput.TypedInputList;
-import net.minecraft.world.level.storage.ValueOutput;
-import net.minecraft.world.level.storage.ValueOutput.TypedOutputList;
+import net.geforcemods.securitycraft.platform.nbt.ValueInput;
+import net.geforcemods.securitycraft.platform.nbt.ValueInput.TypedInputList;
+import net.geforcemods.securitycraft.platform.nbt.ValueOutput;
+import net.geforcemods.securitycraft.platform.nbt.ValueOutput.TypedOutputList;
 
 public abstract class LinkableBlockEntity extends CustomizableBlockEntity implements ITickingBlockEntity {
 	private TypedInputList<LinkedBlock> nbtTagStorage = null;
@@ -32,8 +34,10 @@ public abstract class LinkableBlockEntity extends CustomizableBlockEntity implem
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
+	public void loadAdditional(CompoundTag compoundTag, HolderLookup.Provider lookupProvider) {
+		ValueInput tag = ValueInput.of(compoundTag, lookupProvider);
+
+		super.loadAdditional(tag.tag(), tag.lookup());
 
 		TypedInputList<LinkedBlock> savedLinkedBlocks = tag.listOrEmpty("linkedBlocks", LinkedBlock.NEW_OR_LEGACY_CODEC);
 
@@ -46,8 +50,10 @@ public abstract class LinkableBlockEntity extends CustomizableBlockEntity implem
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
-		super.saveAdditional(tag);
+	public void saveAdditional(CompoundTag compoundTag, HolderLookup.Provider lookupProvider) {
+		ValueOutput tag = ValueOutput.of(compoundTag, lookupProvider);
+
+		super.saveAdditional(tag.tag(), tag.lookup());
 		saveLinkedBlocks(tag);
 	}
 

@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.items;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 import net.geforcemods.securitycraft.SCContent;
@@ -10,7 +11,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.component.TooltipDisplay;
 
 public class KeycardItem extends Item {
 	private static final Component LINK_INFO = Component.translatable("tooltip.securitycraft:keycard.link_info").setStyle(Utils.GRAY_STYLE);
@@ -30,18 +30,17 @@ public class KeycardItem extends Item {
 	}
 
 	@Override
-	public void appendHoverText(ItemStack stack, TooltipContext ctx, TooltipDisplay display, Consumer<Component> tooltipAdder, TooltipFlag flag) {
+	public void appendHoverText(ItemStack stack, TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
 		if (this != SCContent.LIMITED_USE_KEYCARD.get()) {
 			DataComponentType<KeycardData> type = SCContent.KEYCARD_DATA.get();
 			KeycardData keycardData = stack.get(type);
 
 			if (keycardData != null) {
-				if (display.shows(type))
-					keycardData.addToTooltip(ctx, tooltipAdder, flag, stack.getComponents());
+				keycardData.addToTooltip(ctx, tooltip::add, flag);
 			}
 			else {
-				tooltipAdder.accept(LINK_INFO);
-				tooltipAdder.accept(LIMITED_INFO);
+				tooltip.add(LINK_INFO);
+				tooltip.add(LIMITED_INFO);
 			}
 		}
 	}

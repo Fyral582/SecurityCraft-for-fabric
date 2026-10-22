@@ -1,7 +1,5 @@
 package net.geforcemods.securitycraft.renderers;
 
-import java.util.List;
-
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.geforcemods.securitycraft.SCContent;
@@ -11,7 +9,6 @@ import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.block.ModelBlockRenderer;
-import net.minecraft.client.renderer.block.model.BlockModelPart;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.BlockPos;
@@ -32,7 +29,7 @@ public class ReinforcedPistonHeadRenderer implements BlockEntityRenderer<Reinfor
 	}
 
 	@Override
-	public void render(ReinforcedPistonMovingBlockEntity be, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int combinedLight, int combinedOverlay, Vec3 cameraPos) {
+	public void render(ReinforcedPistonMovingBlockEntity be, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int combinedLight, int combinedOverlay) {
 		Level level = be.getLevel();
 
 		if (level != null) {
@@ -73,13 +70,11 @@ public class ReinforcedPistonHeadRenderer implements BlockEntityRenderer<Reinfor
 		if (blockRenderer == null)
 			blockRenderer = Minecraft.getInstance().getBlockRenderer();
 
-		List<BlockModelPart> list = blockRenderer.getBlockModel(state).collectParts(RandomSource.create(state.getSeed(pos)));
-
-		blockRenderer.getModelRenderer().tesselateBlock(level, list, state, pos, poseStack, buffer.getBuffer(ItemBlockRenderTypes.getMovingBlockRenderType(state)), extended, combinedOverlay);
+		blockRenderer.getModelRenderer().tesselateBlock(level, blockRenderer.getBlockModel(state), state, pos, poseStack, buffer.getBuffer(ItemBlockRenderTypes.getMovingBlockRenderType(state)), extended, RandomSource.create(), state.getSeed(pos), combinedOverlay);
 	}
 
 	@Override
-	public boolean shouldRenderOffScreen() {
+	public boolean shouldRenderOffScreen(ReinforcedPistonMovingBlockEntity be) {
 		return true; //replaces NeoForge's getRenderBoundingBox
 	}
 

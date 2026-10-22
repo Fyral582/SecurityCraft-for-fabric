@@ -14,11 +14,10 @@ import net.geforcemods.securitycraft.util.ClientUtils;
 import net.geforcemods.securitycraft.util.Utils;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.CommonColors;
 import net.minecraft.world.entity.player.Inventory;
 import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
@@ -45,7 +44,7 @@ public class LaserBlockScreen extends AbstractContainerScreen<LaserBlockMenu> {
 		titleLabelX = imageWidth / 2 - font.width(title) / 2;
 		inventoryLabelY = imageHeight - 94;
 		sideConfig.forEach((dir, enabled) -> {
-			CallbackCheckbox checkbox = new CallbackCheckbox(leftPos + 40, topPos + dir.get3DDataValue() * 22 + 25, 20, 20, Utils.localize("gui.securitycraft:laser." + dir.getName() + "Enabled"), enabled, newValue -> onChangeValue(dir, newValue), CommonColors.DARK_GRAY) {
+			CallbackCheckbox checkbox = new CallbackCheckbox(leftPos + 40, topPos + dir.get3DDataValue() * 22 + 25, 20, 20, Utils.localize("gui.securitycraft:laser." + dir.getName() + "Enabled"), enabled, newValue -> onChangeValue(dir, newValue), 0xFF404040) {
 				@Override
 				public void onPress() {
 					if (hasSmartModule)
@@ -65,11 +64,11 @@ public class LaserBlockScreen extends AbstractContainerScreen<LaserBlockMenu> {
 
 	@Override
 	protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
-		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
+		guiGraphics.blit(RenderType::guiTextured, TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
 
 		for (int i = 0; i < 6; i++) {
 			if (be.getLensContainer().getItem(i).isEmpty())
-				guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, LENS_SLOT, leftPos + 15, topPos + i * 22 + 27, 16, 16);
+				guiGraphics.blitSprite(RenderType::guiTextured, LENS_SLOT, leftPos + 15, topPos + i * 22 + 27, 16, 16);
 		}
 	}
 

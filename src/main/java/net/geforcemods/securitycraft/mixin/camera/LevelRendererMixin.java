@@ -3,7 +3,6 @@ package net.geforcemods.securitycraft.mixin.camera;
 import java.util.List;
 
 import org.joml.Matrix4f;
-import org.joml.Vector4f;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -15,7 +14,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
 
 import net.geforcemods.securitycraft.compat.ium.IumCompat;
@@ -24,8 +22,8 @@ import net.geforcemods.securitycraft.entity.camera.FrameFeedHandler;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.chunk.CompiledSectionMesh;
 import net.minecraft.client.renderer.chunk.SectionRenderDispatcher;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.core.BlockPos;
@@ -61,7 +59,7 @@ public abstract class LevelRendererMixin {
 	 * Sodium entity culling and thus always rendered.
 	 */
 	@Inject(method = "renderLevel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;compileSections(Lnet/minecraft/client/Camera;)V"))
-	private void securitycraft$afterSetupRender(GraphicsResourceAllocator graphicsResourceAllocator, DeltaTracker deltaTracker, boolean renderBlockOutline, Camera camera, Matrix4f frustumMatrix, Matrix4f projectionMatrix, GpuBufferSlice bufferSlice, Vector4f fogColor, boolean renderSky, CallbackInfo ci, @Local Frustum frustum) {
+	private void securitycraft$afterSetupRender(GraphicsResourceAllocator graphicsResourceAllocator, DeltaTracker deltaTracker, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, Matrix4f frustumMatrix, Matrix4f projectionMatrix, CallbackInfo ci, @Local Frustum frustum) {
 		if (IumCompat.isActive() && FrameFeedHandler.hasFeeds()) {
 			ProfilerFiller profiler = Profiler.get();
 
@@ -118,8 +116,21 @@ public abstract class LevelRendererMixin {
 			SectionPos sectionPos = SectionPos.of(pos);
 			SectionRenderDispatcher.RenderSection renderSection = CameraViewAreaExtension.rawFetch(sectionPos.x(), sectionPos.y(), sectionPos.z(), false);
 
-			if (renderSection != null && renderSection.sectionMesh.get() != CompiledSectionMesh.UNCOMPILED)
+			if (renderSection != null && renderSection.compiled.get() != SectionRenderDispatcher.CompiledSection.UNCOMPILED)
 				cir.setReturnValue(true);
 		}
+	}
+
+	/**
+	 * Sets the correct fog distance for rendering a frame feed, depending on clientside view distance configuration settings.
+	 * Note that the frame block entity chunk loading distance option is not respected for this, since it is only supposed to
+	 * affect the server by setting a limit on forceloaded chunks and unfit to be handled on the client side.
+	 */
+	@ModifyVariable(method = "renderLevel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/FogRenderer;computeFogColor(Lnet/minecraft/client/Camera;FLnet/minecraft/client/multiplayer/ClientLevel;IF)Lorg/joml/Vector4f;"), ordinal = 1)
+	private float securitycraft$modifyFogRenderDistance(float original) {
+		if (FrameFeedHandler.isCapturingCamera())
+			return FrameFeedHandler.getFrameFeedViewDistance(null) * 16;
+
+		return original;
 	}
 }

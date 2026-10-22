@@ -422,21 +422,21 @@ public class SCContent {
 	public static final DeferredBlock<BouncingBettyBlock> BOUNCING_BETTY = BLOCKS.registerBlock("bouncing_betty", BouncingBettyBlock::new, prop(MapColor.METAL, 3.5F).sound(SoundType.METAL).forceSolidOn().pushReaction(PushReaction.NORMAL));
 	@HasManualPage
 	@RegisterItemBlock
-	public static final DeferredBlock<CageTrapBlock> CAGE_TRAP = BLOCKS.registerBlock("cage_trap", CageTrapBlock::new, propDisguisable(MapColor.METAL, 5.0F).sound(SoundType.IRON).noCollission());
+	public static final DeferredBlock<CageTrapBlock> CAGE_TRAP = BLOCKS.registerBlock("cage_trap", CageTrapBlock::new, propDisguisable(MapColor.METAL, 5.0F).sound(SoundType.METAL).noCollission());
 	@HasManualPage
 	@RegisterItemBlock(SCItemGroup.EXPLOSIVES)
 	public static final DeferredBlock<ClaymoreBlock> CLAYMORE = BLOCKS.registerBlock("claymore", ClaymoreBlock::new, prop(MapColor.TERRACOTTA_GREEN, 3.5F).sound(SoundType.METAL).forceSolidOn().pushReaction(PushReaction.NORMAL));
 	@HasManualPage(PageGroup.DISPLAY_CASES)
-	public static final DeferredBlock<DisplayCaseBlock> DISPLAY_CASE = BLOCKS.registerBlock(DISPLAY_CASE_PATH, p -> new DisplayCaseBlock(p, false), prop(MapColor.METAL, 5.0F).sound(SoundType.IRON));
+	public static final DeferredBlock<DisplayCaseBlock> DISPLAY_CASE = BLOCKS.registerBlock(DISPLAY_CASE_PATH, p -> new DisplayCaseBlock(p, false), prop(MapColor.METAL, 5.0F).sound(SoundType.METAL));
 	@HasManualPage
 	@RegisterItemBlock
 	public static final DeferredBlock<FloorTrapBlock> FLOOR_TRAP = BLOCKS.registerBlock("floor_trap", FloorTrapBlock::new, propDisguisable(MapColor.METAL, 5.0F).sound(SoundType.METAL));
 	@HasManualPage
 	@OwnableBE
 	@RegisterItemBlock
-	public static final DeferredBlock<FrameBlock> FRAME = BLOCKS.registerBlock("keypad_frame", FrameBlock::new, prop(MapColor.METAL, 5.0F).sound(SoundType.IRON));
+	public static final DeferredBlock<FrameBlock> FRAME = BLOCKS.registerBlock("keypad_frame", FrameBlock::new, prop(MapColor.METAL, 5.0F).sound(SoundType.METAL));
 	@HasManualPage(PageGroup.DISPLAY_CASES)
-	public static final DeferredBlock<DisplayCaseBlock> GLOW_DISPLAY_CASE = BLOCKS.registerBlock(GLOW_DISPLAY_CASE_PATH, p -> new DisplayCaseBlock(p, true), prop(MapColor.METAL, 5.0F).sound(SoundType.IRON));
+	public static final DeferredBlock<DisplayCaseBlock> GLOW_DISPLAY_CASE = BLOCKS.registerBlock(GLOW_DISPLAY_CASE_PATH, p -> new DisplayCaseBlock(p, true), prop(MapColor.METAL, 5.0F).sound(SoundType.METAL));
 	@HasManualPage
 	@RegisterItemBlock(SCItemGroup.EXPLOSIVES)
 	public static final DeferredBlock<IMSBlock> IMS = BLOCKS.registerBlock("ims", IMSBlock::new, prop(MapColor.TERRACOTTA_GREEN, 3.5F).sound(SoundType.METAL));
@@ -446,8 +446,8 @@ public class SCContent {
 	public static final DeferredBlock<InventoryScannerFieldBlock> INVENTORY_SCANNER_FIELD = BLOCKS.registerBlock("inventory_scanner_field", InventoryScannerFieldBlock::new, prop(MapColor.NONE, -1.0F).noLootTable());
 	@HasManualPage
 	@RegisterItemBlock
-	public static final DeferredBlock<ElectrifiedIronFenceBlock> ELECTRIFIED_IRON_FENCE = BLOCKS.registerBlock("electrified_iron_fence", ElectrifiedIronFenceBlock::new, prop(MapColor.METAL, 5.0F).sound(SoundType.IRON));
-	public static final DeferredBlock<KeyPanelBlock> KEY_PANEL_BLOCK = BLOCKS.registerBlock("key_panel", KeyPanelBlock::new, prop(MapColor.METAL, 3.5F).sound(SoundType.IRON));
+	public static final DeferredBlock<ElectrifiedIronFenceBlock> ELECTRIFIED_IRON_FENCE = BLOCKS.registerBlock("electrified_iron_fence", ElectrifiedIronFenceBlock::new, prop(MapColor.METAL, 5.0F).sound(SoundType.METAL));
+	public static final DeferredBlock<KeyPanelBlock> KEY_PANEL_BLOCK = BLOCKS.registerBlock("key_panel", KeyPanelBlock::new, prop(MapColor.METAL, 3.5F).sound(SoundType.METAL));
 	@HasManualPage
 	@RegisterItemBlock
 	public static final DeferredBlock<KeycardLockBlock> KEYCARD_LOCK = BLOCKS.registerBlock("keycard_lock", KeycardLockBlock::new, prop(2.0F));
@@ -456,25 +456,25 @@ public class SCContent {
 	public static final DeferredBlock<KeycardReaderBlock> KEYCARD_READER = BLOCKS.registerBlock("keycard_reader", KeycardReaderBlock::new, propDisguisable(3.5F));
 	@HasManualPage(hasRecipeDescription = true)
 	@RegisterItemBlock
-	public static final DeferredBlock<KeypadBlock> KEYPAD = BLOCKS.registerBlock("keypad", KeypadBlock::new, propDisguisable(MapColor.METAL, 5.0F).sound(SoundType.IRON));
+	public static final DeferredBlock<KeypadBlock> KEYPAD = BLOCKS.registerBlock("keypad", KeypadBlock::new, propDisguisable(MapColor.METAL, 5.0F).sound(SoundType.METAL));
 	@HasManualPage(hasRecipeDescription = true)
 	@RegisterItemBlock
-	public static final DeferredBlock<KeypadBarrelBlock> KEYPAD_BARREL = BLOCKS.registerBlock("keypad_barrel", KeypadBarrelBlock::new, propDisguisable(MapColor.METAL, 5.0F).sound(SoundType.IRON));
+	public static final DeferredBlock<KeypadBarrelBlock> KEYPAD_BARREL = BLOCKS.registerBlock("keypad_barrel", KeypadBarrelBlock::new, propDisguisable(MapColor.METAL, 5.0F).sound(SoundType.METAL));
 	@HasManualPage(hasRecipeDescription = true)
-	public static final DeferredBlock<KeypadChestBlock> KEYPAD_CHEST = BLOCKS.registerBlock(KEYPAD_CHEST_PATH, KeypadChestBlock::new, propDisguisable(MapColor.METAL, 5.0F).sound(SoundType.IRON));
-	public static final DeferredBlock<KeypadDoorBlock> KEYPAD_DOOR = BLOCKS.registerBlock("keypad_door", p -> new KeypadDoorBlock(p, BlockSetType.IRON), propDisguisable(MapColor.METAL, 5.0F).sound(SoundType.IRON).pushReaction(PushReaction.BLOCK));
-	@HasManualPage(hasRecipeDescription = true)
-	@RegisterItemBlock
-	public static final DeferredBlock<KeypadTrapDoorBlock> KEYPAD_TRAPDOOR = BLOCKS.registerBlock("keypad_trapdoor", p -> new KeypadTrapDoorBlock(p, BlockSetType.IRON), propDisguisable(MapColor.METAL, 5.0F).sound(SoundType.IRON).isValidSpawn(SCContent::never));
+	public static final DeferredBlock<KeypadChestBlock> KEYPAD_CHEST = BLOCKS.registerBlock(KEYPAD_CHEST_PATH, KeypadChestBlock::new, propDisguisable(MapColor.METAL, 5.0F).sound(SoundType.METAL));
+	public static final DeferredBlock<KeypadDoorBlock> KEYPAD_DOOR = BLOCKS.registerBlock("keypad_door", p -> new KeypadDoorBlock(p, BlockSetType.IRON), propDisguisable(MapColor.METAL, 5.0F).sound(SoundType.METAL).pushReaction(PushReaction.BLOCK));
 	@HasManualPage(hasRecipeDescription = true)
 	@RegisterItemBlock
-	public static final DeferredBlock<KeypadFurnaceBlock> KEYPAD_FURNACE = BLOCKS.registerBlock("keypad_furnace", KeypadFurnaceBlock::new, prop(MapColor.METAL, 5.0F).sound(SoundType.IRON).lightLevel(state -> state.getValue(AbstractKeypadFurnaceBlock.LIT) ? 13 : 0));
+	public static final DeferredBlock<KeypadTrapDoorBlock> KEYPAD_TRAPDOOR = BLOCKS.registerBlock("keypad_trapdoor", p -> new KeypadTrapDoorBlock(p, BlockSetType.IRON), propDisguisable(MapColor.METAL, 5.0F).sound(SoundType.METAL).isValidSpawn(SCContent::never));
 	@HasManualPage(hasRecipeDescription = true)
 	@RegisterItemBlock
-	public static final DeferredBlock<KeypadSmokerBlock> KEYPAD_SMOKER = BLOCKS.registerBlock("keypad_smoker", KeypadSmokerBlock::new, prop(MapColor.METAL, 5.0F).sound(SoundType.IRON).lightLevel(state -> state.getValue(AbstractKeypadFurnaceBlock.LIT) ? 13 : 0));
+	public static final DeferredBlock<KeypadFurnaceBlock> KEYPAD_FURNACE = BLOCKS.registerBlock("keypad_furnace", KeypadFurnaceBlock::new, prop(MapColor.METAL, 5.0F).sound(SoundType.METAL).lightLevel(state -> state.getValue(AbstractKeypadFurnaceBlock.LIT) ? 13 : 0));
 	@HasManualPage(hasRecipeDescription = true)
 	@RegisterItemBlock
-	public static final DeferredBlock<KeypadBlastFurnaceBlock> KEYPAD_BLAST_FURNACE = BLOCKS.registerBlock("keypad_blast_furnace", KeypadBlastFurnaceBlock::new, prop(MapColor.METAL, 5.0F).sound(SoundType.IRON).lightLevel(state -> state.getValue(AbstractKeypadFurnaceBlock.LIT) ? 13 : 0));
+	public static final DeferredBlock<KeypadSmokerBlock> KEYPAD_SMOKER = BLOCKS.registerBlock("keypad_smoker", KeypadSmokerBlock::new, prop(MapColor.METAL, 5.0F).sound(SoundType.METAL).lightLevel(state -> state.getValue(AbstractKeypadFurnaceBlock.LIT) ? 13 : 0));
+	@HasManualPage(hasRecipeDescription = true)
+	@RegisterItemBlock
+	public static final DeferredBlock<KeypadBlastFurnaceBlock> KEYPAD_BLAST_FURNACE = BLOCKS.registerBlock("keypad_blast_furnace", KeypadBlastFurnaceBlock::new, prop(MapColor.METAL, 5.0F).sound(SoundType.METAL).lightLevel(state -> state.getValue(AbstractKeypadFurnaceBlock.LIT) ? 13 : 0));
 	@HasManualPage
 	@RegisterItemBlock
 	public static final DeferredBlock<LaserBlock> LASER_BLOCK = BLOCKS.registerBlock("laser_block", LaserBlock::new, propDisguisable(3.5F));
@@ -490,23 +490,23 @@ public class SCContent {
 	@RegisterItemBlock
 	public static final DeferredBlock<PortableRadarBlock> PORTABLE_RADAR = BLOCKS.registerBlock("portable_radar", PortableRadarBlock::new, prop(MapColor.COLOR_BLACK, 5.0F));
 	@OwnableBE
-	public static final DeferredBlock<ProjectorBlock> PROJECTOR = BLOCKS.registerBlock("projector", ProjectorBlock::new, propDisguisable(MapColor.METAL, 5.0F).sound(SoundType.IRON));
+	public static final DeferredBlock<ProjectorBlock> PROJECTOR = BLOCKS.registerBlock("projector", ProjectorBlock::new, propDisguisable(MapColor.METAL, 5.0F).sound(SoundType.METAL));
 	@HasManualPage
 	@RegisterItemBlock
 	public static final DeferredBlock<ProtectoBlock> PROTECTO = BLOCKS.registerBlock("protecto", ProtectoBlock::new, propDisguisable(MapColor.METAL, 10.0F).sound(SoundType.METAL).lightLevel(state -> 7));
 	@OwnableBE
-	public static final DeferredBlock<ReinforcedDoorBlock> REINFORCED_DOOR = BLOCKS.registerBlock("iron_door_reinforced", ReinforcedDoorBlock::new, prop(MapColor.METAL, 5.0F).sound(SoundType.IRON).noOcclusion().pushReaction(PushReaction.BLOCK));
+	public static final DeferredBlock<ReinforcedDoorBlock> REINFORCED_DOOR = BLOCKS.registerBlock("iron_door_reinforced", ReinforcedDoorBlock::new, prop(MapColor.METAL, 5.0F).sound(SoundType.METAL).noOcclusion().pushReaction(PushReaction.BLOCK));
 	@HasManualPage
 	@RegisterItemBlock
-	public static final DeferredBlock<ElectrifiedIronFenceGateBlock> ELECTRIFIED_IRON_FENCE_GATE = BLOCKS.registerBlock("reinforced_fence_gate", ElectrifiedIronFenceGateBlock::new, prop(MapColor.METAL, 5.0F).sound(SoundType.IRON).forceSolidOn());
+	public static final DeferredBlock<ElectrifiedIronFenceGateBlock> ELECTRIFIED_IRON_FENCE_GATE = BLOCKS.registerBlock("reinforced_fence_gate", ElectrifiedIronFenceGateBlock::new, prop(MapColor.METAL, 5.0F).sound(SoundType.METAL).forceSolidOn());
 	@HasManualPage
 	@RegisterItemBlock
 	public static final DeferredBlock<RetinalScannerBlock> RETINAL_SCANNER = BLOCKS.registerBlock("retinal_scanner", RetinalScannerBlock::new, propDisguisable(3.5F));
-	public static final DeferredBlock<RiftStabilizerBlock> RIFT_STABILIZER = BLOCKS.registerBlock("rift_stabilizer", RiftStabilizerBlock::new, propDisguisable(MapColor.METAL, 5.0F).sound(SoundType.IRON));
-	public static final DeferredBlock<ScannerDoorBlock> SCANNER_DOOR = BLOCKS.registerBlock("scanner_door", p -> new ScannerDoorBlock(p, BlockSetType.IRON), propDisguisable(MapColor.METAL, 5.0F).sound(SoundType.IRON).pushReaction(PushReaction.BLOCK));
+	public static final DeferredBlock<RiftStabilizerBlock> RIFT_STABILIZER = BLOCKS.registerBlock("rift_stabilizer", RiftStabilizerBlock::new, propDisguisable(MapColor.METAL, 5.0F).sound(SoundType.METAL));
+	public static final DeferredBlock<ScannerDoorBlock> SCANNER_DOOR = BLOCKS.registerBlock("scanner_door", p -> new ScannerDoorBlock(p, BlockSetType.IRON), propDisguisable(MapColor.METAL, 5.0F).sound(SoundType.METAL).pushReaction(PushReaction.BLOCK));
 	@HasManualPage
 	@RegisterItemBlock
-	public static final DeferredBlock<ScannerTrapDoorBlock> SCANNER_TRAPDOOR = BLOCKS.registerBlock("scanner_trapdoor", p -> new ScannerTrapDoorBlock(p, BlockSetType.IRON), propDisguisable(MapColor.METAL, 5.0F).sound(SoundType.IRON).isValidSpawn(SCContent::never));
+	public static final DeferredBlock<ScannerTrapDoorBlock> SCANNER_TRAPDOOR = BLOCKS.registerBlock("scanner_trapdoor", p -> new ScannerTrapDoorBlock(p, BlockSetType.IRON), propDisguisable(MapColor.METAL, 5.0F).sound(SoundType.METAL).isValidSpawn(SCContent::never));
 	public static final DeferredBlock<SecretStandingSignBlock> SECRET_OAK_SIGN = secretStandingSign("secret_sign_standing", Blocks.OAK_SIGN, p -> p.overrideDescription("block.securitycraft.secret_sign"));
 	public static final DeferredBlock<SecretWallSignBlock> SECRET_OAK_WALL_SIGN = secretWallSign("secret_sign_wall", Blocks.OAK_SIGN, p -> p.overrideDescription("block.securitycraft.secret_sign"));
 	public static final DeferredBlock<SecretStandingSignBlock> SECRET_SPRUCE_SIGN = secretStandingSign("secret_spruce_sign_standing", Blocks.SPRUCE_SIGN, p -> p.overrideDescription("block.securitycraft.secret_spruce_sign"));
@@ -2817,7 +2817,7 @@ public class SCContent {
 	public static final DeferredItem<AdminToolItem> ADMIN_TOOL = ITEMS.registerItem("admin_tool", AdminToolItem::new, itemProp(1).rarity(Rarity.EPIC));
 	public static final DeferredItem<BlockItem> ANCIENT_DEBRIS_MINE_ITEM = ITEMS.registerSimpleBlockItem(SCContent.ANCIENT_DEBRIS_MINE, itemProp().fireResistant());
 	@HasManualPage
-	public static final DeferredItem<BriefcaseItem> BRIEFCASE = ITEMS.registerItem("briefcase", BriefcaseItem::new, itemProp(1).component(DataComponents.CONTAINER, ItemContainerContents.EMPTY).component(DataComponents.TOOLTIP_DISPLAY, BriefcaseItem.DEFAULT_TOOLTIP_DISPLAY));
+	public static final DeferredItem<BriefcaseItem> BRIEFCASE = ITEMS.registerItem("briefcase", BriefcaseItem::new, itemProp(1).component(DataComponents.CONTAINER, ItemContainerContents.EMPTY));
 	@HasManualPage
 	public static final DeferredItem<CameraMonitorItem> CAMERA_MONITOR = registerItem("camera_monitor", CameraMonitorItem::new, () -> itemProp(1).component(BOUND_CAMERAS, CameraMonitorItem.DEFAULT_NAMED_POSITIONS));
 	@HasManualPage

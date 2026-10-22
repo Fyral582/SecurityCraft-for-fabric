@@ -50,7 +50,7 @@ public class Utils {
 	}
 
 	public static BlockPos readBlockPos(CompoundTag tag) {
-		return new BlockPos(tag.getIntOr("X", 0), tag.getIntOr("Y", 0), tag.getIntOr("Z", 0));
+		return new BlockPos(tag.getInt("X"), tag.getInt("Y"), tag.getInt("Z"));
 	}
 
 	public static CompoundTag writeBlockPos(BlockPos pos) {

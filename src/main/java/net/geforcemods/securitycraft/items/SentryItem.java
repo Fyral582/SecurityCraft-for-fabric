@@ -62,6 +62,8 @@ public class SentryItem extends Item {
 		if (level instanceof ServerLevel serverLevel)
 			EntityType.<Sentry>createDefaultStackConfig(serverLevel, stack, player).accept(entity);
 
+		entity.applyItemComponents(stack);
+
 		level.addFreshEntity(entity);
 		entity.gameEvent(GameEvent.ENTITY_PLACE, player);
 		player.displayClientMessage(Utils.localize(SentryMode.CAMOUFLAGE_HP.getModeKey()).append(Utils.localize(SentryMode.CAMOUFLAGE_HP.getDescriptionKey())), true);

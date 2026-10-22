@@ -1,5 +1,7 @@
 package net.geforcemods.securitycraft.blockentities;
 
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -28,10 +30,10 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueInput.TypedInputList;
-import net.minecraft.world.level.storage.ValueOutput;
-import net.minecraft.world.level.storage.ValueOutput.TypedOutputList;
+import net.geforcemods.securitycraft.platform.nbt.ValueInput;
+import net.geforcemods.securitycraft.platform.nbt.ValueInput.TypedInputList;
+import net.geforcemods.securitycraft.platform.nbt.ValueOutput;
+import net.geforcemods.securitycraft.platform.nbt.ValueOutput.TypedOutputList;
 import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 
 public class FrameBlockEntity extends CustomizableBlockEntity implements ITickingBlockEntity {
@@ -93,8 +95,10 @@ public class FrameBlockEntity extends CustomizableBlockEntity implements ITickin
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
+	public void loadAdditional(CompoundTag compoundTag, HolderLookup.Provider lookupProvider) {
+		ValueInput tag = ValueInput.of(compoundTag, lookupProvider);
+
+		super.loadAdditional(tag.tag(), tag.lookup());
 
 		TypedInputList<NamedPositions.Entry> cameras = tag.listOrEmpty("cameras", NamedPositions.Entry.CODEC.orElse(NamedPositions.Entry.EMPTY));
 
@@ -117,8 +121,10 @@ public class FrameBlockEntity extends CustomizableBlockEntity implements ITickin
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
-		super.saveAdditional(tag);
+	public void saveAdditional(CompoundTag compoundTag, HolderLookup.Provider lookupProvider) {
+		ValueOutput tag = ValueOutput.of(compoundTag, lookupProvider);
+
+		super.saveAdditional(tag.tag(), tag.lookup());
 
 		TypedOutputList<NamedPositions.Entry> cameras = tag.list("cameras", NamedPositions.Entry.CODEC.orElse(NamedPositions.Entry.EMPTY));
 

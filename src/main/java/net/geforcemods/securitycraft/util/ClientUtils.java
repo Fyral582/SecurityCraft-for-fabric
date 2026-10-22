@@ -1,5 +1,7 @@
 package net.geforcemods.securitycraft.util;
 
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import org.joml.Matrix4f;
 import java.util.Arrays;
 
 import org.joml.Quaternionf;
@@ -9,7 +11,7 @@ import net.geforcemods.securitycraft.misc.ModuleType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.network.chat.Component;
@@ -48,11 +50,11 @@ public class ClientUtils {
 			drawTexture(guiGraphics, SUGAR_TEXTURE, moduleLeft, moduleTop, color);
 
 		if (moduleTooltip != null && mouseX >= moduleLeft && mouseX < moduleRight && mouseY >= moduleTop && mouseY <= moduleBottom && mc.screen != null)
-			guiGraphics.setComponentTooltipForNextFrame(font, Arrays.asList(moduleTooltip), mouseX, mouseY);
+			guiGraphics.renderComponentTooltip(font, Arrays.asList(moduleTooltip), mouseX, mouseY);
 	}
 
 	private static void drawTexture(GuiGraphics guiGraphics, ResourceLocation texture, int moduleLeft, int moduleTop, int color) {
-		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, texture, moduleLeft, moduleTop, 0.0F, 0.0F, 16, 16, 16, 16, color);
+		guiGraphics.blit(RenderType::guiTextured, texture, moduleLeft, moduleTop, 0.0F, 0.0F, 16, 16, 16, 16, color);
 	}
 
 	public static void recompileChunk(BlockPos pos) {
@@ -78,6 +80,24 @@ public class ClientUtils {
 		quaternion.mul(new Quaternionf(0.0F, (float) Math.sin(y / 2.0F), 0.0F, (float) Math.cos(y / 2.0F)));
 		quaternion.mul(new Quaternionf(0.0F, 0.0F, (float) Math.sin(z / 2.0F), (float) Math.cos(z / 2.0F)));
 		return quaternion;
+	}
+
+	public static void fillHorizontalGradient(GuiGraphics guiGraphics, int zLevel, int left, int top, int right, int bottom, int fromColor, int toColor) {
+		float fromAlpha = (fromColor >> 24 & 255) / 255.0F;
+		float fromRed = (fromColor >> 16 & 255) / 255.0F;
+		float fromGreen = (fromColor >> 8 & 255) / 255.0F;
+		float fromBlue = (fromColor & 255) / 255.0F;
+		float toAlpha = (toColor >> 24 & 255) / 255.0F;
+		float toRed = (toColor >> 16 & 255) / 255.0F;
+		float toGreen = (toColor >> 8 & 255) / 255.0F;
+		float toBlue = (toColor & 255) / 255.0F;
+		Matrix4f mat = guiGraphics.pose().last().pose();
+		VertexConsumer buffer = Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(RenderType.gui());
+
+		buffer.addVertex(mat, right, top, zLevel).setColor(toRed, toGreen, toBlue, toAlpha);
+		buffer.addVertex(mat, left, top, zLevel).setColor(fromRed, fromGreen, fromBlue, fromAlpha);
+		buffer.addVertex(mat, left, bottom, zLevel).setColor(fromRed, fromGreen, fromBlue, fromAlpha);
+		buffer.addVertex(mat, right, bottom, zLevel).setColor(toRed, toGreen, toBlue, toAlpha);
 	}
 
 	public static int HSBtoRGB(float hue, float saturation, float brightness) {

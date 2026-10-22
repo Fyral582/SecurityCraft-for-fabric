@@ -1,5 +1,7 @@
 package net.geforcemods.securitycraft.blockentities;
 
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
@@ -42,8 +44,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
+import net.geforcemods.securitycraft.platform.nbt.ValueInput;
+import net.geforcemods.securitycraft.platform.nbt.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 
 public class SecureTradingStationBlockEntity extends DisguisableBlockEntity implements WorldlyContainer, MenuProvider, ITickingBlockEntity {
@@ -76,17 +78,21 @@ public class SecureTradingStationBlockEntity extends DisguisableBlockEntity impl
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
+	public void loadAdditional(CompoundTag compoundTag, HolderLookup.Provider lookupProvider) {
+		ValueInput tag = ValueInput.of(compoundTag, lookupProvider);
 
-		ContainerHelper.loadAllItems(tag, inventoryContents);
+		super.loadAdditional(tag.tag(), tag.lookup());
+
+		ContainerHelper.loadAllItems(tag.tag(), inventoryContents, tag.lookup());
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
-		super.saveAdditional(tag);
+	public void saveAdditional(CompoundTag compoundTag, HolderLookup.Provider lookupProvider) {
+		ValueOutput tag = ValueOutput.of(compoundTag, lookupProvider);
 
-		ContainerHelper.saveAllItems(tag, inventoryContents);
+		super.saveAdditional(tag.tag(), tag.lookup());
+
+		ContainerHelper.saveAllItems(tag.tag(), inventoryContents, tag.lookup());
 	}
 
 	@Override

@@ -26,12 +26,11 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.util.CommonColors;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.scores.PlayerTeam;
@@ -94,7 +93,7 @@ public class EditModuleScreen extends Screen implements StillValid {
 		clearButton = addRenderableWidget(new Button(controlsStartX, height / 2 + 57, controlsWidth, 20, Utils.localize("gui.securitycraft:editModule.clear"), this::clearButtonClicked, Button.DEFAULT_NARRATION));
 		playerList = addRenderableWidget(new PlayerList(minecraft, 110, 165, height / 2 - 88, guiLeft + 10));
 		teamList = addRenderableWidget(new TeamList(minecraft, editTeamsButton.getWidth(), 75, editTeamsButton.getY() + editTeamsButton.getHeight(), editTeamsButton.getX()));
-		affectEveryPlayerCheckbox = addRenderableWidget(new CallbackCheckbox(guiLeft + xSize / 2 - length / 2, guiTop + ySize - 25, 20, 20, checkboxText, module.getOrDefault(SCContent.LIST_MODULE_DATA, ListModuleData.EMPTY).affectEveryone(), newState -> module.getOrDefault(SCContent.LIST_MODULE_DATA, ListModuleData.EMPTY).updateAffectEveryone(module, newState), CommonColors.DARK_GRAY));
+		affectEveryPlayerCheckbox = addRenderableWidget(new CallbackCheckbox(guiLeft + xSize / 2 - length / 2, guiTop + ySize - 25, 20, 20, checkboxText, module.getOrDefault(SCContent.LIST_MODULE_DATA, ListModuleData.EMPTY).affectEveryone(), newState -> module.getOrDefault(SCContent.LIST_MODULE_DATA, ListModuleData.EMPTY).updateAffectEveryone(module, newState), 0xFF404040));
 
 		teamList.active = false;
 		editTeamsButton.active = !availableTeams.isEmpty();
@@ -133,13 +132,13 @@ public class EditModuleScreen extends Screen implements StillValid {
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
-		guiGraphics.drawWordWrap(font, editModule, leftPos + xSize / 2 - font.width(editModule) / 2, topPos + 6, width, CommonColors.DARK_GRAY, false);
+		guiGraphics.drawWordWrap(font, editModule, leftPos + xSize / 2 - font.width(editModule) / 2, topPos + 6, width, 0xFF404040, false);
 	}
 
 	@Override
 	public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
 		renderTransparentBackground(guiGraphics);
-		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, leftPos, topPos, 0.0F, 0.0F, xSize, ySize, 256, 256);
+		guiGraphics.blit(RenderType::guiTextured, TEXTURE, leftPos, topPos, 0.0F, 0.0F, xSize, ySize, 256, 256);
 	}
 
 	@Override
@@ -412,7 +411,7 @@ public class EditModuleScreen extends Screen implements StillValid {
 					int baseY = top + border - (int) scrollDistance;
 
 					if (length >= width - 6) //6 = barWidth
-						guiGraphics.setTooltipForNextFrame(font, name, left + 3, baseY + (SLOT_HEIGHT * slotIndex + SLOT_HEIGHT));
+						guiGraphics.renderTooltip(font, name, left + 3, baseY + (SLOT_HEIGHT * slotIndex + SLOT_HEIGHT));
 				}
 			}
 		}
@@ -433,7 +432,7 @@ public class EditModuleScreen extends Screen implements StillValid {
 				PlayerTeam team = availableTeams.get(i);
 
 				guiGraphics.drawString(font, team.getDisplayName(), left + 15, yStart, 0xFFC6C6C6, false);
-				guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, teamsListedStatus.get(team) ? CONFIRM_SPRITE : CANCEL_SPRITE, left + 1, yStart - 3, 12, 12);
+				guiGraphics.blitSprite(RenderType::guiTextured, teamsListedStatus.get(team) ? CONFIRM_SPRITE : CANCEL_SPRITE, left + 1, yStart - 3, 12, 12);
 			}
 		}
 

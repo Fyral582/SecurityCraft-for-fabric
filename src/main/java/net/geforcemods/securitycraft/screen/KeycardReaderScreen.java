@@ -27,11 +27,10 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.CommonColors;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
@@ -221,16 +220,16 @@ public class KeycardReaderScreen extends AbstractContainerScreen<KeycardReaderMe
 
 	@Override
 	protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-		guiGraphics.drawString(font, title, imageWidth / 2 - font.width(title) / 2, 6, CommonColors.DARK_GRAY, false);
-		guiGraphics.drawString(font, signatureText, signatureTextStartX, 23, CommonColors.DARK_GRAY, false);
-		guiGraphics.drawString(font, keycardLevelsText, 170 - font.width(keycardLevelsText), 56, CommonColors.DARK_GRAY, false);
+		guiGraphics.drawString(font, title, imageWidth / 2 - font.width(title) / 2, 6, 0xFF404040, false);
+		guiGraphics.drawString(font, signatureText, signatureTextStartX, 23, 0xFF404040, false);
+		guiGraphics.drawString(font, keycardLevelsText, 170 - font.width(keycardLevelsText), 56, 0xFF404040, false);
 
 		//numbers infront of keycard levels buttons
 		for (int i = 1; i <= 5; i++) {
-			guiGraphics.drawString(font, "" + i, 91, 55 + 17 * i, CommonColors.DARK_GRAY, false);
+			guiGraphics.drawString(font, "" + i, 91, 55 + 17 * i, 0xFF404040, false);
 		}
 
-		guiGraphics.drawString(font, Utils.INVENTORY_TEXT, 8, imageHeight - 93, CommonColors.DARK_GRAY, false);
+		guiGraphics.drawString(font, Utils.INVENTORY_TEXT, 8, imageHeight - 93, 0xFF404040, false);
 	}
 
 	@Override
@@ -278,14 +277,14 @@ public class KeycardReaderScreen extends AbstractContainerScreen<KeycardReaderMe
 			int left = leftPos + 18;
 			int top = topPos + 82;
 
-			guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, WARNING_HIGHLIGHTED_SPRITE, left, top, 24, 24);
+			guiGraphics.blitSprite(RenderType::guiTextured, WARNING_HIGHLIGHTED_SPRITE, left, top, 24, 24);
 
 			if (mouseX >= left && mouseX <= left + 12 && mouseY >= top && mouseY <= top + 22)
-				guiGraphics.setTooltipForNextFrame(font, levelMismatchInfo, mouseX, mouseY);
+				guiGraphics.renderTooltip(font, levelMismatchInfo, mouseX, mouseY);
 		}
 
 		if (!usesTextField.active && !stack.isEmpty() && usesHoverChecker.checkHover(mouseX, mouseY))
-			guiGraphics.setComponentTooltipForNextFrame(font, usesHoverChecker.getLines(), mouseX, mouseY);
+			guiGraphics.renderComponentTooltip(font, usesHoverChecker.getLines(), mouseX, mouseY);
 
 		renderTooltip(guiGraphics, mouseX, mouseY);
 		ClientUtils.renderModuleInfo(guiGraphics, font, ModuleType.SMART, smartModuleTooltip, hasSmartModule, leftPos + 5, topPos + 5, mouseX, mouseY);
@@ -293,7 +292,7 @@ public class KeycardReaderScreen extends AbstractContainerScreen<KeycardReaderMe
 
 	@Override
 	protected void renderBg(GuiGraphics guiGraphics, float partialTicks, int mouseX, int mouseY) {
-		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
+		guiGraphics.blit(RenderType::guiTextured, TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
 	}
 
 	@Override

@@ -1,5 +1,8 @@
 package net.geforcemods.securitycraft.api;
 
+import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.CompoundTag;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumMap;
@@ -17,15 +20,14 @@ import net.geforcemods.securitycraft.util.PlayerUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.util.ExtraCodecs;
-import net.minecraft.world.ItemStackWithSlot;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
+import net.geforcemods.securitycraft.platform.nbt.ValueInput;
+import net.geforcemods.securitycraft.platform.nbt.ValueOutput;
 
 import static com.mojang.serialization.codecs.RecordCodecBuilder.create;
 
@@ -35,11 +37,6 @@ import static com.mojang.serialization.codecs.RecordCodecBuilder.create;
  * @author bl4ckscor3
  */
 public interface IModuleInventory {
-	Codec<ItemStackWithSlot> MODULE_SLOT_CODEC = create(i -> i.group(
-					ExtraCodecs.UNSIGNED_BYTE.fieldOf("ModuleSlot").orElse(0).forGetter(ItemStackWithSlot::slot),
-					ItemStack.MAP_CODEC.forGetter(ItemStackWithSlot::stack))
-			.apply(i, ItemStackWithSlot::new));
-
 	/**
 	 * @return The list that holds the contents of this inventory
 	 */
@@ -268,9 +265,14 @@ public interface IModuleInventory {
 	 * @param tag The tag to read the inventory from
 	 */
 	public default void readModuleInventory(NonNullList<ItemStack> modules, ValueInput tag) {
-		for (ItemStackWithSlot itemstackwithslot : tag.listOrEmpty("Modules", MODULE_SLOT_CODEC)) {
-			if (itemstackwithslot.isValidInContainer(modules.size()))
-				modules.set(itemstackwithslot.slot(), itemstackwithslot.stack());
+		ListTag list = tag.tag().getList("Modules", Tag.TAG_COMPOUND);
+
+		for (int i = 0; i < list.size(); i++) {
+			CompoundTag stackTag = list.getCompound(i);
+			int slot = stackTag.getByte("ModuleSlot") & 255;
+
+			if (slot < modules.size())
+				modules.set(slot, ItemStack.parseOptional(tag.lookup(), stackTag));
 		}
 	}
 
@@ -304,15 +306,21 @@ public interface IModuleInventory {
 	 * @param tag The tag to write the inventory to
 	 */
 	public default void writeModuleInventory(ValueOutput tag) {
-		ValueOutput.TypedOutputList<ItemStackWithSlot> list = tag.list("Modules", MODULE_SLOT_CODEC);
+		ListTag list = new ListTag();
 		NonNullList<ItemStack> modules = getInventory();
 
 		for (int i = 0; i < modules.size(); i++) {
 			ItemStack stack = modules.get(i);
 
-			if (!stack.isEmpty())
-				list.add(new ItemStackWithSlot(i, stack));
+			if (!stack.isEmpty()) {
+				CompoundTag stackTag = new CompoundTag();
+
+				stackTag.putByte("ModuleSlot", (byte) i);
+				list.add(stack.save(tag.lookup(), stackTag));
+			}
 		}
+
+		tag.tag().put("Modules", list);
 	}
 
 	/**

@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.platform.ext;
 
+import net.minecraft.server.level.ServerLevel;
 import java.util.function.BiConsumer;
 
 import org.jetbrains.annotations.Nullable;
@@ -91,6 +92,12 @@ public interface SCBlockExtension {
 	}
 
 	default void onNeighborChange(BlockState state, LevelReader level, BlockPos pos, BlockPos neighbor) {}
+
+	/**
+	 * Backport of 1.21.5's BlockBehaviour#affectNeighborsAfterRemoval. Called by BlockBehaviourRemovalMixin on the server after
+	 * the block got replaced by a different block
+	 */
+	default void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean isMoving) {}
 
 	default BubbleColumnDirection getBubbleColumnDirection(BlockState state) {
 		if (state.is(Blocks.SOUL_SAND))

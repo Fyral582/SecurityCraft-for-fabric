@@ -1,7 +1,5 @@
 package net.geforcemods.securitycraft.renderers;
 
-import java.util.function.Function;
-
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.geforcemods.securitycraft.ClientHandler;
@@ -12,10 +10,8 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.block.ModelBlockRenderer;
-import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
@@ -27,8 +23,8 @@ public class ProjectorRenderer implements BlockEntityRenderer<ProjectorBlockEnti
 	public ProjectorRenderer(BlockEntityRendererProvider.Context ctx) {}
 
 	@Override
-	public void render(ProjectorBlockEntity be, float partialTicks, PoseStack pose, MultiBufferSource buffer, int combinedLight, int combinedOverlay, Vec3 cameraPos) {
-		ClientHandler.DISGUISED_BLOCK_RENDER_DELEGATE.tryRenderDelegate(be, partialTicks, pose, buffer, combinedLight, combinedOverlay, cameraPos);
+	public void render(ProjectorBlockEntity be, float partialTicks, PoseStack pose, MultiBufferSource buffer, int combinedLight, int combinedOverlay) {
+		ClientHandler.DISGUISED_BLOCK_RENDER_DELEGATE.tryRenderDelegate(be, partialTicks, pose, buffer, combinedLight, combinedOverlay);
 
 		if (be.isActive() && !be.isEmpty()) {
 			Level level = be.getLevel();
@@ -46,9 +42,8 @@ public class ProjectorRenderer implements BlockEntityRenderer<ProjectorBlockEnti
 				pose.translate(relativePos.getX(), relativePos.getY(), relativePos.getZ());
 
 				if (be.isOverridingBlocks() || level.isEmptyBlock(projectionPos)) {
-					BlockStateModel model = dispatcher.getBlockModel(state);
-					dispatcher.renderBatched(state, projectionPos, level, pose, buffer.getBuffer(ItemBlockRenderTypes.getMovingBlockRenderType(state)), true, model.collectParts(RandomSource.create(state.getSeed(projectionPos))));
-					ClientHandler.PROJECTOR_RENDER_DELEGATE.tryRenderDelegate(be, partialTicks, pose, buffer, combinedLight, combinedOverlay, cameraPos);
+					dispatcher.renderBatched(state, projectionPos, level, pose, buffer.getBuffer(ItemBlockRenderTypes.getMovingBlockRenderType(state)), true, RandomSource.create(state.getSeed(projectionPos)));
+					ClientHandler.PROJECTOR_RENDER_DELEGATE.tryRenderDelegate(be, partialTicks, pose, buffer, combinedLight, combinedOverlay);
 				}
 
 				pose.popPose();
@@ -59,7 +54,7 @@ public class ProjectorRenderer implements BlockEntityRenderer<ProjectorBlockEnti
 	}
 
 	@Override
-	public boolean shouldRenderOffScreen() {
+	public boolean shouldRenderOffScreen(ProjectorBlockEntity be) {
 		return true;
 	}
 

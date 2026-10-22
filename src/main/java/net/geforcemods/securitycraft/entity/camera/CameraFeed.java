@@ -13,8 +13,7 @@ import com.mojang.blaze3d.pipeline.TextureTarget;
 
 import net.geforcemods.securitycraft.ConfigHandler;
 import net.geforcemods.securitycraft.blockentities.FrameBlockEntity;
-import net.minecraft.client.renderer.chunk.CompiledSectionMesh;
-import net.minecraft.client.renderer.chunk.SectionMesh;
+import net.minecraft.client.renderer.chunk.SectionRenderDispatcher.CompiledSection;
 import net.minecraft.client.renderer.chunk.SectionRenderDispatcher.RenderSection;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.core.BlockPos;
@@ -37,10 +36,10 @@ public class CameraFeed {
 	public CameraFeed(GlobalPos globalPos, RenderSection startingSection) {
 		int resolution = ConfigHandler.CLIENT.frameFeedResolution.get();
 
-		this.renderTarget = new TextureTarget("securitycraft:frame", resolution, resolution, true);
+		this.renderTarget = new TextureTarget(resolution, resolution, true);
 		compilingSectionsQueue.add(startingSection);
 		sectionsInRange.add(startingSection);
-		sectionsInRangePositions.add(startingSection.getRenderOrigin().asLong());
+		sectionsInRangePositions.add(startingSection.getOrigin().asLong());
 		discoverVisibleSections(globalPos, FrameFeedHandler.getFrameFeedViewDistance(null));
 	}
 
@@ -60,10 +59,10 @@ public class CameraFeed {
 
 		while (!queueToCheck.isEmpty()) {
 			RenderSection currentSection = queueToCheck.poll();
-			BlockPos origin = currentSection.getRenderOrigin();
-			SectionMesh sectionMesh = currentSection.getSectionMesh();
+			BlockPos origin = currentSection.getOrigin();
+			CompiledSection currentCompiledSection = currentSection.getCompiled();
 
-			if (sectionMesh == CompiledSectionMesh.UNCOMPILED) {
+			if (currentCompiledSection == CompiledSection.UNCOMPILED) {
 				compilingSectionsQueue.add(currentSection);
 				continue;
 			}
@@ -78,11 +77,11 @@ public class CameraFeed {
 					RenderSection neighbourSection = CameraViewAreaExtension.rawFetch(cx, cy, cz, true);
 
 					if (neighbourSection != null) {
-						long neighbourPosAsLong = neighbourSection.getRenderOrigin().asLong();
+						long neighbourPosAsLong = neighbourSection.getOrigin().asLong();
 
-						if (!sectionsInRangePositions.contains(neighbourPosAsLong) && canSeeNeighborFace(sectionMesh, dir)) {
+						if (!sectionsInRangePositions.contains(neighbourPosAsLong) && canSeeNeighborFace(currentCompiledSection, dir)) {
 							sectionsInRange.add(neighbourSection); //Yet uncompiled render sections are added to the sections-in-range list, so Minecraft will schedule to compile them
-							sectionsInRangePositions.add(neighbourSection.getRenderOrigin().asLong());
+							sectionsInRangePositions.add(neighbourSection.getOrigin().asLong());
 							compilingSectionsQueue.add(neighbourSection);
 							requestFrustumUpdate();
 						}
@@ -92,9 +91,9 @@ public class CameraFeed {
 		}
 	}
 
-	private boolean canSeeNeighborFace(SectionMesh sectionMesh, Direction dir) {
+	private boolean canSeeNeighborFace(CompiledSection currentCompiledSection, Direction dir) {
 		for (int j = 0; j < Direction.values().length; j++) {
-			if (sectionMesh.facesCanSeeEachother(Direction.values()[j].getOpposite(), dir))
+			if (currentCompiledSection.facesCanSeeEachother(Direction.values()[j].getOpposite(), dir))
 				return true;
 		}
 

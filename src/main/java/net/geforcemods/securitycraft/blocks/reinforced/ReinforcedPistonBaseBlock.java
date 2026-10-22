@@ -323,9 +323,6 @@ public class ReinforcedPistonBaseBlock extends PistonBaseBlock implements IReinf
 				BlockState updatedState = updatedBlocks[j++];
 				BlockPos posToDestroy = blocksToDestroy.get(i1);
 
-				if (level instanceof ServerLevel serverlevel)
-					updatedState.affectNeighborsAfterRemoval(serverlevel, posToDestroy, false);
-
 				updatedState.updateIndirectNeighbourShapes(level, posToDestroy, 2);
 				level.updateNeighborsAt(posToDestroy, updatedState.getBlock(), orientation);
 			}

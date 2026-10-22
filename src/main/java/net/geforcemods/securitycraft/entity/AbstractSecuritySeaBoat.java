@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.entity;
 
+import net.minecraft.nbt.CompoundTag;
 import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
@@ -37,7 +38,6 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -63,8 +63,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
+import net.geforcemods.securitycraft.platform.nbt.ValueInput;
+import net.geforcemods.securitycraft.platform.nbt.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 import net.geforcemods.securitycraft.platform.network.PacketDistributor;
 
@@ -291,10 +291,12 @@ public abstract class AbstractSecuritySeaBoat extends AbstractChestBoat implemen
 	}
 
 	@Override
-	protected void addAdditionalSaveData(ValueOutput tag) {
+	protected void addAdditionalSaveData(CompoundTag compoundTag) {
+		ValueOutput tag = ValueOutput.of(compoundTag, level().registryAccess());
+
 		long cooldownLeft;
 
-		super.addAdditionalSaveData(tag);
+		super.addAdditionalSaveData(tag.tag());
 		writeModuleInventory(tag);
 		writeModuleStates(tag);
 		writeOptions(tag);
@@ -305,10 +307,12 @@ public abstract class AbstractSecuritySeaBoat extends AbstractChestBoat implemen
 	}
 
 	@Override
-	protected void readAdditionalSaveData(ValueInput tag) {
+	protected void readAdditionalSaveData(CompoundTag compoundTag) {
+		ValueInput tag = ValueInput.of(compoundTag, level().registryAccess());
+
 		NonNullList<ItemStack> modules = NonNullList.withSize(getMaxNumberOfModules(), ItemStack.EMPTY);
 
-		super.readAdditionalSaveData(tag);
+		super.readAdditionalSaveData(tag.tag());
 		readModuleInventory(modules, tag);
 		entityData.set(MODULES, modules);
 		entityData.set(MODULE_STATES, readModuleStates(tag));
@@ -356,40 +360,21 @@ public abstract class AbstractSecuritySeaBoat extends AbstractChestBoat implemen
 	@Override
 	public void onOwnerChanged(BlockState state, Level level, BlockPos pos, Player player, Owner oldOwner, Owner newOwner) {}
 
-	@Override
-	protected void applyImplicitComponents(DataComponentGetter getter) {
-		super.applyImplicitComponents(getter);
-		applyImplicitComponentIfPresent(getter, SCContent.OWNER_DATA.get());
-		applyImplicitComponentIfPresent(getter, SCContent.PASSCODE_DATA.get());
-	}
+	/**
+	 * Applies the owner and passcode stored on the item the boat was placed with. Replaces the implicit entity components of
+	 * 1.21.5+
+	 */
+	public void applyItemComponents(ItemStack stack) {
+		OwnerData ownerData = stack.get(SCContent.OWNER_DATA.get());
+		PasscodeData passcodeData = stack.get(SCContent.PASSCODE_DATA.get());
 
-	@Override
-	protected <T> boolean applyImplicitComponent(DataComponentType<T> type, T value) {
-		if (type == SCContent.OWNER_DATA.get()) {
-			OwnerData ownerData = castComponentValue(SCContent.OWNER_DATA.get(), value);
-
+		if (ownerData != null)
 			setOwner(ownerData.uuid(), ownerData.name());
-			return true;
-		}
-		else if (type == SCContent.PASSCODE_DATA.get()) {
-			PasscodeData passcodeData = castComponentValue(SCContent.PASSCODE_DATA.get(), value);
 
+		if (passcodeData != null) {
 			setPasscode(PasscodeUtils.stringToBytes(passcodeData.passcode()));
 			setSaltKey(passcodeData.saltKey());
-			return true;
 		}
-
-		return super.applyImplicitComponent(type, value);
-	}
-
-	@Override
-	public <T> T get(DataComponentType<? extends T> type) {
-		if (type == SCContent.OWNER_DATA.get())
-			return (T) OwnerData.fromOwner(getOwner());
-		else if (type == SCContent.PASSCODE_DATA.get())
-			return (T) new PasscodeData(PasscodeUtils.bytesToString(getPasscode()), getSaltKey());
-		else
-			return super.get(type);
 	}
 
 	@Override

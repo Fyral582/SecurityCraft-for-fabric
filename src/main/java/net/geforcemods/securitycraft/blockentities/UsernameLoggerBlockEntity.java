@@ -1,5 +1,7 @@
 package net.geforcemods.securitycraft.blockentities;
 
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,10 +25,10 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueInput.TypedInputList;
-import net.minecraft.world.level.storage.ValueOutput;
-import net.minecraft.world.level.storage.ValueOutput.TypedOutputList;
+import net.geforcemods.securitycraft.platform.nbt.ValueInput;
+import net.geforcemods.securitycraft.platform.nbt.ValueInput.TypedInputList;
+import net.geforcemods.securitycraft.platform.nbt.ValueOutput;
+import net.geforcemods.securitycraft.platform.nbt.ValueOutput.TypedOutputList;
 import net.minecraft.world.phys.AABB;
 import net.geforcemods.securitycraft.platform.network.PacketDistributor;
 
@@ -128,8 +130,10 @@ public class UsernameLoggerBlockEntity extends DisguisableBlockEntity implements
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
-		super.saveAdditional(tag);
+	public void saveAdditional(CompoundTag compoundTag, HolderLookup.Provider lookupProvider) {
+		ValueOutput tag = ValueOutput.of(compoundTag, lookupProvider);
+
+		super.saveAdditional(tag.tag(), tag.lookup());
 
 		TypedOutputList<UsernameLoggerEntry> tagList = tag.list("players", UsernameLoggerEntry.CODEC);
 
@@ -140,8 +144,10 @@ public class UsernameLoggerBlockEntity extends DisguisableBlockEntity implements
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
+	public void loadAdditional(CompoundTag compoundTag, HolderLookup.Provider lookupProvider) {
+		ValueInput tag = ValueInput.of(compoundTag, lookupProvider);
+
+		super.loadAdditional(tag.tag(), tag.lookup());
 		clearEntries();
 
 		TypedInputList<UsernameLoggerEntry> players = tag.listOrEmpty("players", UsernameLoggerEntry.CODEC);

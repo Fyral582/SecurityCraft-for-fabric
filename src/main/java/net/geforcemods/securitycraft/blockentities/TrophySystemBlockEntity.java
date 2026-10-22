@@ -1,5 +1,8 @@
 package net.geforcemods.securitycraft.blockentities;
 
+import net.minecraft.nbt.Tag;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
@@ -46,7 +49,7 @@ import net.minecraft.world.entity.Entity.RemovalReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.AbstractThrownPotion;
+import net.minecraft.world.entity.projectile.ThrownPotion;
 import net.minecraft.world.entity.projectile.FishingHook;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.ThrownExperienceBottle;
@@ -57,8 +60,8 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.Level.ExplosionInteraction;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
+import net.geforcemods.securitycraft.platform.nbt.ValueInput;
+import net.geforcemods.securitycraft.platform.nbt.ValueOutput;
 import net.minecraft.world.phys.AABB;
 import net.geforcemods.securitycraft.platform.network.client.ClientPacketDistributor;
 import net.geforcemods.securitycraft.platform.network.PacketDistributor;
@@ -141,8 +144,10 @@ public class TrophySystemBlockEntity extends DisguisableBlockEntity implements I
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
-		super.saveAdditional(tag);
+	public void saveAdditional(CompoundTag compoundTag, HolderLookup.Provider lookupProvider) {
+		ValueOutput tag = ValueOutput.of(compoundTag, lookupProvider);
+
+		super.saveAdditional(tag.tag(), tag.lookup());
 
 		ValueOutput projectilesNBT = tag.child("projectiles");
 		int i = 0;
@@ -152,12 +157,14 @@ public class TrophySystemBlockEntity extends DisguisableBlockEntity implements I
 			i++;
 		}
 
-		lens.storeAsItemList(tag.list("lens", ItemStack.CODEC));
+		tag.tag().put("lens", lens.createTag(tag.lookup()));
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
+	public void loadAdditional(CompoundTag compoundTag, HolderLookup.Provider lookupProvider) {
+		ValueInput tag = ValueInput.of(compoundTag, lookupProvider);
+
+		super.loadAdditional(tag.tag(), tag.lookup());
 
 		ValueInput projectilesNBT = tag.childOrEmpty("projectiles");
 		int i = 0;
@@ -167,7 +174,7 @@ public class TrophySystemBlockEntity extends DisguisableBlockEntity implements I
 			i++;
 		}
 
-		lens.fromItemList(tag.listOrEmpty("lens", ItemStack.CODEC));
+		lens.fromTag(tag.tag().getList("lens", Tag.TAG_COMPOUND), tag.lookup());
 	}
 
 	@Override
@@ -268,7 +275,7 @@ public class TrophySystemBlockEntity extends DisguisableBlockEntity implements I
 	}
 
 	private boolean isAllowedToTarget(Projectile target) {
-		if (target instanceof ThrownTrident || target instanceof FishingHook || target instanceof AbstractThrownPotion || target instanceof ThrownExperienceBottle)
+		if (target instanceof ThrownTrident || target instanceof FishingHook || target instanceof ThrownPotion || target instanceof ThrownExperienceBottle)
 			return false;
 
 		//try to get the target's type filter first. if not found, it's a modded projectile and the return value falls back to the modded filter (designated by the PIG entity type)

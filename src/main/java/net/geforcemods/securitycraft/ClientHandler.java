@@ -1,14 +1,10 @@
 package net.geforcemods.securitycraft;
 
-import net.fabricmc.fabric.api.client.model.loading.v1.ExtraModelKey;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
-import net.fabricmc.fabric.api.client.model.loading.v1.SimpleUnbakedExtraModel;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
-import net.fabricmc.fabric.api.client.rendering.v1.SpecialGuiElementRegistry;
-import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.geforcemods.securitycraft.platform.menu.MenuDataPayload;
 import net.minecraft.client.color.item.ItemTintSources;
 import net.minecraft.client.gui.screens.MenuScreens;
@@ -18,17 +14,24 @@ import net.minecraft.client.renderer.item.properties.numeric.RangeSelectItemMode
 import net.minecraft.client.renderer.item.properties.select.SelectItemModelProperties;
 import net.minecraft.client.renderer.special.SpecialModelRenderers;
 
-import net.fabricmc.fabric.api.client.rendering.v1.BlockRenderLayerMap;
+import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
+import net.fabricmc.fabric.api.client.rendering.v1.HudLayerRegistrationCallback;
+import net.fabricmc.fabric.api.client.rendering.v1.IdentifiedLayer;
+import net.minecraft.client.renderer.ShaderDefines;
+import net.minecraft.client.renderer.ShaderProgram;
+import net.minecraft.client.renderer.block.BlockModelShaper;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.ModelResourceLocation;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import java.lang.reflect.Field;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.OptionalDouble;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
 
 import com.google.common.base.Suppliers;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -134,12 +137,9 @@ import net.geforcemods.securitycraft.screen.SingleLensScreen;
 import net.geforcemods.securitycraft.screen.SonicSecuritySystemScreen;
 import net.geforcemods.securitycraft.screen.TrophySystemScreen;
 import net.geforcemods.securitycraft.screen.UsernameLoggerScreen;
-import net.geforcemods.securitycraft.screen.components.GuiBlockModelRenderState;
-import net.geforcemods.securitycraft.screen.components.GuiBlockModelRenderer;
 import net.geforcemods.securitycraft.util.BlockEntityRenderDelegate;
 import net.geforcemods.securitycraft.util.ClientUtils;
 import net.geforcemods.securitycraft.util.Reinforced;
-import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.block.BlockColor;
 import net.minecraft.client.model.HumanoidModel.ArmPose;
@@ -149,12 +149,9 @@ import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.blockentity.LecternRenderer;
-import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.entity.NoopRenderer;
 import net.minecraft.client.resources.model.BlockModelRotation;
 import net.minecraft.core.BlockPos;
@@ -233,21 +230,21 @@ public class ClientHandler {
 	private static final ResourceLocation SRI_BASE_MODEL_LOCATION = SecurityCraft.resLoc("block/secure_redstone_interface");
 	private static final ResourceLocation SRI_SENDER_ON_MODEL_LOCATION = SRI_BASE_MODEL_LOCATION.withSuffix("_sender_on");
 	private static final ResourceLocation SRI_RECEIVER_ON_MODEL_LOCATION = SRI_BASE_MODEL_LOCATION.withSuffix("_receiver_on");
-	private static final Map<SRIKey, ExtraModelKey<BlockStateModel>> SRI_MODEL_KEYS = Util.make(new HashMap<>(), map -> {
-		Arrays.stream(Direction.values()).forEach(direction -> {
-			map.put(new SRIKey(true, direction), ExtraModelKey.create(() -> SRI_SENDER_ON_MODEL_LOCATION + "$" + direction.getName()));
-			map.put(new SRIKey(false, direction), ExtraModelKey.create(() -> SRI_RECEIVER_ON_MODEL_LOCATION + "$" + direction.getName()));
-		});
-	});
+	private static final ShaderProgram FRAME_FEED_SHADER = new ShaderProgram(SecurityCraft.resLoc("frame_draw_fb_in_area"), DefaultVertexFormat.POSITION_TEX, ShaderDefines.EMPTY);
 	//@formatter:off
     public static final RenderType.CompositeRenderType OVERLAY_LINES = RenderType.create(
 			"overlay_lines",
+			DefaultVertexFormat.POSITION_COLOR_NORMAL,
+			VertexFormat.Mode.LINES,
 			1536,
-			RenderPipelines.LINES,
 			RenderType.CompositeState.builder()
+				.setShaderState(RenderStateShard.RENDERTYPE_LINES_SHADER)
 				.setLineState(new RenderStateShard.LineStateShard(OptionalDouble.empty()))
 				.setLayeringState(RenderStateShard.VIEW_OFFSET_Z_LAYERING)
+				.setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
 				.setOutputState(RenderStateShard.OUTLINE_TARGET)
+				.setWriteMaskState(RenderStateShard.COLOR_DEPTH_WRITE)
+				.setCullState(RenderStateShard.NO_CULL)
 				.createCompositeState(false));
 	//@formatter:on
 
@@ -263,7 +260,6 @@ public class ClientHandler {
 		registerMenuScreens();
 		LayerToggleHandler.init();
 		registerGuiLayers();
-		registerPipRenderers();
 		registerEntityRenderers();
 		registerLayerDefinitions();
 		registerParticleProviders();
@@ -272,31 +268,40 @@ public class ClientHandler {
 	}
 
 	private static void onInitializeModelLoading(ModelLoadingPlugin.Context context) {
-		onModelRegisterAdditional(context);
+		Map<ModelResourceLocation, BlockState> modelLocationToState = new HashMap<>();
+
+		for (Block block : disguisableBlocks.get()) {
+			for (BlockState state : block.getStateDefinition().getPossibleStates()) {
+				modelLocationToState.put(BlockModelShaper.stateToModelLocation(state), state);
+			}
+		}
+
+		for (BlockState state : SCContent.SECURE_REDSTONE_INTERFACE.get().getStateDefinition().getPossibleStates()) {
+			modelLocationToState.put(BlockModelShaper.stateToModelLocation(state), state);
+		}
+
+		context.addModels(SRI_SENDER_ON_MODEL_LOCATION, SRI_RECEIVER_ON_MODEL_LOCATION);
 		context.modifyBlockModelAfterBake().register((model, ctx) -> {
-			BlockState state = ctx.state();
-			Block block = state.getBlock();
+			BlockState state = modelLocationToState.get(ctx.id());
 
-			if (block == SCContent.SECURE_REDSTONE_INTERFACE.get()) {
-				boolean sender = state.getValue(SecureRedstoneInterfaceBlock.SENDER);
-				Direction direction = state.getValue(SecureRedstoneInterfaceBlock.FACING);
-				ExtraModelKey<BlockStateModel> key = SRI_MODEL_KEYS.get(new SRIKey(sender, direction));
+			if (state == null)
+				return model;
+			else if (state.is(SCContent.SECURE_REDSTONE_INTERFACE.get())) {
+				SRIKey key = new SRIKey(state.getValue(SecureRedstoneInterfaceBlock.SENDER), state.getValue(SecureRedstoneInterfaceBlock.FACING));
+				BakedModel poweredModel;
 
-				return new SecureRedstoneInterfaceBlockStateModel(() -> Minecraft.getInstance().getModelManager().getModel(key), model);
+				try {
+					poweredModel = ctx.baker().bake(key.location(), key.modelRotation());
+				}
+				catch (Exception e) {
+					SecurityCraft.LOGGER.warn("Unable to bake model '{}' for direction {}: {}", key.location(), key.direction(), e);
+					poweredModel = null;
+				}
+
+				return new SecureRedstoneInterfaceBlockStateModel(poweredModel, model);
 			}
-
-			for (Block disguisableBlock : disguisableBlocks.get()) {
-				if (block == disguisableBlock)
-					return new DisguisableBlockStateModel(model);
-			}
-
-			return model;
-		});
-	}
-
-	private static void onModelRegisterAdditional(ModelLoadingPlugin.Context context) {
-		SRI_MODEL_KEYS.forEach((sriKey, modelKey) -> {
-			context.addModel(modelKey, SimpleUnbakedExtraModel.blockStateModel(sriKey.location(), sriKey.modelRotation()));
+			else
+				return new DisguisableBlockStateModel(model);
 		});
 	}
 
@@ -320,50 +325,50 @@ public class ClientHandler {
 	}
 
 	private static void onFMLClientSetup() {
-		ChunkSectionLayer cutout = ChunkSectionLayer.CUTOUT;
-		ChunkSectionLayer cutoutMipped = ChunkSectionLayer.CUTOUT_MIPPED;
-		ChunkSectionLayer translucent = ChunkSectionLayer.TRANSLUCENT;
+		RenderType cutout = RenderType.cutout();
+		RenderType cutoutMipped = RenderType.cutoutMipped();
+		RenderType translucent = RenderType.translucent();
 
-		BlockRenderLayerMap.putFluid(SCContent.FAKE_WATER.get(), translucent);
-		BlockRenderLayerMap.putFluid(SCContent.FLOWING_FAKE_WATER.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_GLASS.get(), cutout);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_GLASS_PANE.get(), cutoutMipped);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_IRON_BARS.get(), cutoutMipped);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_LIGHTNING_ROD.get(), cutout);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_WHITE_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_ORANGE_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_MAGENTA_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_LIGHT_BLUE_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_YELLOW_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_LIME_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_PINK_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_GRAY_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_LIGHT_GRAY_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_CYAN_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_PURPLE_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_BLUE_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_BROWN_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_GREEN_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_RED_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_BLACK_STAINED_GLASS.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_WHITE_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_ORANGE_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_MAGENTA_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_LIGHT_BLUE_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_YELLOW_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_LIME_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_PINK_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_GRAY_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_LIGHT_GRAY_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_CYAN_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_PURPLE_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_BLUE_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_BROWN_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_GREEN_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_RED_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_BLACK_STAINED_GLASS_PANE.get(), translucent);
-		BlockRenderLayerMap.putBlock(SCContent.REINFORCED_PALE_MOSS_CARPET.get(), cutout);
-		BlockRenderLayerMap.putBlock(SCContent.TRACK_MINE.get(), cutout);
+		BlockRenderLayerMap.INSTANCE.putFluid(SCContent.FAKE_WATER.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putFluid(SCContent.FLOWING_FAKE_WATER.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_GLASS.get(), cutout);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_GLASS_PANE.get(), cutoutMipped);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_IRON_BARS.get(), cutoutMipped);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_LIGHTNING_ROD.get(), cutout);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_WHITE_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_ORANGE_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_MAGENTA_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_LIGHT_BLUE_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_YELLOW_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_LIME_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_PINK_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_GRAY_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_LIGHT_GRAY_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_CYAN_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_PURPLE_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_BLUE_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_BROWN_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_GREEN_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_RED_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_BLACK_STAINED_GLASS.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_WHITE_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_ORANGE_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_MAGENTA_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_LIGHT_BLUE_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_YELLOW_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_LIME_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_PINK_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_GRAY_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_LIGHT_GRAY_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_CYAN_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_PURPLE_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_BLUE_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_BROWN_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_GREEN_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_RED_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_BLACK_STAINED_GLASS_PANE.get(), translucent);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.REINFORCED_PALE_MOSS_CARPET.get(), cutout);
+		BlockRenderLayerMap.INSTANCE.putBlock(SCContent.TRACK_MINE.get(), cutout);
 	}
 
 	private static void registerMenuScreens() {
@@ -389,12 +394,12 @@ public class ClientHandler {
 	}
 
 	private static void registerGuiLayers() {
-		HudElementRegistry.addLast(CAMERA_LAYER, LayerToggleHandler.wrap(CAMERA_LAYER, SCClientEventHandler::cameraOverlay));
+		HudLayerRegistrationCallback.EVENT.register(drawer -> drawer.addLayer(IdentifiedLayer.of(CAMERA_LAYER, LayerToggleHandler.wrap(CAMERA_LAYER, SCClientEventHandler::cameraOverlay))));
 		LayerToggleHandler.disable(CAMERA_LAYER);
 	}
 
-	private static void registerPipRenderers() {
-		SpecialGuiElementRegistry.register(ctx -> new GuiBlockModelRenderer(ctx.vertexConsumers()));
+	public static ShaderProgram getFrameFeedShader() {
+		return FRAME_FEED_SHADER;
 	}
 
 	private static void registerEntityRenderers() {

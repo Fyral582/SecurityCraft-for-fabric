@@ -11,13 +11,12 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.util.CommonColors;
 import net.minecraft.world.Nameable;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -90,7 +89,7 @@ public class SSSConnectionList<T extends Screen & ConnectionAccessor> extends Sc
 
 			guiGraphics.fill(min, slotTop - 2, max, slotTop + slotBuffer + 2, 0xFF808080);
 			guiGraphics.fill(min + 1, slotTop - 1, max - 1, slotTop + slotBuffer + 1, 0xFF000000);
-			guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, CANCEL_SPRITE, left + 2, slotTop - 2, 11, 11);
+			guiGraphics.blitSprite(RenderType::guiTextured, CANCEL_SPRITE, left + 2, slotTop - 2, 11, 11);
 		}
 
 		int i = 0;
@@ -116,9 +115,9 @@ public class SSSConnectionList<T extends Screen & ConnectionAccessor> extends Sc
 			int baseY = top + border - (int) scrollDistance;
 
 			if (length + 13 >= width - 6) //6 = barWidth
-				guiGraphics.setTooltipForNextFrame(font, blockName, left + 1, baseY + (SLOT_HEIGHT * slotIndex + SLOT_HEIGHT));
+				guiGraphics.renderTooltip(font, blockName, left + 1, baseY + (SLOT_HEIGHT * slotIndex + SLOT_HEIGHT));
 
-			guiGraphics.drawString(font, Utils.getFormattedCoordinates(connectionInfo.get(slotIndex).globalPos.pos()), left + 13, top + height + 5, CommonColors.DARK_GRAY, false);
+			guiGraphics.drawString(font, Utils.getFormattedCoordinates(connectionInfo.get(slotIndex).globalPos.pos()), left + 13, top + height + 5, 0xFF404040, false);
 		}
 	}
 

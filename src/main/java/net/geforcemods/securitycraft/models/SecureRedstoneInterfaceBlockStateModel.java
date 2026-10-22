@@ -8,8 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.geforcemods.securitycraft.platform.model.ModelData;
 import net.geforcemods.securitycraft.platform.model.ModelProperty;
-import net.minecraft.client.renderer.block.model.BlockStateModel;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
@@ -18,32 +17,20 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public class SecureRedstoneInterfaceBlockStateModel extends DisguisableBlockStateModel {
 	public static final ModelProperty<Boolean> POWERED = new ModelProperty<>();
-	private final Supplier<BlockStateModel> poweredModel;
+	private final BakedModel poweredModel;
 
-	public SecureRedstoneInterfaceBlockStateModel(Supplier<BlockStateModel> poweredModel, BlockStateModel oldModel) {
+	public SecureRedstoneInterfaceBlockStateModel(BakedModel poweredModel, BakedModel oldModel) {
 		super(oldModel);
 		this.poweredModel = poweredModel;
 	}
 
 	@Override
-	public void emitOldQuads(ModelData modelData, QuadEmitter emitter, BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random, Predicate<@Nullable Direction> cullTest) {
+	public void emitOldQuads(ModelData modelData, QuadEmitter emitter, BlockAndTintGetter level, BlockState state, BlockPos pos, Supplier<RandomSource> random, Predicate<@Nullable Direction> cullTest) {
 		Boolean powered = modelData.get(POWERED);
-		BlockStateModel model = powered != null && powered ? poweredModel.get() : null;
 
-		if (model != null)
-			model.emitQuads(emitter, level, pos, state, random, cullTest);
+		if (poweredModel != null && powered != null && powered)
+			poweredModel.emitBlockQuads(emitter, level, state, pos, random, cullTest);
 		else
-			super.emitOldQuads(modelData, emitter, level, pos, state, random, cullTest);
-	}
-
-	@Override
-	public TextureAtlasSprite oldParticleIcon(ModelData modelData, BlockAndTintGetter level, BlockPos pos, BlockState state) {
-		Boolean powered = modelData.get(POWERED);
-		BlockStateModel model = powered != null && powered ? poweredModel.get() : null;
-
-		if (model != null)
-			return model.particleSprite(level, pos, state);
-
-		return super.oldParticleIcon(modelData, level, pos, state);
+			super.emitOldQuads(modelData, emitter, level, state, pos, random, cullTest);
 	}
 }

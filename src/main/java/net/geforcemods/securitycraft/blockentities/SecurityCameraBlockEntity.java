@@ -1,5 +1,8 @@
 package net.geforcemods.securitycraft.blockentities;
 
+import net.minecraft.nbt.Tag;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
@@ -55,8 +58,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
+import net.geforcemods.securitycraft.platform.nbt.ValueInput;
+import net.geforcemods.securitycraft.platform.nbt.ValueOutput;
 
 public class SecurityCameraBlockEntity extends DisguisableBlockEntity implements ITickingBlockEntity, IEMPAffectedBE, MenuProvider, ContainerListener, SingleLensContainer {
 	private static final Map<ServerPlayer, Set<SecurityCameraBlockEntity>> RECENTLY_UNVIEWED_CAMERAS = new HashMap<>();
@@ -173,24 +176,28 @@ public class SecurityCameraBlockEntity extends DisguisableBlockEntity implements
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
-		super.saveAdditional(tag);
+	public void saveAdditional(CompoundTag compoundTag, HolderLookup.Provider lookupProvider) {
+		ValueOutput tag = ValueOutput.of(compoundTag, lookupProvider);
+
+		super.saveAdditional(tag.tag(), tag.lookup());
 		tag.putDouble("camera_rotation", cameraRotation);
 		tag.putBoolean("add_to_rotation", addToRotation);
 		tag.putBoolean("shutDown", shutDown);
-		lens.storeAsItemList(tag.list("lens", ItemStack.CODEC));
+		tag.tag().put("lens", lens.createTag(tag.lookup()));
 		tag.putFloat("initial_x_rotation", initialXRotation);
 		tag.putFloat("initial_y_rotation", initialYRotation);
 		tag.putFloat("initial_zoom", initialZoom);
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
+	public void loadAdditional(CompoundTag compoundTag, HolderLookup.Provider lookupProvider) {
+		ValueInput tag = ValueInput.of(compoundTag, lookupProvider);
+
+		super.loadAdditional(tag.tag(), tag.lookup());
 		cameraRotation = tag.getDoubleOr("camera_rotation", 0.0D);
 		addToRotation = tag.getBooleanOr("add_to_rotation", false);
 		shutDown = tag.getBooleanOr("shutDown", false);
-		lens.fromItemList(tag.listOrEmpty("lens", ItemStack.CODEC));
+		lens.fromTag(tag.tag().getList("lens", Tag.TAG_COMPOUND), tag.lookup());
 		initialXRotation = tag.getFloatOr("initial_x_rotation", 1.0F);
 		initialYRotation = tag.getFloatOr("initial_y_rotation", 1.0F);
 		initialZoom = tag.getFloatOr("initial_zoom", initialZoom);

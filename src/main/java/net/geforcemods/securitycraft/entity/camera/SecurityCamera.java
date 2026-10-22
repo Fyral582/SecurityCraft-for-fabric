@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.entity.camera;
 
+import net.minecraft.nbt.CompoundTag;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -25,8 +26,8 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
+import net.geforcemods.securitycraft.platform.nbt.ValueInput;
+import net.geforcemods.securitycraft.platform.nbt.ValueOutput;
 import net.geforcemods.securitycraft.platform.network.PacketDistributor;
 
 public class SecurityCamera extends Entity {
@@ -166,12 +167,16 @@ public class SecurityCamera extends Entity {
 	}
 
 	@Override
-	public void addAdditionalSaveData(ValueOutput tag) {
+	public void addAdditionalSaveData(CompoundTag compoundTag) {
+		ValueOutput tag = ValueOutput.of(compoundTag, level().registryAccess());
+
 		tag.putFloat("zoom_amount", getZoomAmount());
 	}
 
 	@Override
-	public void readAdditionalSaveData(ValueInput tag) {
+	public void readAdditionalSaveData(CompoundTag compoundTag) {
+		ValueInput tag = ValueInput.of(compoundTag, level().registryAccess());
+
 		entityData.set(ZOOM_AMOUNT, tag.getFloatOr("zoom_amount", 1.0F));
 	}
 

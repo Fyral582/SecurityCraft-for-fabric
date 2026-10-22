@@ -15,10 +15,9 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.CommonColors;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -70,15 +69,15 @@ public class KeyChangerScreen extends Screen implements StillValid {
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
 		super.render(guiGraphics, mouseX, mouseY, partialTick);
-		guiGraphics.drawString(font, ukcName, width / 2 - font.width(ukcName) / 2, topPos + 6, CommonColors.DARK_GRAY, false);
-		guiGraphics.drawString(font, enterPasscode, width / 2 - font.width(enterPasscode) / 2, topPos + 25, CommonColors.DARK_GRAY, false);
-		guiGraphics.drawString(font, confirmPasscode, width / 2 - font.width(confirmPasscode) / 2, topPos + 65, CommonColors.DARK_GRAY, false);
+		guiGraphics.drawString(font, ukcName, width / 2 - font.width(ukcName) / 2, topPos + 6, 0xFF404040, false);
+		guiGraphics.drawString(font, enterPasscode, width / 2 - font.width(enterPasscode) / 2, topPos + 25, 0xFF404040, false);
+		guiGraphics.drawString(font, confirmPasscode, width / 2 - font.width(confirmPasscode) / 2, topPos + 65, 0xFF404040, false);
 	}
 
 	@Override
 	public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
 		renderTransparentBackground(guiGraphics);
-		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
+		guiGraphics.blit(RenderType::guiTextured, TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
 	}
 
 	@Override

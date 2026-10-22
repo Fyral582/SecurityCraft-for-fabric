@@ -12,7 +12,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.CommonColors;
 import net.minecraft.world.item.ItemStack;
 
 public abstract class BaseCategory implements IRecipeCategory<ReinforcerRecipe> {
@@ -31,7 +30,7 @@ public abstract class BaseCategory implements IRecipeCategory<ReinforcerRecipe> 
 		Font font = Minecraft.getInstance().font;
 
 		background.draw(guiGraphics);
-		guiGraphics.drawString(font, OUTPUT_TEXT, 103 - font.width(OUTPUT_TEXT), 5, CommonColors.DARK_GRAY, false);
+		guiGraphics.drawString(font, OUTPUT_TEXT, 103 - font.width(OUTPUT_TEXT), 5, 0xFF404040, false);
 	}
 
 	@Override

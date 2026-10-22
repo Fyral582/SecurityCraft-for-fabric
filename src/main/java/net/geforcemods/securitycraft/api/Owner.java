@@ -14,8 +14,8 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
+import net.geforcemods.securitycraft.platform.nbt.ValueInput;
+import net.geforcemods.securitycraft.platform.nbt.ValueOutput;
 
 /**
  * This class is used with {@link IOwnable} to get the player of the block. Allows for easy access to the player's IGN and
@@ -70,9 +70,9 @@ public class Owner {
 		Owner owner = new Owner();
 
 		if (tag != null) {
-			owner.ownerName = tag.getStringOr("owner", owner.ownerName);
-			owner.ownerUUID = tag.getStringOr("ownerUUID", owner.ownerUUID);
-			owner.validated = tag.getBooleanOr("ownerValidated", owner.validated);
+			owner.ownerName = tag.contains("owner") ? tag.getString("owner") : owner.ownerName;
+			owner.ownerUUID = tag.contains("ownerUUID") ? tag.getString("ownerUUID") : owner.ownerUUID;
+			owner.validated = tag.contains("ownerValidated") ? tag.getBoolean("ownerValidated") : owner.validated;
 		}
 
 		return owner;

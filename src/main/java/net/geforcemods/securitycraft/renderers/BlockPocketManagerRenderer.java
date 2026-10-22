@@ -21,7 +21,7 @@ public class BlockPocketManagerRenderer implements BlockEntityRenderer<BlockPock
 	public BlockPocketManagerRenderer(BlockEntityRendererProvider.Context ctx) {}
 
 	@Override
-	public void render(BlockPocketManagerBlockEntity be, float partialTicks, PoseStack pose, MultiBufferSource buffer, int combinedLight, int combinedOverlay, Vec3 cameraPos) {
+	public void render(BlockPocketManagerBlockEntity be, float partialTicks, PoseStack pose, MultiBufferSource buffer, int combinedLight, int combinedOverlay) {
 		// The code below draws the outline border of a block pocket.
 
 		if (!be.showsOutline() || !be.isOwnedBy(Minecraft.getInstance().player))
@@ -52,7 +52,7 @@ public class BlockPocketManagerRenderer implements BlockEntityRenderer<BlockPock
 	}
 
 	@Override
-	public boolean shouldRenderOffScreen() {
+	public boolean shouldRenderOffScreen(BlockPocketManagerBlockEntity be) {
 		return true;
 	}
 }

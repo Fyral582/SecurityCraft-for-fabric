@@ -1,5 +1,7 @@
 package net.geforcemods.securitycraft.blockentities;
 
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import java.util.UUID;
 
 import net.geforcemods.securitycraft.SCContent;
@@ -26,8 +28,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
+import net.geforcemods.securitycraft.platform.nbt.ValueInput;
+import net.geforcemods.securitycraft.platform.nbt.ValueOutput;
 
 public class DisplayCaseBlockEntity extends CustomizableBlockEntity implements ITickingBlockEntity, IPasscodeProtected, ILockable {
 	private BooleanOption sendAllowlistMessage = new SendAllowlistMessageOption(false);
@@ -110,10 +112,12 @@ public class DisplayCaseBlockEntity extends CustomizableBlockEntity implements I
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
+	public void saveAdditional(CompoundTag compoundTag, HolderLookup.Provider lookupProvider) {
+		ValueOutput tag = ValueOutput.of(compoundTag, lookupProvider);
+
 		long cooldownLeft;
 
-		super.saveAdditional(tag);
+		super.saveAdditional(tag.tag(), tag.lookup());
 
 		if (!displayedStack.isEmpty())
 			tag.store("DisplayedStack", ItemStack.CODEC, displayedStack);
@@ -125,8 +129,10 @@ public class DisplayCaseBlockEntity extends CustomizableBlockEntity implements I
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
+	public void loadAdditional(CompoundTag compoundTag, HolderLookup.Provider lookupProvider) {
+		ValueInput tag = ValueInput.of(compoundTag, lookupProvider);
+
+		super.loadAdditional(tag.tag(), tag.lookup());
 		setDisplayedStack(tag.read("DisplayedStack", ItemStack.CODEC).orElse(ItemStack.EMPTY));
 		shouldBeOpen = tag.getBooleanOr("ShouldBeOpen", false);
 		cooldownEnd = System.currentTimeMillis() + tag.getLongOr("cooldownLeft", 0);

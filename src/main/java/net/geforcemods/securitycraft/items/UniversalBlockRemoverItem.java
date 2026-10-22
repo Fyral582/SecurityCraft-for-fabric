@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.items;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 import net.geforcemods.securitycraft.ConfigHandler;
@@ -32,7 +33,6 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -122,11 +122,11 @@ public class UniversalBlockRemoverItem extends Item {
 	}
 
 	@Override
-	public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltipAdder, TooltipFlag tooltipFlag) {
+	public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag tooltipFlag) {
 		if (ConfigHandler.SERVER.vanillaToolBlockBreaking.get())
-			tooltipAdder.accept(DISABLED_ITEM_TOOLTIP);
+			tooltip.add(DISABLED_ITEM_TOOLTIP);
 
-		super.appendHoverText(stack, context, display, tooltipAdder, tooltipFlag);
+		super.appendHoverText(stack, context, tooltip, tooltipFlag);
 	}
 
 	private static boolean isOwnableBlock(Block block, BlockEntity be) {

@@ -39,11 +39,11 @@ public class KeypadChestRenderer extends ChestRenderer<ChestBlockEntity> {
 	}
 
 	@Override
-	public void render(ChestBlockEntity be, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, Vec3 cameraPos) {
-		ClientHandler.DISGUISED_BLOCK_RENDER_DELEGATE.tryRenderDelegate(be, partialTicks, poseStack, buffer, packedLight, packedOverlay, cameraPos);
+	public void render(ChestBlockEntity be, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+		ClientHandler.DISGUISED_BLOCK_RENDER_DELEGATE.tryRenderDelegate(be, partialTicks, poseStack, buffer, packedLight, packedOverlay);
 
 		if (be instanceof IModuleInventory moduleInv && !moduleInv.isModuleEnabled(ModuleType.DISGUISE))
-			super.render(be, partialTicks, poseStack, buffer, packedLight, packedOverlay, cameraPos);
+			super.render(be, partialTicks, poseStack, buffer, packedLight, packedOverlay);
 	}
 
 	/**

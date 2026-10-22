@@ -21,7 +21,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 
@@ -78,20 +77,20 @@ public class MineRemoteAccessToolItem extends Item {
 	}
 
 	@Override
-	public void appendHoverText(ItemStack stack, TooltipContext ctx, TooltipDisplay display, Consumer<Component> tooltipAdder, TooltipFlag flag) {
+	public void appendHoverText(ItemStack stack, TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
 		DataComponentType<GlobalPositions> type = SCContent.BOUND_MINES.get();
 		GlobalPositions positions = stack.get(type);
 
-		if (positions != null && display.shows(type) && !positions.isEmpty()) {
+		if (positions != null && !positions.isEmpty()) {
 			List<GlobalPos> globalPositions = positions.positions();
 
 			for (int i = 0; i < globalPositions.size(); i++) {
 				GlobalPos globalPos = globalPositions.get(i);
 
 				if (globalPos == null)
-					tooltipAdder.accept(Component.literal(ChatFormatting.GRAY + "---"));
+					tooltip.add(Component.literal(ChatFormatting.GRAY + "---"));
 				else
-					tooltipAdder.accept(Utils.localize("tooltip.securitycraft:mine", i, Utils.getFormattedCoordinates(globalPos.pos())).setStyle(Utils.GRAY_STYLE));
+					tooltip.add(Utils.localize("tooltip.securitycraft:mine", i, Utils.getFormattedCoordinates(globalPos.pos())).setStyle(Utils.GRAY_STYLE));
 			}
 		}
 	}

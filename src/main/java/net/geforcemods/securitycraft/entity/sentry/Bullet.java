@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.entity.sentry;
 
+import net.minecraft.nbt.CompoundTag;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -24,8 +25,8 @@ import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
+import net.geforcemods.securitycraft.platform.nbt.ValueInput;
+import net.geforcemods.securitycraft.platform.nbt.ValueOutput;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 
@@ -62,16 +63,20 @@ public class Bullet extends AbstractArrow {
 	}
 
 	@Override
-	public void addAdditionalSaveData(ValueOutput tag) {
-		super.addAdditionalSaveData(tag);
+	public void addAdditionalSaveData(CompoundTag compoundTag) {
+		ValueOutput tag = ValueOutput.of(compoundTag, level().registryAccess());
+
+		super.addAdditionalSaveData(tag.tag());
 
 		if (!potionEffects.isEmpty())
 			tag.store("PotionEffects", MobEffectInstance.CODEC.listOf(), new ArrayList<>(potionEffects));
 	}
 
 	@Override
-	public void readAdditionalSaveData(ValueInput tag) {
-		super.readAdditionalSaveData(tag);
+	public void readAdditionalSaveData(CompoundTag compoundTag) {
+		ValueInput tag = ValueInput.of(compoundTag, level().registryAccess());
+
+		super.readAdditionalSaveData(tag.tag());
 
 		List<MobEffectInstance> mobEffectList = tag.read("PotionEffects", MobEffectInstance.CODEC.listOf()).orElse(List.of());
 

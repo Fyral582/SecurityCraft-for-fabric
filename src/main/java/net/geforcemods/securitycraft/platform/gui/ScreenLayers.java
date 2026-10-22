@@ -29,7 +29,7 @@ public final class ScreenLayers {
 		LAYERS.push(mc.screen);
 		mc.screen = screen;
 		screen.init(mc, mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight());
-		mc.getNarrator().saySystemNow(screen.getNarrationMessage());
+		mc.getNarrator().sayNow(screen.getNarrationMessage());
 	}
 
 	public static void popGuiLayer() {

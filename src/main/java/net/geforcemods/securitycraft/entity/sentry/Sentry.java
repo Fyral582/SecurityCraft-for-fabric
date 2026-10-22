@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.entity.sentry;
 
+import net.minecraft.nbt.CompoundTag;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
@@ -26,7 +27,6 @@ import net.geforcemods.securitycraft.util.Utils;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.dispenser.BlockSource;
@@ -70,8 +70,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.material.PushReaction;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
+import net.geforcemods.securitycraft.platform.nbt.ValueInput;
+import net.geforcemods.securitycraft.platform.nbt.ValueOutput;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -405,7 +405,9 @@ public class Sentry extends PathfinderMob implements RangedAttackMob, IEMPAffect
 	}
 
 	@Override
-	public void addAdditionalSaveData(ValueOutput tag) {
+	public void addAdditionalSaveData(CompoundTag compoundTag) {
+		ValueOutput tag = ValueOutput.of(compoundTag, level().registryAccess());
+
 		ItemStack allowlistModule = getAllowlistModule();
 
 		tag.store("TileEntityData", Owner.CODEC, getOwner());
@@ -418,11 +420,13 @@ public class Sentry extends PathfinderMob implements RangedAttackMob, IEMPAffect
 		tag.putBoolean("HasTarget", hasTarget());
 		tag.putFloat("HeadRotation", entityData.get(HEAD_ROTATION));
 		tag.putBoolean("ShutDown", isShutDown());
-		super.addAdditionalSaveData(tag);
+		super.addAdditionalSaveData(tag.tag());
 	}
 
 	@Override
-	public void readAdditionalSaveData(ValueInput tag) {
+	public void readAdditionalSaveData(CompoundTag compoundTag) {
+		ValueInput tag = ValueInput.of(compoundTag, level().registryAccess());
+
 		Owner owner = tag.read("TileEntityData", Owner.CODEC).orElseGet(Owner::new);
 		float savedHeadRotation = tag.getFloatOr("HeadRotation", 0.0F);
 
@@ -444,7 +448,7 @@ public class Sentry extends PathfinderMob implements RangedAttackMob, IEMPAffect
 		entityData.set(HEAD_ROTATION, savedHeadRotation);
 		oHeadRotation = savedHeadRotation;
 		headRotation = savedHeadRotation;
-		super.readAdditionalSaveData(tag);
+		super.readAdditionalSaveData(tag.tag());
 	}
 
 	@Override
@@ -476,30 +480,14 @@ public class Sentry extends PathfinderMob implements RangedAttackMob, IEMPAffect
 	@Override
 	public void onOwnerChanged(BlockState state, Level level, BlockPos pos, Player player, Owner oldOwner, Owner newOwner) {}
 
-	@Override
-	protected void applyImplicitComponents(DataComponentGetter getter) {
-		super.applyImplicitComponents(getter);
-		applyImplicitComponentIfPresent(getter, SCContent.OWNER_DATA.get());
-	}
+	/**
+	 * Applies the owner stored on the item the sentry was placed with. Replaces the implicit entity components of 1.21.5+
+	 */
+	public void applyItemComponents(ItemStack stack) {
+		OwnerData ownerData = stack.get(SCContent.OWNER_DATA.get());
 
-	@Override
-	protected <T> boolean applyImplicitComponent(DataComponentType<T> type, T value) {
-		if (type == SCContent.OWNER_DATA.get()) {
-			OwnerData ownerData = castComponentValue(SCContent.OWNER_DATA.get(), value);
-
+		if (ownerData != null)
 			setOwner(ownerData.uuid(), ownerData.name());
-			return true;
-		}
-
-		return super.applyImplicitComponent(type, value);
-	}
-
-	@Override
-	public <T> T get(DataComponentType<? extends T> type) {
-		if (type == SCContent.OWNER_DATA.get())
-			return (T) OwnerData.fromOwner(getOwner());
-		else
-			return super.get(type);
 	}
 
 	/**

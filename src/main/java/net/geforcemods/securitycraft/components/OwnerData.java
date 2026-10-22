@@ -9,7 +9,6 @@ import io.netty.buffer.ByteBuf;
 import net.geforcemods.securitycraft.SCContent;
 import net.geforcemods.securitycraft.api.Owner;
 import net.geforcemods.securitycraft.util.Utils;
-import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -33,10 +32,16 @@ public record OwnerData(String name, String uuid) implements TooltipProvider {
 			OwnerData::new);
 	//@formatter:on
 	@Override
-	public void addToTooltip(TooltipContext ctx, Consumer<Component> lineAdder, TooltipFlag flag, DataComponentGetter componentGetter) {
-		KeycardData keycardData = componentGetter.get(SCContent.KEYCARD_DATA.get());
+	public void addToTooltip(TooltipContext ctx, Consumer<Component> lineAdder, TooltipFlag flag) {
+		addToTooltip(lineAdder, false);
+	}
 
-		if (keycardData != null)
+	/**
+	 * In 1.21.4, tooltip providers cannot access the other components of the item stack, so the caller needs to say whether
+	 * the stack is a keycard
+	 */
+	public void addToTooltip(Consumer<Component> lineAdder, boolean isKeycard) {
+		if (isKeycard)
 			lineAdder.accept(Component.translatable("tooltip.securitycraft:keycard.reader_owner", name).setStyle(Utils.GRAY_STYLE));
 		else
 			lineAdder.accept(Component.translatable("tooltip.securitycraft.component.owner", name).setStyle(Utils.GRAY_STYLE));

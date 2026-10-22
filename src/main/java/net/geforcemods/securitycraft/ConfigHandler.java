@@ -8,7 +8,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import net.geforcemods.securitycraft.misc.TintMode;
 import net.geforcemods.securitycraft.platform.SCPlatform;
 import net.geforcemods.securitycraft.util.TeamUtils;
-import fuzs.forgeconfigapiport.fabric.api.v5.ModConfigEvents;
+import fuzs.forgeconfigapiport.fabric.api.neoforge.v4.NeoForgeModConfigEvents;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.common.ModConfigSpec.BooleanValue;
@@ -283,8 +283,8 @@ public class ConfigHandler {
 	}
 
 	public static void registerEvents() {
-		ModConfigEvents.loading(SecurityCraft.MODID).register(ConfigHandler::onModConfigReloading);
-		ModConfigEvents.reloading(SecurityCraft.MODID).register(ConfigHandler::onModConfigReloading);
+		NeoForgeModConfigEvents.loading(SecurityCraft.MODID).register(ConfigHandler::onModConfigReloading);
+		NeoForgeModConfigEvents.reloading(SecurityCraft.MODID).register(ConfigHandler::onModConfigReloading);
 	}
 
 	public static void onModConfigReloading(ModConfig config) {

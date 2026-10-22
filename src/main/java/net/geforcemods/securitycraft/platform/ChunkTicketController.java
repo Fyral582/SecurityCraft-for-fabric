@@ -1,13 +1,12 @@
 package net.geforcemods.securitycraft.platform;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Registry;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
@@ -23,8 +22,8 @@ import net.minecraft.world.level.Level;
  */
 public class ChunkTicketController {
 	private final ResourceLocation id;
-	private TicketType loadingTicket;
-	private TicketType tickingTicket;
+	private TicketType<ChunkPos> loadingTicket;
+	private TicketType<ChunkPos> tickingTicket;
 	private final Map<ResourceKey<Level>, Map<Long, Set<Object>>> forcedChunks = new HashMap<>();
 
 	public ChunkTicketController(ResourceLocation id) {
@@ -32,8 +31,8 @@ public class ChunkTicketController {
 	}
 
 	public void register() {
-		loadingTicket = Registry.register(BuiltInRegistries.TICKET_TYPE, id, new TicketType(TicketType.NO_TIMEOUT, false, TicketType.TicketUse.LOADING));
-		tickingTicket = Registry.register(BuiltInRegistries.TICKET_TYPE, id.withSuffix("_ticking"), new TicketType(TicketType.NO_TIMEOUT, false, TicketType.TicketUse.LOADING_AND_SIMULATION));
+		loadingTicket = TicketType.create(id.toString(), Comparator.comparingLong(ChunkPos::toLong));
+		tickingTicket = TicketType.create(id.withSuffix("_ticking").toString(), Comparator.comparingLong(ChunkPos::toLong));
 	}
 
 	public boolean forceChunk(ServerLevel level, BlockPos owner, int chunkX, int chunkZ, boolean add, boolean ticking) {
@@ -48,7 +47,7 @@ public class ChunkTicketController {
 		ChunkPos chunkPos = new ChunkPos(chunkX, chunkZ);
 		Map<Long, Set<Object>> chunks = forcedChunks.computeIfAbsent(level.dimension(), k -> new HashMap<>());
 		long key = chunkPos.toLong();
-		TicketType type = ticking ? tickingTicket : loadingTicket;
+		TicketType<ChunkPos> type = ticking ? tickingTicket : loadingTicket;
 
 		if (add) {
 			Set<Object> owners = chunks.computeIfAbsent(key, k -> new HashSet<>());
@@ -56,7 +55,7 @@ public class ChunkTicketController {
 			boolean changed = owners.add(owner);
 
 			if (wasEmpty && changed)
-				level.getChunkSource().addTicketWithRadius(type, chunkPos, ticking ? 2 : 0);
+				level.getChunkSource().addRegionTicket(type, chunkPos, ticking ? 2 : 0, chunkPos);
 
 			return changed;
 		}
@@ -68,7 +67,7 @@ public class ChunkTicketController {
 
 			if (owners.isEmpty()) {
 				chunks.remove(key);
-				level.getChunkSource().removeTicketWithRadius(type, chunkPos, ticking ? 2 : 0);
+				level.getChunkSource().removeRegionTicket(type, chunkPos, ticking ? 2 : 0, chunkPos);
 			}
 
 			return true;

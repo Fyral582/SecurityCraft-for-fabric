@@ -1,7 +1,7 @@
 package net.geforcemods.securitycraft;
 
-import fuzs.forgeconfigapiport.fabric.api.v5.ConfigRegistry;
-import fuzs.forgeconfigapiport.fabric.api.v5.client.ConfigScreenFactoryRegistry;
+import fuzs.forgeconfigapiport.fabric.api.neoforge.v4.NeoForgeConfigRegistry;
+import fuzs.forgeconfigapiport.fabric.api.neoforge.v4.client.ConfigScreenFactoryRegistry;
 import org.spongepowered.asm.mixin.MixinEnvironment;
 
 import net.fabricmc.api.ClientModInitializer;
@@ -18,7 +18,7 @@ import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 public class SecurityCraftClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
-		ConfigRegistry.INSTANCE.register(SecurityCraft.MODID, ModConfig.Type.CLIENT, ConfigHandler.CLIENT_SPEC);
+		NeoForgeConfigRegistry.INSTANCE.register(SecurityCraft.MODID, ModConfig.Type.CLIENT, ConfigHandler.CLIENT_SPEC);
 		ConfigScreenFactoryRegistry.INSTANCE.register(SecurityCraft.MODID, ConfigurationScreen::new);
 		HitCheck.bootstrap();
 		PlatformClientHooks.init();

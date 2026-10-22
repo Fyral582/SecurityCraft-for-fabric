@@ -24,11 +24,10 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.Rect2i;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.CommonColors;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
@@ -131,34 +130,34 @@ public class BlockPocketManagerScreen extends AbstractContainerScreen<BlockPocke
 
 	@Override
 	protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-		guiGraphics.drawString(font, title, (hasStorageModule ? 123 : imageWidth) / 2 - font.width(title) / 2, 6, CommonColors.DARK_GRAY, false);
+		guiGraphics.drawString(font, title, (hasStorageModule ? 123 : imageWidth) / 2 - font.width(title) / 2, 6, 0xFF404040, false);
 
 		if (hasStorageModule)
-			guiGraphics.drawString(font, playerInventoryTitle, 8, imageHeight - 94, CommonColors.DARK_GRAY, false);
+			guiGraphics.drawString(font, playerInventoryTitle, 8, imageHeight - 94, 0xFF404040, false);
 
 		if (!be.isEnabled() && isOwner) {
 			if (!hasStorageModule) {
-				guiGraphics.drawString(font, youNeed, imageWidth / 2 - font.width(youNeed) / 2, 83, CommonColors.DARK_GRAY, false);
+				guiGraphics.drawString(font, youNeed, imageWidth / 2 - font.width(youNeed) / 2, 83, 0xFF404040, false);
 
-				guiGraphics.drawString(font, wallsNeededOverall + "", 42, 100, CommonColors.DARK_GRAY, false);
+				guiGraphics.drawString(font, wallsNeededOverall + "", 42, 100, 0xFF404040, false);
 				guiGraphics.renderItem(BLOCK_POCKET_WALL, 25, 96);
 
-				guiGraphics.drawString(font, pillarsNeededOverall + "", 94, 100, CommonColors.DARK_GRAY, false);
+				guiGraphics.drawString(font, pillarsNeededOverall + "", 94, 100, 0xFF404040, false);
 				guiGraphics.renderItem(REINFORCED_CRYSTAL_QUARTZ_PILLAR, 77, 96);
 
-				guiGraphics.drawString(font, CHISELED_NEEDED_OVERALL + "", 147, 100, CommonColors.DARK_GRAY, false);
+				guiGraphics.drawString(font, CHISELED_NEEDED_OVERALL + "", 147, 100, 0xFF404040, false);
 				guiGraphics.renderItem(REINFORCED_CHISELED_CRYSTAL_QUARTZ, 130, 96);
 			}
 			else {
-				guiGraphics.drawString(font, youNeed, 169 + 87 / 2 - font.width(youNeed) / 2, imageHeight - 83, CommonColors.DARK_GRAY, false);
+				guiGraphics.drawString(font, youNeed, 169 + 87 / 2 - font.width(youNeed) / 2, imageHeight - 83, 0xFF404040, false);
 
-				guiGraphics.drawString(font, Math.max(0, wallsStillNeeded) + "", 192, imageHeight - 66, CommonColors.DARK_GRAY, false);
+				guiGraphics.drawString(font, Math.max(0, wallsStillNeeded) + "", 192, imageHeight - 66, 0xFF404040, false);
 				guiGraphics.renderItem(BLOCK_POCKET_WALL, 175, imageHeight - 70);
 
-				guiGraphics.drawString(font, Math.max(0, pillarsStillNeeded) + "", 192, imageHeight - 44, CommonColors.DARK_GRAY, false);
+				guiGraphics.drawString(font, Math.max(0, pillarsStillNeeded) + "", 192, imageHeight - 44, 0xFF404040, false);
 				guiGraphics.renderItem(REINFORCED_CRYSTAL_QUARTZ_PILLAR, 175, imageHeight - 48);
 
-				guiGraphics.drawString(font, Math.max(0, chiseledStillNeeded) + "", 192, imageHeight - 22, CommonColors.DARK_GRAY, false);
+				guiGraphics.drawString(font, Math.max(0, chiseledStillNeeded) + "", 192, imageHeight - 22, 0xFF404040, false);
 				guiGraphics.renderItem(REINFORCED_CHISELED_CRYSTAL_QUARTZ, 175, imageHeight - 26);
 			}
 		}
@@ -174,7 +173,7 @@ public class BlockPocketManagerScreen extends AbstractContainerScreen<BlockPocke
 		if (!be.isEnabled() && isOwner) {
 			for (StackHoverChecker shc : hoverCheckers) {
 				if (shc.checkHover(mouseX, mouseY)) {
-					guiGraphics.setTooltipForNextFrame(font, shc.getStack(), mouseX, mouseY);
+					guiGraphics.renderTooltip(font, shc.getStack(), mouseX, mouseY);
 					break;
 				}
 			}
@@ -183,7 +182,7 @@ public class BlockPocketManagerScreen extends AbstractContainerScreen<BlockPocke
 
 	@Override
 	protected void renderBg(GuiGraphics guiGraphics, float partialTicks, int mouseX, int mouseY) {
-		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, hasStorageModule ? TEXTURE_STORAGE : TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
+		guiGraphics.blit(RenderType::guiTextured, hasStorageModule ? TEXTURE_STORAGE : TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
 	}
 
 	@Override

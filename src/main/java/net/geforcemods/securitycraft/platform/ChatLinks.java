@@ -31,7 +31,7 @@ public final class ChatLinks {
 			try {
 				URI uri = new URI(url.startsWith("http") ? url : "https://" + url);
 
-				result.append(Component.literal(url).withStyle(style -> style.withClickEvent(new ClickEvent.OpenUrl(uri)).withUnderlined(true).withColor(ChatFormatting.BLUE)));
+				result.append(Component.literal(url).withStyle(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, uri.toString())).withUnderlined(true).withColor(ChatFormatting.BLUE)));
 			}
 			catch (Exception e) {
 				result.append(Component.literal(url));

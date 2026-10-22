@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.items;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -23,7 +24,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -95,16 +95,16 @@ public class SonicSecuritySystemItem extends BlockItem {
 	}
 
 	@Override
-	public void appendHoverText(ItemStack stack, TooltipContext ctx, TooltipDisplay display, Consumer<Component> tooltipAdder, TooltipFlag flag) {
+	public void appendHoverText(ItemStack stack, TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
 		DataComponentType<GlobalPositions> type = SCContent.SSS_LINKED_BLOCKS.get();
 		GlobalPositions sssLinkedBlocks = stack.get(type);
 
-		if (sssLinkedBlocks != null && display.shows(type)) {
+		if (sssLinkedBlocks != null) {
 			// If this item is storing block positions, show the number of them in the tooltip
 			long numOfLinkedBlocks = sssLinkedBlocks.positions().stream().filter(Objects::nonNull).count();
 
 			if (numOfLinkedBlocks > 0)
-				tooltipAdder.accept(Utils.localize("tooltip.securitycraft:sonicSecuritySystem.linkedTo", numOfLinkedBlocks).withStyle(Utils.GRAY_STYLE));
+				tooltip.add(Utils.localize("tooltip.securitycraft:sonicSecuritySystem.linkedTo", numOfLinkedBlocks).withStyle(Utils.GRAY_STYLE));
 		}
 	}
 }

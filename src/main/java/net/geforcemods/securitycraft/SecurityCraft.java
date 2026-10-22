@@ -14,7 +14,7 @@ import org.slf4j.Logger;
 import com.google.common.base.Suppliers;
 import com.mojang.logging.LogUtils;
 
-import fuzs.forgeconfigapiport.fabric.api.v5.ConfigRegistry;
+import fuzs.forgeconfigapiport.fabric.api.neoforge.v4.NeoForgeConfigRegistry;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -75,7 +75,7 @@ public class SecurityCraft implements ModInitializer {
 	public void onInitialize() {
 		SCPlatform.init();
 		PlatformHooks.init();
-		ConfigRegistry.INSTANCE.register(MODID, ModConfig.Type.SERVER, ConfigHandler.SERVER_SPEC);
+		NeoForgeConfigRegistry.INSTANCE.register(MODID, ModConfig.Type.SERVER, ConfigHandler.SERVER_SPEC);
 		ConfigHandler.registerEvents();
 		CAMERA_TICKET_CONTROLLER.register();
 		//same order as vanilla's/NeoForge's registries, so that entries can reference entries of registries that come before them

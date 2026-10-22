@@ -1,5 +1,8 @@
 package net.geforcemods.securitycraft.blockentities;
 
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -22,17 +25,16 @@ import net.geforcemods.securitycraft.util.ITickingBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.GlobalPos;
-import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.core.component.DataComponentMap.Builder;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueInput.TypedInputList;
-import net.minecraft.world.level.storage.ValueOutput;
-import net.minecraft.world.level.storage.ValueOutput.TypedOutputList;
+import net.geforcemods.securitycraft.platform.nbt.ValueInput;
+import net.geforcemods.securitycraft.platform.nbt.ValueInput.TypedInputList;
+import net.geforcemods.securitycraft.platform.nbt.ValueOutput;
+import net.geforcemods.securitycraft.platform.nbt.ValueOutput.TypedOutputList;
 
 public class SonicSecuritySystemBlockEntity extends DisguisableBlockEntity implements ITickingBlockEntity, IEMPAffectedBE {
 	/** The delay between each ping sound in ticks */
@@ -174,8 +176,10 @@ public class SonicSecuritySystemBlockEntity extends DisguisableBlockEntity imple
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
-		super.saveAdditional(tag);
+	public void saveAdditional(CompoundTag compoundTag, HolderLookup.Provider lookupProvider) {
+		ValueOutput tag = ValueOutput.of(compoundTag, lookupProvider);
+
+		super.saveAdditional(tag.tag(), tag.lookup());
 
 		TypedOutputList<GlobalPos> linkedBlocksList = tag.list("linked_blocks", GlobalPos.CODEC.orElse(GlobalPositions.DUMMY_GLOBAL_POS));
 		TypedOutputList<NoteWrapper> notesList = tag.list("notes", NoteWrapper.CODEC);
@@ -199,8 +203,10 @@ public class SonicSecuritySystemBlockEntity extends DisguisableBlockEntity imple
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
+	public void loadAdditional(CompoundTag compoundTag, HolderLookup.Provider lookupProvider) {
+		ValueInput tag = ValueInput.of(compoundTag, lookupProvider);
+
+		super.loadAdditional(tag.tag(), tag.lookup());
 
 		//what happens when this tries to load old BE data that has an empty compound tag?
 		TypedInputList<GlobalPos> linkedBlocksList = tag.listOrEmpty("linked_blocks", GlobalPos.CODEC.orElse(GlobalPositions.DUMMY_GLOBAL_POS));
@@ -452,7 +458,7 @@ public class SonicSecuritySystemBlockEntity extends DisguisableBlockEntity imple
 	}
 
 	@Override
-	protected void applyImplicitComponents(DataComponentGetter input) {
+	protected void applyImplicitComponents(BlockEntity.DataComponentInput input) {
 		super.applyImplicitComponents(input);
 
 		GlobalPositions sssLinkedBlocks = input.get(SCContent.SSS_LINKED_BLOCKS.get());
@@ -486,8 +492,10 @@ public class SonicSecuritySystemBlockEntity extends DisguisableBlockEntity imple
 	}
 
 	@Override
-	public void removeComponentsFromTag(ValueOutput tag) {
-		super.removeComponentsFromTag(tag);
+	public void removeComponentsFromTag(CompoundTag compoundTag) {
+		ValueOutput tag = ValueOutput.of(compoundTag, null);
+
+		super.removeComponentsFromTag(tag.tag());
 		tag.discard("linked_blocks");
 		tag.discard("notes");
 	}

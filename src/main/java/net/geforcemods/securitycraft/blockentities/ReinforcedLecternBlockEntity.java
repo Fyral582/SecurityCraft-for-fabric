@@ -28,8 +28,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.entity.LecternBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
+import net.geforcemods.securitycraft.platform.nbt.ValueInput;
+import net.geforcemods.securitycraft.platform.nbt.ValueOutput;
 
 public class ReinforcedLecternBlockEntity extends LecternBlockEntity implements IOwnable, IModuleInventory, ICustomizable, IPistonMoveListener {
 	private Owner owner = new Owner();
@@ -42,8 +42,10 @@ public class ReinforcedLecternBlockEntity extends LecternBlockEntity implements 
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
+	public void loadAdditional(CompoundTag compoundTag, HolderLookup.Provider lookupProvider) {
+		ValueInput tag = ValueInput.of(compoundTag, lookupProvider);
+
+		super.loadAdditional(tag.tag(), tag.lookup());
 		owner.load(tag);
 		readModuleInventory(modules, tag);
 		moduleStates = readModuleStates(tag);
@@ -51,8 +53,10 @@ public class ReinforcedLecternBlockEntity extends LecternBlockEntity implements 
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
-		super.saveAdditional(tag);
+	public void saveAdditional(CompoundTag compoundTag, HolderLookup.Provider lookupProvider) {
+		ValueOutput tag = ValueOutput.of(compoundTag, lookupProvider);
+
+		super.saveAdditional(tag.tag(), tag.lookup());
 
 		if (owner != null)
 			owner.save(tag, needsValidation());

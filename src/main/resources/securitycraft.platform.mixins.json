@@ -4,6 +4,7 @@
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
 		"AnvilMenuMixin",
+		"BlockBehaviourRemovalMixin",
 		"BlockEntityExtensionImplMixin",
 		"BlockEntityRenderDataMixin",
 		"BlockExtensionImplMixin",
@@ -58,7 +59,8 @@
 		"client.ScreenLayersMinecraftMixin",
 		"client.ScreenLayersGameRendererMixin",
 		"client.AbstractWidgetMixin",
-		"client.AbstractButtonMixin"
+		"client.AbstractButtonMixin",
+		"client.GuiMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

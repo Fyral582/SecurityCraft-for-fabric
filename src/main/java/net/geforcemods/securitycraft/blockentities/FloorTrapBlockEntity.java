@@ -1,5 +1,7 @@
 package net.geforcemods.securitycraft.blockentities;
 
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.geforcemods.securitycraft.SCContent;
 import net.geforcemods.securitycraft.api.Option;
 import net.geforcemods.securitycraft.api.Option.BooleanOption;
@@ -18,8 +20,8 @@ import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
+import net.geforcemods.securitycraft.platform.nbt.ValueInput;
+import net.geforcemods.securitycraft.platform.nbt.ValueOutput;
 import net.minecraft.world.phys.AABB;
 
 public class FloorTrapBlockEntity extends DisguisableBlockEntity implements ITickingBlockEntity {
@@ -96,8 +98,10 @@ public class FloorTrapBlockEntity extends DisguisableBlockEntity implements ITic
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
-		super.saveAdditional(tag);
+	public void saveAdditional(CompoundTag compoundTag, HolderLookup.Provider lookupProvider) {
+		ValueOutput tag = ValueOutput.of(compoundTag, lookupProvider);
+
+		super.saveAdditional(tag.tag(), tag.lookup());
 		tag.putBoolean("should_disappear", shouldDisappear);
 		tag.putBoolean("should_reappear", shouldReappear);
 		tag.putInt("ticks_until_disappearing", ticksUntilDisappearing);
@@ -105,8 +109,10 @@ public class FloorTrapBlockEntity extends DisguisableBlockEntity implements ITic
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
+	public void loadAdditional(CompoundTag compoundTag, HolderLookup.Provider lookupProvider) {
+		ValueInput tag = ValueInput.of(compoundTag, lookupProvider);
+
+		super.loadAdditional(tag.tag(), tag.lookup());
 		shouldDisappear = tag.getBooleanOr("should_disappear", false);
 		shouldReappear = tag.getBooleanOr("should_reappear", false);
 		ticksUntilDisappearing = tag.getIntOr("ticks_until_disappearing", -1);

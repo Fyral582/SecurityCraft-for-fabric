@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.mixin.camera;
 
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -46,7 +47,7 @@ public class GameRendererMixin {
 	 * Renders the camera tint if a lens is installed. This cannot be done in a standard overlay, as the tint needs to exist even
 	 * when the GUI is hidden with F1
 	 */
-	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/Gui;render(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/DeltaTracker;)V"))
+	@Inject(method = "render", at = @At(value = "FIELD", target = "Lnet/minecraft/client/Options;hideGui:Z", opcode = Opcodes.GETFIELD))
 	private void securitycraft$renderCameraTint(DeltaTracker deltaTracker, boolean renderLevel, CallbackInfo ci, @Local GuiGraphics guiGraphics) {
 		if (minecraft.cameraEntity instanceof SecurityCamera) {
 			Level level = minecraft.level;

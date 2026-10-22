@@ -12,11 +12,10 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.CommonColors;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -62,20 +61,20 @@ public class SetPasscodeScreen extends Screen implements StillValid {
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
-		guiGraphics.drawString(font, "CODE:", width / 2 - 67, height / 2 - 47 + 2, CommonColors.DARK_GRAY);
+		guiGraphics.drawString(font, "CODE:", width / 2 - 67, height / 2 - 47 + 2, 0xFF404040);
 
 		if (font.width(combined) < imageWidth - 10)
-			guiGraphics.drawString(font, combined, width / 2 - font.width(combined) / 2, topPos + 6, CommonColors.DARK_GRAY, false);
+			guiGraphics.drawString(font, combined, width / 2 - font.width(combined) / 2, topPos + 6, 0xFF404040, false);
 		else {
-			guiGraphics.drawString(font, title, width / 2 - font.width(title) / 2, topPos + 6, CommonColors.DARK_GRAY, false);
-			guiGraphics.drawString(font, setup, width / 2 - font.width(setup) / 2, topPos + 16, CommonColors.DARK_GRAY, false);
+			guiGraphics.drawString(font, title, width / 2 - font.width(title) / 2, topPos + 6, 0xFF404040, false);
+			guiGraphics.drawString(font, setup, width / 2 - font.width(setup) / 2, topPos + 16, 0xFF404040, false);
 		}
 	}
 
 	@Override
 	public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
 		renderTransparentBackground(guiGraphics);
-		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
+		guiGraphics.blit(RenderType::guiTextured, TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
 	}
 
 	@Override

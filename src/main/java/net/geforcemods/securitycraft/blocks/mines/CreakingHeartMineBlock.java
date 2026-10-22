@@ -17,7 +17,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.InsideBlockEffectApplier;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -36,7 +35,6 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.entity.CreakingHeartBlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.CreakingHeartState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -83,7 +81,7 @@ public class CreakingHeartMineBlock extends CreakingHeartBlock implements IBlock
 	}
 
 	@Override
-	public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity, InsideBlockEffectApplier effectApplier) {
+	public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
 		if (level.getBlockEntity(pos) instanceof IOwnable ownable && !ownable.isOwnedBy(entity))
 			explode(level, pos);
 	}
@@ -150,7 +148,7 @@ public class CreakingHeartMineBlock extends CreakingHeartBlock implements IBlock
 
 	@Override
 	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-		return !level.isClientSide && state.getValue(STATE) != CreakingHeartState.UPROOTED ? createTickerHelper(type, SCContent.CREAKING_HEART_MINE_BLOCK_ENTITY.get(), CreakingHeartBlockEntity::serverTick) : null;
+		return !level.isClientSide && state.getValue(ACTIVE) ? createTickerHelper(type, SCContent.CREAKING_HEART_MINE_BLOCK_ENTITY.get(), CreakingHeartBlockEntity::serverTick) : null;
 	}
 
 	@Override

@@ -19,7 +19,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public class SecureTradingStationRenderer implements BlockEntityRenderer<SecureTradingStationBlockEntity> {
@@ -37,8 +36,8 @@ public class SecureTradingStationRenderer implements BlockEntityRenderer<SecureT
 	}
 
 	@Override
-	public void render(SecureTradingStationBlockEntity be, float partialTicks, PoseStack pose, MultiBufferSource buffer, int packedLight, int packedOverlay, Vec3 cameraPos) {
-		ClientHandler.DISGUISED_BLOCK_RENDER_DELEGATE.tryRenderDelegate(be, partialTicks, pose, buffer, packedLight, packedOverlay, cameraPos);
+	public void render(SecureTradingStationBlockEntity be, float partialTicks, PoseStack pose, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+		ClientHandler.DISGUISED_BLOCK_RENDER_DELEGATE.tryRenderDelegate(be, partialTicks, pose, buffer, packedLight, packedOverlay);
 
 		if (!be.isModuleEnabled(ModuleType.DISGUISE)) {
 			Level level = be.getLevel();
@@ -56,14 +55,13 @@ public class SecureTradingStationRenderer implements BlockEntityRenderer<SecureT
 
 	private void renderItem(Level level, PoseStack pose, ItemStack stack, Direction facing, float sideOffset, MultiBufferSource buffer, int packedLight) {
 		int seed = ItemClusterRenderState.getSeedForItemStack(stack);
-		AABB modelSize;
 
-		itemModelResolver.updateForTopItem(itemStackRenderState, stack, ItemDisplayContext.FIXED, level, null, seed);
-		modelSize = itemStackRenderState.getModelBoundingBox();
+		itemModelResolver.updateForTopItem(itemStackRenderState, stack, ItemDisplayContext.FIXED, false, level, null, seed);
 		pose.pushPose();
-		pose.translate(0.5F, 0.4F - 0.3F * modelSize.minY, 0.5F);
+		//1.21.4 has no model bounding boxes, so flat (non-3D) item models are moved forward like thin models are in 1.21.6+
+		pose.translate(0.5F, 0.4F, 0.5F);
 		pose.mulPose(ROTATIONS[facing.get2DDataValue()]);
-		pose.translate(sideOffset, 0.0F, modelSize.getZsize() <= 0.0625F ? 0.1F : 0.0F);
+		pose.translate(sideOffset, 0.0F, itemStackRenderState.isGui3d() ? 0.0F : 0.1F);
 		pose.scale(0.35F, 0.35F, 0.35F);
 		itemStackRenderState.render(pose, buffer, packedLight, OverlayTexture.NO_OVERLAY);
 		pose.popPose();

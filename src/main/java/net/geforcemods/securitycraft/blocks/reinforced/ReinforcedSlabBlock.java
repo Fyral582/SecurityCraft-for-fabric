@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import net.geforcemods.securitycraft.api.IOwnable;
 import net.geforcemods.securitycraft.util.PlayerUtils;
 import net.geforcemods.securitycraft.util.Utils;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -131,7 +132,7 @@ public class ReinforcedSlabBlock extends BaseReinforcedBlock implements SimpleWa
 	}
 
 	@Override
-	public boolean canPlaceLiquid(LivingEntity player, BlockGetter level, BlockPos pos, BlockState state, Fluid fluid) {
+	public boolean canPlaceLiquid(Player player, BlockGetter level, BlockPos pos, BlockState state, Fluid fluid) {
 		return state.getValue(TYPE) != SlabType.DOUBLE && SimpleWaterloggedBlock.super.canPlaceLiquid(player, level, pos, state, fluid);
 	}
 

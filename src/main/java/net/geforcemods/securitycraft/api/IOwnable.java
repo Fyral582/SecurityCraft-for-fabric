@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.api;
 
+import java.util.UUID;
 import net.geforcemods.securitycraft.SCContent;
 import net.geforcemods.securitycraft.util.PlayerUtils;
 import net.geforcemods.securitycraft.util.TeamUtils;
@@ -7,7 +8,6 @@ import net.geforcemods.securitycraft.util.Utils;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityReference;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.player.Player;
@@ -113,9 +113,9 @@ public interface IOwnable {
 	 */
 	public default boolean allowsOwnableEntity(OwnableEntity entity) {
 		Owner beOwner = getOwner();
-		EntityReference<LivingEntity> ownerReference = entity.getOwnerReference();
+		UUID ownerUUID = entity.getOwnerUUID();
 
-		return ownerReference != null && (ownerReference.getUUID().toString().equals(beOwner.getUUID()) || TeamUtils.areOnSameTeam(beOwner, new Owner(entity.getOwner())));
+		return ownerUUID != null && (ownerUUID.toString().equals(beOwner.getUUID()) || TeamUtils.areOnSameTeam(beOwner, new Owner(entity.getOwner())));
 	}
 
 	/**

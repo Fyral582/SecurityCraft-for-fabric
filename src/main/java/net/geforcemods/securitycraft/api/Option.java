@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.api;
 
+import net.minecraft.nbt.CompoundTag;
 import java.util.function.Supplier;
 
 import net.geforcemods.securitycraft.misc.TargetingMode;
@@ -10,8 +11,8 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
+import net.geforcemods.securitycraft.platform.nbt.ValueInput;
+import net.geforcemods.securitycraft.platform.nbt.ValueOutput;
 
 /**
  * A class that allows blocks that have {@link ICustomizable} block entities to have custom, per-block options that are

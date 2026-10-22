@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.entity;
 
+import net.minecraft.nbt.CompoundTag;
 import net.geforcemods.securitycraft.ConfigHandler;
 import net.geforcemods.securitycraft.SCContent;
 import net.geforcemods.securitycraft.util.BlockUtils;
@@ -15,8 +16,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
+import net.geforcemods.securitycraft.platform.nbt.ValueInput;
+import net.geforcemods.securitycraft.platform.nbt.ValueOutput;
 
 public class BouncingBetty extends Entity {
 	/** How many ticks until the explosion */
@@ -29,7 +30,7 @@ public class BouncingBetty extends Entity {
 
 	public BouncingBetty(Level level, double x, double y, double z) {
 		this(SCContent.BOUNCING_BETTY_ENTITY.get(), level);
-		snapTo(x, y, z);
+		moveTo(x, y, z);
 
 		double f = Math.random() * Math.PI * 2.0D;
 
@@ -79,12 +80,16 @@ public class BouncingBetty extends Entity {
 	}
 
 	@Override
-	protected void addAdditionalSaveData(ValueOutput tag) {
+	protected void addAdditionalSaveData(CompoundTag compoundTag) {
+		ValueOutput tag = ValueOutput.of(compoundTag, level().registryAccess());
+
 		tag.putByte("Fuse", (byte) getFuse());
 	}
 
 	@Override
-	protected void readAdditionalSaveData(ValueInput tag) {
+	protected void readAdditionalSaveData(CompoundTag compoundTag) {
+		ValueInput tag = ValueInput.of(compoundTag, level().registryAccess());
+
 		setFuse(tag.getByteOr("Fuse", (byte) 0));
 	}
 

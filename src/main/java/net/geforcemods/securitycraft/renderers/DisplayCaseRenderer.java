@@ -21,7 +21,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.Vec3;
 
 public class DisplayCaseRenderer implements BlockEntityRenderer<DisplayCaseBlockEntity> {
 	private final ResourceLocation texture = SecurityCraft.resLoc("textures/entity/display_case/normal.png");
@@ -35,7 +34,7 @@ public class DisplayCaseRenderer implements BlockEntityRenderer<DisplayCaseBlock
 	}
 
 	@Override
-	public void render(DisplayCaseBlockEntity be, float partialTick, PoseStack pose, MultiBufferSource buffer, int packedLight, int packedOverlay, Vec3 cameraPos) {
+	public void render(DisplayCaseBlockEntity be, float partialTick, PoseStack pose, MultiBufferSource buffer, int packedLight, int packedOverlay) {
 		VertexConsumer consumer;
 		BlockState state = be.getBlockState();
 		Direction facing = state.getValue(DisplayCaseBlock.FACING);

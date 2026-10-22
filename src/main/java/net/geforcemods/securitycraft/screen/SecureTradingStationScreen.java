@@ -15,7 +15,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
@@ -91,7 +91,7 @@ public class SecureTradingStationScreen extends AbstractContainerScreen<SecureTr
 		super.render(guiGraphics, mouseX, mouseY, partialTick);
 
 		if (be.hasRewardReferenceStacks() && getTransactionsOnConfirmation() > be.rewardLimitedTransactions) {
-			guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, WARNING_HIGHLIGHTED_SPRITE, leftPos + 148, topPos + 16, 24, 24);
+			guiGraphics.blitSprite(RenderType::guiTextured, WARNING_HIGHLIGHTED_SPRITE, leftPos + 148, topPos + 16, 24, 24);
 
 			if (mouseX >= leftPos + 148 && mouseX <= leftPos + 160 && mouseY >= topPos + 16 && mouseY <= topPos + 40) {
 				Component warning;
@@ -101,7 +101,7 @@ public class SecureTradingStationScreen extends AbstractContainerScreen<SecureTr
 				else
 					warning = Utils.localize("gui.securitycraft:secure_trading_station.not_enough_reward", be.rewardLimitedTransactions);
 
-				guiGraphics.setComponentTooltipForNextFrame(font, List.of(warning), mouseX, mouseY);
+				guiGraphics.renderComponentTooltip(font, List.of(warning), mouseX, mouseY);
 			}
 		}
 
@@ -117,7 +117,7 @@ public class SecureTradingStationScreen extends AbstractContainerScreen<SecureTr
 			if (skipPaymentCheck)
 				buttonTooltip.add(allowedText);
 
-			guiGraphics.setComponentTooltipForNextFrame(font, buttonTooltip, mouseX, mouseY);
+			guiGraphics.renderComponentTooltip(font, buttonTooltip, mouseX, mouseY);
 		}
 
 		renderTooltip(guiGraphics, mouseX, mouseY);
@@ -143,7 +143,7 @@ public class SecureTradingStationScreen extends AbstractContainerScreen<SecureTr
 		else
 			backgroundTexture = storageVisible ? GUI_TEXTURE_STORAGE : GUI_TEXTURE;
 
-		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, backgroundTexture, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
+		guiGraphics.blit(RenderType::guiTextured, backgroundTexture, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
 	}
 
 	private void sendTransactionRequest(Button button) {

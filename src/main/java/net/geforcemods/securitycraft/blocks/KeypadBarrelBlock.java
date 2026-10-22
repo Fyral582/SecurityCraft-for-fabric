@@ -16,7 +16,6 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.stats.Stats;
-import net.minecraft.util.ProblemReporter;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
@@ -42,7 +41,6 @@ import net.minecraft.world.level.block.state.StateDefinition.Builder;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
-import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.phys.BlockHitResult;
 import net.fabricmc.fabric.api.tag.convention.v2.ConventionalBlockTags;
 
@@ -187,9 +185,7 @@ public class KeypadBarrelBlock extends DisguisableBlock {
 			level.setBlockAndUpdate(pos, SCContent.KEYPAD_BARREL.get().defaultBlockState().setValue(HORIZONTAL_FACING, horizontalFacing).setValue(LID_FACING, generalFacing).setValue(OPEN, false));
 			keypadBarrel = (KeypadBarrelBlockEntity) level.getBlockEntity(pos);
 
-			try (ProblemReporter.ScopedCollector problemReporter = new ProblemReporter.ScopedCollector(keypadBarrel.problemPath(), SecurityCraft.LOGGER)) {
-				keypadBarrel.loadWithComponents(TagValueInput.create(problemReporter, level.registryAccess(), tag));
-			}
+			keypadBarrel.loadWithComponents(tag, level.registryAccess());
 
 			keypadBarrel.setPreviousBarrel(state.getBlock());
 
@@ -220,9 +216,7 @@ public class KeypadBarrelBlock extends DisguisableBlock {
 			level.setBlockAndUpdate(pos, convertedBlock.defaultBlockState().setValue(BarrelBlock.FACING, direction).setValue(OPEN, false));
 			barrel = (BarrelBlockEntity) level.getBlockEntity(pos);
 
-			try (ProblemReporter.ScopedCollector problemReporter = new ProblemReporter.ScopedCollector(barrel.problemPath(), SecurityCraft.LOGGER)) {
-				barrel.loadWithComponents(TagValueInput.create(problemReporter, level.registryAccess(), tag));
-			}
+			barrel.loadWithComponents(tag, level.registryAccess());
 
 			return true;
 		}

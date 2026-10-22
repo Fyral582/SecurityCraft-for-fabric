@@ -24,7 +24,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -93,18 +92,18 @@ public class SentryRemoteAccessToolItem extends Item {
 	}
 
 	@Override
-	public void appendHoverText(ItemStack stack, TooltipContext ctx, TooltipDisplay display, Consumer<Component> tooltipAdder, TooltipFlag flag) {
+	public void appendHoverText(ItemStack stack, TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
 		DataComponentType<NamedPositions> type = SCContent.BOUND_SENTRIES.get();
 		NamedPositions positions = stack.get(type);
 
-		if (positions != null && display.shows(type) && !positions.isEmpty()) {
+		if (positions != null && !positions.isEmpty()) {
 			List<NamedPositions.Entry> entries = positions.positions();
 
 			for (int i = 0; i < SentryRemoteAccessToolItem.MAX_SENTRIES; i++) {
 				NamedPositions.Entry entry = entries.get(i);
 
 				if (entry == null)
-					tooltipAdder.accept(Component.literal(ChatFormatting.GRAY + "---"));
+					tooltip.add(Component.literal(ChatFormatting.GRAY + "---"));
 				else {
 					BlockPos pos = entry.globalPos().pos();
 					String nameToShow = null;
@@ -120,7 +119,7 @@ public class SentryRemoteAccessToolItem extends Item {
 							nameToShow = Utils.localize("tooltip.securitycraft:sentry", i).getString();
 					}
 
-					tooltipAdder.accept(Component.literal(ChatFormatting.GRAY + nameToShow + ": " + Utils.getFormattedCoordinates(pos).getString()));
+					tooltip.add(Component.literal(ChatFormatting.GRAY + nameToShow + ": " + Utils.getFormattedCoordinates(pos).getString()));
 				}
 			}
 		}

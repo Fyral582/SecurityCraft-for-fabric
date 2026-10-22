@@ -127,7 +127,7 @@ public class TaserItem extends Item {
 	}
 
 	@Override
-	public void inventoryTick(ItemStack stack, ServerLevel level, Entity entity, EquipmentSlot slot) {
+	public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean isSelected) {
 		if (stack.getDamageValue() >= 1)
 			stack.setDamageValue(stack.getDamageValue() - 1);
 	}
@@ -141,8 +141,8 @@ public class TaserItem extends Item {
 		PotionContents effects = new PotionContents(Potions.WATER);
 
 		effects = effects.withEffectAdded(new MobEffectInstance(MobEffects.WEAKNESS, 200, 1));
-		effects = effects.withEffectAdded(new MobEffectInstance(MobEffects.NAUSEA, 200, 1));
-		effects = effects.withEffectAdded(new MobEffectInstance(MobEffects.SLOWNESS, 200, 1));
+		effects = effects.withEffectAdded(new MobEffectInstance(MobEffects.CONFUSION, 200, 1));
+		effects = effects.withEffectAdded(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 200, 1));
 		return effects;
 	}
 
@@ -150,8 +150,8 @@ public class TaserItem extends Item {
 		PotionContents effects = new PotionContents(Potions.WATER);
 
 		effects = effects.withEffectAdded(new MobEffectInstance(MobEffects.WEAKNESS, 400, 4));
-		effects = effects.withEffectAdded(new MobEffectInstance(MobEffects.NAUSEA, 400, 4));
-		effects = effects.withEffectAdded(new MobEffectInstance(MobEffects.SLOWNESS, 400, 4));
+		effects = effects.withEffectAdded(new MobEffectInstance(MobEffects.CONFUSION, 400, 4));
+		effects = effects.withEffectAdded(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 400, 4));
 		return effects;
 	}
 }

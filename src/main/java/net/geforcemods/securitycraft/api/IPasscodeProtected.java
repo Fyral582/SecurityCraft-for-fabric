@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.api;
 
+import net.minecraft.nbt.CompoundTag;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -23,8 +24,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
+import net.geforcemods.securitycraft.platform.nbt.ValueInput;
+import net.geforcemods.securitycraft.platform.nbt.ValueOutput;
 import net.geforcemods.securitycraft.platform.network.PacketDistributor;
 
 /**

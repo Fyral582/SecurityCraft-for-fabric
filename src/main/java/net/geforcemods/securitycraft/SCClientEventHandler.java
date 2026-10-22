@@ -1,5 +1,7 @@
 package net.geforcemods.securitycraft;
 
+import net.geforcemods.securitycraft.components.OwnerData;
+import java.util.function.Consumer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientChunkEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientWorldEvents;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
@@ -35,7 +37,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.ShapeRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponentType;
@@ -50,7 +52,6 @@ import net.minecraft.world.item.Item.TooltipContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.component.TooltipProvider;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
@@ -172,22 +173,26 @@ public class SCClientEventHandler {
 	}
 
 	public static void onItemTooltip(ItemStack stack, TooltipContext ctx, TooltipFlag flag, List<Component> tooltip) {
-		TooltipDisplay display = stack.getOrDefault(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT);
 		int nextIndex = 0;
 
 		for (int i = 0; i < COMPONENTS_WITH_GLOBAL_TOOLTIP.size(); i++) {
 			DataComponentType<? extends TooltipProvider> type = COMPONENTS_WITH_GLOBAL_TOOLTIP.get(i).get();
 			TooltipProvider tooltipProvider = stack.get(type);
 
-			if (tooltipProvider != null && display.shows(type)) {
+			if (tooltipProvider != null) {
 				final int index = nextIndex++ + 1; //add in order of global tooltip components list, after item name
 
-				tooltipProvider.addToTooltip(ctx, line -> {
+				Consumer<Component> lineAdder = line -> {
 					if (index >= tooltip.size())
 						tooltip.add(line);
 					else
 						tooltip.add(index, line);
-				}, flag, stack.getComponents());
+				};
+
+				if (tooltipProvider instanceof OwnerData ownerData)
+					ownerData.addToTooltip(lineAdder, stack.has(SCContent.KEYCARD_DATA.get()));
+				else
+					tooltipProvider.addToTooltip(ctx, lineAdder, flag);
 			}
 		}
 	}
@@ -240,13 +245,13 @@ public class SCClientEventHandler {
 			}
 		}
 
-		guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, BACKGROUND_SPRITE, 5, 0, 90, 20);
-		guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, LIVE_SPRITE, window.getGuiScaledWidth() - 70, 5, 65, 16);
+		guiGraphics.blitSprite(RenderType::guiTextured, BACKGROUND_SPRITE, 5, 0, 90, 20);
+		guiGraphics.blitSprite(RenderType::guiTextured, LIVE_SPRITE, window.getGuiScaledWidth() - 70, 5, 65, 16);
 
 		if (!mc.player.hasEffect(MobEffects.NIGHT_VISION))
-			guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, NIGHT_VISION_INACTIVE_SPRITE, 28, 4, 16, 9);
+			guiGraphics.blitSprite(RenderType::guiTextured, NIGHT_VISION_INACTIVE_SPRITE, 28, 4, 16, 9);
 		else
-			guiGraphics.blit(RenderPipelines.GUI_TEXTURED, NIGHT_VISION, 27, -1, 0, 0, 18, 18, 18, 18);
+			guiGraphics.blit(RenderType::guiTextured, NIGHT_VISION, 27, -1, 0, 0, 18, 18, 18, 18);
 
 		if (state.getSignal(level, pos, state.getValue(SecurityCameraBlock.FACING)) == 0) {
 			if (!be.isModuleEnabled(ModuleType.REDSTONE))

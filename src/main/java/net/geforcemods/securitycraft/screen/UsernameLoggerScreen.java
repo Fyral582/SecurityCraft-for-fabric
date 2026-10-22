@@ -19,10 +19,9 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.CommonColors;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
 import net.geforcemods.securitycraft.platform.gui.ScrollPanel;
@@ -63,13 +62,13 @@ public class UsernameLoggerScreen extends Screen implements StillValid {
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
 		super.render(guiGraphics, mouseX, mouseY, partialTick);
-		guiGraphics.drawString(font, logged, width / 2 - font.width(logged) / 2, topPos + 6, CommonColors.DARK_GRAY, false);
+		guiGraphics.drawString(font, logged, width / 2 - font.width(logged) / 2, topPos + 6, 0xFF404040, false);
 	}
 
 	@Override
 	public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
 		renderTransparentBackground(guiGraphics);
-		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
+		guiGraphics.blit(RenderType::guiTextured, TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
 	}
 
 	@Override
@@ -145,8 +144,8 @@ public class UsernameLoggerScreen extends Screen implements StillValid {
 					if (entry != null) {
 						Component localized = Utils.localize("gui.securitycraft:logger.date", dateFormat.format(new Date(entry.timestamp())));
 
-						guiGraphics.setTooltipForNextFrame(font, Component.literal(entry.uuid().toString()), mouseX, mouseY);
-						guiGraphics.drawString(font, localized, leftPos + (imageWidth / 2 - font.width(localized) / 2), bottom + 5, CommonColors.DARK_GRAY, false);
+						guiGraphics.renderTooltip(font, Component.literal(entry.uuid().toString()), mouseX, mouseY);
+						guiGraphics.drawString(font, localized, leftPos + (imageWidth / 2 - font.width(localized) / 2), bottom + 5, 0xFF404040, false);
 					}
 				}
 			}

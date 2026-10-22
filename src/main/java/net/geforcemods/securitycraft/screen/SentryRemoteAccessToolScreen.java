@@ -25,12 +25,11 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.CommonColors;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -189,17 +188,17 @@ public class SentryRemoteAccessToolScreen extends Screen implements StillValid {
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
 
-		guiGraphics.drawString(font, title, leftPos + xSize / 2 - font.width(title) / 2, topPos + 6, CommonColors.DARK_GRAY, false);
+		guiGraphics.drawString(font, title, leftPos + xSize / 2 - font.width(title) / 2, topPos + 6, 0xFF404040, false);
 
 		for (int i = 0; i < 12; i++) {
-			guiGraphics.drawString(font, lines[i], leftPos + xSize / 4 - lengths[i] + 35 + (i / 6) * xSize / 2, topPos + (i % 6) * 25 + 33, CommonColors.DARK_GRAY, false);
+			guiGraphics.drawString(font, lines[i], leftPos + xSize / 4 - lengths[i] + 35 + (i / 6) * xSize / 2, topPos + (i % 6) * 25 + 33, 0xFF404040, false);
 		}
 
-		guiGraphics.drawString(font, modifyAll, leftPos + xSize / 2 - font.width(modifyAll) + 25, topPos + 194, CommonColors.DARK_GRAY, false);
+		guiGraphics.drawString(font, modifyAll, leftPos + xSize / 2 - font.width(modifyAll) + 25, topPos + 194, 0xFF404040, false);
 
 		for (TextHoverChecker chc : hoverCheckers) {
 			if (chc != null && chc.checkHover(mouseX, mouseY)) {
-				guiGraphics.setTooltipForNextFrame(font, chc.getName(), mouseX, mouseY);
+				guiGraphics.renderTooltip(font, chc.getName(), mouseX, mouseY);
 				break;
 			}
 		}
@@ -208,7 +207,7 @@ public class SentryRemoteAccessToolScreen extends Screen implements StillValid {
 	@Override
 	public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
 		renderTransparentBackground(guiGraphics);
-		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, leftPos, topPos, 0.0F, 0.0F, xSize, ySize, 512, 256);
+		guiGraphics.blit(RenderType::guiTextured, TEXTURE, leftPos, topPos, 0.0F, 0.0F, xSize, ySize, 512, 256);
 	}
 
 	/**

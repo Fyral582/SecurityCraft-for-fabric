@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.entity;
 
+import net.minecraft.nbt.CompoundTag;
 import net.geforcemods.securitycraft.ConfigHandler;
 import net.geforcemods.securitycraft.SCContent;
 import net.geforcemods.securitycraft.api.Owner;
@@ -19,8 +20,8 @@ import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.projectile.Fireball;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
+import net.geforcemods.securitycraft.platform.nbt.ValueInput;
+import net.geforcemods.securitycraft.platform.nbt.ValueOutput;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.HitResult.Type;
@@ -77,16 +78,20 @@ public class IMSBomb extends Fireball {
 	}
 
 	@Override
-	public void addAdditionalSaveData(ValueOutput tag) {
-		super.addAdditionalSaveData(tag);
+	public void addAdditionalSaveData(CompoundTag compoundTag) {
+		ValueOutput tag = ValueOutput.of(compoundTag, level().registryAccess());
+
+		super.addAdditionalSaveData(tag.tag());
 		tag.putInt("ticksFlying", ticksFlying);
 		tag.putBoolean("launching", launching);
 		tag.putBoolean("isFast", isFast);
 	}
 
 	@Override
-	public void readAdditionalSaveData(ValueInput tag) {
-		super.readAdditionalSaveData(tag);
+	public void readAdditionalSaveData(CompoundTag compoundTag) {
+		ValueInput tag = ValueInput.of(compoundTag, level().registryAccess());
+
+		super.readAdditionalSaveData(tag.tag());
 		ticksFlying = tag.getIntOr("ticksFlying", 0);
 		launching = tag.getBooleanOr("launching", false);
 		isFast = tag.getBooleanOr("isFast", false);

@@ -16,13 +16,12 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.phys.Vec3;
 
 public class ClaymoreRenderer implements BlockEntityRenderer<ClaymoreBlockEntity> {
 	public ClaymoreRenderer(BlockEntityRendererProvider.Context ctx) {}
 
 	@Override
-	public void render(ClaymoreBlockEntity be, float partialTicks, PoseStack pose, MultiBufferSource buffer, int combinedLight, int combinedOverlay, Vec3 cameraPos) {
+	public void render(ClaymoreBlockEntity be, float partialTicks, PoseStack pose, MultiBufferSource buffer, int combinedLight, int combinedOverlay) {
 		if (be.getBlockState().getValue(ClaymoreBlock.DEACTIVATED))
 			return;
 
@@ -62,7 +61,7 @@ public class ClaymoreRenderer implements BlockEntityRenderer<ClaymoreBlockEntity
 	}
 
 	@Override
-	public boolean shouldRenderOffScreen() {
+	public boolean shouldRenderOffScreen(ClaymoreBlockEntity be) {
 		return true;
 	}
 }

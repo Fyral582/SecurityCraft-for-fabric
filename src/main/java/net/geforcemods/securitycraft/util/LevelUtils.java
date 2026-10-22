@@ -55,7 +55,7 @@ public class LevelUtils {
 				newState.updateIndirectNeighbourShapes(level, pos, i, recursionLeft - 1);
 			}
 
-			level.updatePOIOnBlockStateChange(pos, oldState, currentState);
+			level.onBlockStateChange(pos, oldState, currentState);
 		}
 	}
 
@@ -69,7 +69,7 @@ public class LevelUtils {
 	public static LightningBolt createLightning(Level level, Vec3 pos, boolean effectOnly) {
 		LightningBolt lightning = EntityType.LIGHTNING_BOLT.create(level, EntitySpawnReason.TRIGGERED);
 
-		lightning.snapTo(pos);
+		lightning.moveTo(pos);
 		lightning.setVisualOnly(effectOnly);
 		return lightning;
 	}

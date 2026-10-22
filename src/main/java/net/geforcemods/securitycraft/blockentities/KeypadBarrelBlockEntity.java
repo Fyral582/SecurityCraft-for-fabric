@@ -53,8 +53,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.ContainerOpenersCounter;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
+import net.geforcemods.securitycraft.platform.nbt.ValueInput;
+import net.geforcemods.securitycraft.platform.nbt.ValueOutput;
 import net.geforcemods.securitycraft.platform.model.ModelData;
 
 public class KeypadBarrelBlockEntity extends RandomizableContainerBlockEntity implements IPasscodeProtected, IOwnable, IModuleInventory, ICustomizable, ILockable, ISentryBulletContainer {
@@ -100,13 +100,15 @@ public class KeypadBarrelBlockEntity extends RandomizableContainerBlockEntity im
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
+	public void saveAdditional(CompoundTag compoundTag, HolderLookup.Provider lookupProvider) {
+		ValueOutput tag = ValueOutput.of(compoundTag, lookupProvider);
+
 		long cooldownLeft;
 
-		super.saveAdditional(tag);
+		super.saveAdditional(tag.tag(), tag.lookup());
 
-		if (!trySaveLootTable(tag))
-			ContainerHelper.saveAllItems(tag, items);
+		if (!trySaveLootTable(tag.tag()))
+			ContainerHelper.saveAllItems(tag.tag(), items, tag.lookup());
 
 		writeModuleInventory(tag);
 		writeModuleStates(tag);
@@ -123,13 +125,15 @@ public class KeypadBarrelBlockEntity extends RandomizableContainerBlockEntity im
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
+	public void loadAdditional(CompoundTag compoundTag, HolderLookup.Provider lookupProvider) {
+		ValueInput tag = ValueInput.of(compoundTag, lookupProvider);
+
+		super.loadAdditional(tag.tag(), tag.lookup());
 
 		items = NonNullList.withSize(getContainerSize(), ItemStack.EMPTY);
 
-		if (!tryLoadLootTable(tag))
-			ContainerHelper.loadAllItems(tag, items);
+		if (!tryLoadLootTable(tag.tag()))
+			ContainerHelper.loadAllItems(tag.tag(), items, tag.lookup());
 
 		readModuleInventory(modules, tag);
 		moduleStates = readModuleStates(tag);

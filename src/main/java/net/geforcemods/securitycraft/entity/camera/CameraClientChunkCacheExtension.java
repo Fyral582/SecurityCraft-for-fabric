@@ -205,6 +205,7 @@
 //@formatter:on
 package net.geforcemods.securitycraft.entity.camera;
 
+import net.minecraft.nbt.CompoundTag;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -254,7 +255,7 @@ public class CameraClientChunkCacheExtension {
 		}
 	}
 
-	public static LevelChunk replaceWithPacketData(ClientLevel level, int x, int z, FriendlyByteBuf packetData, Map<Heightmap.Types, long[]> heightmaps, Consumer<ClientboundLevelChunkPacketData.BlockEntityTagOutput> tagOutput) {
+	public static LevelChunk replaceWithPacketData(ClientLevel level, int x, int z, FriendlyByteBuf packetData, CompoundTag chunkTag, Consumer<ClientboundLevelChunkPacketData.BlockEntityTagOutput> tagOutput) {
 		if (!Minecraft.getInstance().isSameThread())
 			throw new UnsupportedOperationException("replaceWithPacketData called off-thread, this shouldn't happen!");
 
@@ -266,7 +267,7 @@ public class CameraClientChunkCacheExtension {
 			LevelChunk newChunk = new LevelChunk(level, chunkPos);
 
 			chunk = newChunk;
-			chunk.replaceWithPacketData(packetData, heightmaps, tagOutput);
+			chunk.replaceWithPacketData(packetData, chunkTag, tagOutput);
 			modifyChunkMaps(map -> map.put(longChunkPos, newChunk));
 		}
 

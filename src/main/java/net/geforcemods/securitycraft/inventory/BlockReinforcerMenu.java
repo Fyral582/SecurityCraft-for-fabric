@@ -4,6 +4,7 @@ import net.geforcemods.securitycraft.SCContent;
 import net.geforcemods.securitycraft.api.IReinforcedBlock;
 import net.geforcemods.securitycraft.items.UniversalBlockReinforcerItem;
 import net.geforcemods.securitycraft.util.PlayerUtils;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
@@ -137,7 +138,7 @@ public class BlockReinforcerMenu extends AbstractContainerMenu {
 		public void onTake(Player player, ItemStack itemsTaken) {
 			super.onTake(player, itemsTaken);
 			inputSlot.getItem().shrink(itemsTaken.getCount());
-			blockReinforcer.hurtAndBreak(itemsTaken.getCount(), player, player.getUsedItemHand());
+			blockReinforcer.hurtAndBreak(itemsTaken.getCount(), player, LivingEntity.getSlotForHand(player.getUsedItemHand()));
 
 			if (blockReinforcer.isEmpty()) //Ran out of durability
 				player.closeContainer();

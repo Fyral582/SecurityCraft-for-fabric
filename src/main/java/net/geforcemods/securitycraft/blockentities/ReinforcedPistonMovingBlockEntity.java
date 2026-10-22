@@ -20,7 +20,6 @@ import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
-import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.level.BlockGetter;
@@ -38,10 +37,8 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.PistonType;
 import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.level.redstone.ExperimentalRedstoneUtils;
-import net.minecraft.world.level.storage.TagValueInput;
-import net.minecraft.world.level.storage.TagValueOutput;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
+import net.geforcemods.securitycraft.platform.nbt.ValueInput;
+import net.geforcemods.securitycraft.platform.nbt.ValueOutput;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -74,17 +71,13 @@ public class ReinforcedPistonMovingBlockEntity extends BlockEntity implements IO
 		this.isSourcePiston = shouldHeadBeRendered;
 
 		if (beToMove != null) {
-			try (ProblemReporter.ScopedCollector problemReporter = new ProblemReporter.ScopedCollector(beToMove.problemPath(), SecurityCraft.LOGGER)) {
-				HolderLookup.Provider registryAccess = level.registryAccess();
-				TagValueOutput valueOutput = TagValueOutput.createWithContext(problemReporter, registryAccess);
+			CompoundTag savedTag = beToMove.saveWithoutMetadata(level.registryAccess());
 
-				beToMove.saveWithoutMetadata(valueOutput);
-				movedBlockEntityTag = valueOutput.isEmpty() ? null : valueOutput.buildResult();
-				owner = Owner.fromCompound(movedBlockEntityTag);
+			movedBlockEntityTag = savedTag.isEmpty() ? null : savedTag;
+			owner = Owner.fromCompound(movedBlockEntityTag);
 
-				if (beToMove instanceof IPistonMoveListener listener)
-					listener.prePistonPushSideEffects(pos);
-			}
+			if (beToMove instanceof IPistonMoveListener listener)
+				listener.prePistonPushSideEffects(pos);
 		}
 	}
 
@@ -217,7 +210,6 @@ public class ReinforcedPistonMovingBlockEntity extends BlockEntity implements IO
 		NOCLIP.set(direction);
 		entity.move(MoverType.PISTON, new Vec3(progress * moveDirection.getStepX(), progress * moveDirection.getStepY(), progress * moveDirection.getStepZ()));
 		entity.applyEffectsFromBlocks(originalPos, entity.position());
-		entity.removeLatestMovementRecording();
 		NOCLIP.set(null);
 	}
 
@@ -309,9 +301,7 @@ public class ReinforcedPistonMovingBlockEntity extends BlockEntity implements IO
 					BlockEntity be = pushedState.hasBlockEntity() ? ((EntityBlock) pushedState.getBlock()).newBlockEntity(worldPosition, pushedState) : null;
 
 					if (be != null) {
-						try (ProblemReporter.ScopedCollector problemReporter = new ProblemReporter.ScopedCollector(be.problemPath(), SecurityCraft.LOGGER)) {
-							be.loadWithComponents(TagValueInput.create(problemReporter, level.registryAccess(), movedBlockEntityTag));
-						}
+						be.loadWithComponents(movedBlockEntityTag, level.registryAccess());
 
 						level.setBlockEntity(be);
 
@@ -369,9 +359,7 @@ public class ReinforcedPistonMovingBlockEntity extends BlockEntity implements IO
 							BlockEntity storedBe = pushedState.hasBlockEntity() ? ((EntityBlock) pushedState.getBlock()).newBlockEntity(be.worldPosition, pushedState) : null;
 
 							if (storedBe != null) {
-								try (ProblemReporter.ScopedCollector problemReporter = new ProblemReporter.ScopedCollector(storedBe.problemPath(), SecurityCraft.LOGGER)) {
-									storedBe.loadWithComponents(TagValueInput.create(problemReporter, level.registryAccess(), be.movedBlockEntityTag));
-								}
+								storedBe.loadWithComponents(be.movedBlockEntityTag, level.registryAccess());
 
 								level.setBlockEntity(storedBe);
 
@@ -405,10 +393,12 @@ public class ReinforcedPistonMovingBlockEntity extends BlockEntity implements IO
 	}
 
 	@Override
-	public void loadAdditional(ValueInput tag) {
-		super.loadAdditional(tag);
+	public void loadAdditional(CompoundTag compoundTag, HolderLookup.Provider lookupProvider) {
+		ValueInput tag = ValueInput.of(compoundTag, lookupProvider);
+
+		super.loadAdditional(tag.tag(), tag.lookup());
 		movedState = tag.read("blockState", BlockState.CODEC).orElse(DEFAULT_BLOCK_STATE);
-		direction = tag.read("facing", Direction.LEGACY_ID_CODEC).orElse(Direction.DOWN);
+		direction = Direction.from3DDataValue(tag.getIntOr("facing", 0));
 		progress = tag.getFloatOr("progress", 0.0F);
 		lastProgress = progress;
 		extending = tag.getBooleanOr("extending", false);
@@ -418,10 +408,12 @@ public class ReinforcedPistonMovingBlockEntity extends BlockEntity implements IO
 	}
 
 	@Override
-	public void saveAdditional(ValueOutput tag) {
-		super.saveAdditional(tag);
+	public void saveAdditional(CompoundTag compoundTag, HolderLookup.Provider lookupProvider) {
+		ValueOutput tag = ValueOutput.of(compoundTag, lookupProvider);
+
+		super.saveAdditional(tag.tag(), tag.lookup());
 		tag.store("blockState", BlockState.CODEC, movedState);
-		tag.store("facing", Direction.LEGACY_ID_CODEC, direction);
+		tag.putInt("facing", direction.get3DDataValue());
 		tag.putFloat("progress", lastProgress);
 		tag.putBoolean("extending", extending);
 		tag.putBoolean("source", isSourcePiston);

@@ -3,7 +3,6 @@ package net.geforcemods.securitycraft.platform.ext;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
-import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.world.item.ItemStack;
 
@@ -27,7 +26,4 @@ public interface SCItemStackExtension {
 		return self().update(type.get(), defaultValue, updater);
 	}
 
-	default void copyFrom(Supplier<? extends DataComponentType<?>> type, DataComponentGetter src) {
-		self().copyFrom(type.get(), src);
-	}
 }

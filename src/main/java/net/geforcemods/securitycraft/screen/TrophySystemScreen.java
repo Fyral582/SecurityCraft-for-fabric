@@ -11,10 +11,9 @@ import net.geforcemods.securitycraft.util.ClientUtils;
 import net.geforcemods.securitycraft.util.Utils;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.CommonColors;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Inventory;
 
@@ -72,10 +71,10 @@ public class TrophySystemScreen extends AbstractContainerScreen<TrophySystemMenu
 
 	@Override
 	protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
-		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, GUI_TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
+		guiGraphics.blit(RenderType::guiTextured, GUI_TEXTURE, leftPos, topPos, 0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
 
 		if (be.getLensContainer().getItem(0).isEmpty())
-			guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, LENS_SLOT, leftPos + 154, topPos + 6, 16, 16);
+			guiGraphics.blitSprite(RenderType::guiTextured, LENS_SLOT, leftPos + 154, topPos + 6, 16, 16);
 	}
 
 	@Override
@@ -88,7 +87,7 @@ public class TrophySystemScreen extends AbstractContainerScreen<TrophySystemMenu
 	@Override
 	public void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
 		super.renderLabels(guiGraphics, mouseX, mouseY);
-		guiGraphics.drawString(font, scrollListTitle, imageWidth / 2 - font.width(scrollListTitle) / 2, 31, CommonColors.DARK_GRAY, false);
+		guiGraphics.drawString(font, scrollListTitle, imageWidth / 2 - font.width(scrollListTitle) / 2, 31, 0xFF404040, false);
 	}
 
 	@Override

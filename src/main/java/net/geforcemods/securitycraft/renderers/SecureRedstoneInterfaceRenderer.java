@@ -27,8 +27,8 @@ public class SecureRedstoneInterfaceRenderer implements BlockEntityRenderer<Secu
 	}
 
 	@Override
-	public void render(SecureRedstoneInterfaceBlockEntity be, float partialTicks, PoseStack pose, MultiBufferSource buffer, int combinedLight, int combinedOverlay, Vec3 cameraPos) {
-		ClientHandler.DISGUISED_BLOCK_RENDER_DELEGATE.tryRenderDelegate(be, partialTicks, pose, buffer, combinedLight, combinedOverlay, cameraPos);
+	public void render(SecureRedstoneInterfaceBlockEntity be, float partialTicks, PoseStack pose, MultiBufferSource buffer, int combinedLight, int combinedOverlay) {
+		ClientHandler.DISGUISED_BLOCK_RENDER_DELEGATE.tryRenderDelegate(be, partialTicks, pose, buffer, combinedLight, combinedOverlay);
 
 		if (!ConfigHandler.CLIENT.morePerformantSRIRendering.get() && !be.isModuleEnabled(ModuleType.DISGUISE) && !be.getBlockState().getValue(SecureRedstoneInterfaceBlock.SENDER)) {
 			pose.translate(0.5D, 0.5D, 0.5D);

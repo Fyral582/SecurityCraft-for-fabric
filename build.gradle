@@ -71,14 +71,13 @@ dependencies {
 	include "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${project.fcap_version}"
 
 	// optional integrations, only used when the respective mod is installed
-	modCompileOnly "mezz.jei:jei-1.21.8-fabric:24.2.0.6"
-	modCompileOnly "maven.modrinth:jade:o3aatc5Q"
-	modCompileOnly "maven.modrinth:wthit:JgMWZWVx"
-	modCompileOnly "maven.modrinth:badpackets:Luy2S9Fr"
-	modCompileOnly "maven.modrinth:distanthorizons:ybg8dWNM"
-	modCompileOnly "maven.modrinth:sodium:7pwil2dy"
-	modCompileOnly "maven.modrinth:betterf3:DHCqyQtH"
-	modCompileOnly "maven.modrinth:cloth-config:cz0b1j8R"
+	modCompileOnly "maven.modrinth:jade:sSHUBFoq"
+	modCompileOnly "maven.modrinth:wthit:rI9SWsRN"
+	modCompileOnly "maven.modrinth:badpackets:hjhT2sMz"
+	modCompileOnly "maven.modrinth:distanthorizons:SSfzA0Av"
+	modCompileOnly "maven.modrinth:sodium:c3YkZvne"
+	modCompileOnly "maven.modrinth:betterf3:729ec3Jf"
+	modCompileOnly "maven.modrinth:cloth-config:TJ6o2sr4"
 }
 
 sourceSets.main.resources {
@@ -110,7 +109,7 @@ tasks.named('jar', Jar).configure {
 }
 
 remapJar {
-	archiveFileName = "[1.21.6-1.21.8] SecurityCraft v${version} (Fabric).jar"
+	archiveFileName = "[1.21.4] SecurityCraft v${version} (Fabric).jar"
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -123,4 +122,6 @@ sourceSets.main.java {
 	// Data generation is NeoForge specific, the generated resources are shipped in src/generated/resources
 	exclude 'net/geforcemods/securitycraft/datagen/**'
 	exclude 'net/geforcemods/securitycraft/mixin/datagen/**'
+	// JEI has no Fabric release for 1.21.4
+	exclude 'net/geforcemods/securitycraft/compat/jei/**'
 }

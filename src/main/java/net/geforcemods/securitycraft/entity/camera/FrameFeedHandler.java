@@ -92,6 +92,7 @@ public class FrameFeedHandler {
 		RenderTarget oldMainRenderTarget = mc.getMainRenderTarget();
 
 		mc.gameRenderer.setRenderBlockOutline(false);
+		mc.gameRenderer.setRenderHand(false);
 		mc.gameRenderer.setPanoramicMode(true);
 		window.setWidth(100);
 		window.setHeight(100); //Different width/height values seem to have no effect, although the ratio needs to be 1:1
@@ -111,6 +112,7 @@ public class FrameFeedHandler {
 					if (!feed.hasFrameInFrustum(playerFrustum))
 						continue;
 
+					RenderTarget frameTarget = feed.renderTarget();
 					Vec3 cameraEntityPos = new Vec3(pos.getX() + 0.5D, pos.getY() - player.getDimensions(Pose.STANDING).eyeHeight() + 0.5D, pos.getZ() + 0.5D);
 					float cameraXRot = be.getDefaultXRotation();
 					float cameraYRot = be.getDefaultYRotation(be.getBlockState().getValue(SecurityCameraBlock.FACING)) + (float) Mth.lerp(partialTick.getGameTimeDeltaPartialTick(false), be.getOriginalCameraRotation(), be.getCameraRotation()) * Mth.RAD_TO_DEG;
@@ -123,9 +125,11 @@ public class FrameFeedHandler {
 					feed.applyVisibleSections(mc.levelRenderer.visibleSections);
 					profiler.push("securitycraft:discover_frame_sections");
 					feed.discoverVisibleSections(cameraPos, newFrameFeedViewDistance);
-					mc.levelRenderer.endFrame(); //This fixes frame feed clouds being rendered at the position of a previous feed sometimes, due to the cloud rendering buffer not resetting itself properly
-					mc.gameRenderer.fogRenderer.endFrame(); //Same fix but for fog color
-					mc.mainRenderTarget = feed.renderTarget();
+					profiler.popPush("securitycraft:bind_frame_target");
+					frameTarget.clear();
+					frameTarget.bindWrite(true);
+					mc.mainRenderTarget = frameTarget;
+					profiler.pop();
 
 					try {
 						mc.gameRenderer.renderLevel(DeltaTracker.ONE);
@@ -168,8 +172,10 @@ public class FrameFeedHandler {
 		mc.levelRenderer.visibleSections.addAll(oldVisibleSections);
 		window.setWidth(oldWidth);
 		window.setHeight(oldHeight);
+		mc.gameRenderer.setRenderHand(true);
 		mc.gameRenderer.setPanoramicMode(false);
 		mc.mainRenderTarget = oldMainRenderTarget;
+		mc.getMainRenderTarget().bindWrite(true);
 		currentlyCapturedCamera = null;
 	}
 
@@ -263,10 +269,6 @@ public class FrameFeedHandler {
 
 	public static void removeAllFeeds() {
 		FRAME_CAMERA_FEEDS.clear();
-	}
-
-	public static CameraFeed getCurrentlyCapturedFeed() {
-		return getFeed(currentlyCapturedCamera);
 	}
 
 	public static int getFrameFeedViewDistance(FrameBlockEntity be) {

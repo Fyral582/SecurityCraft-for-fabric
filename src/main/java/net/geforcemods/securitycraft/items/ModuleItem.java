@@ -28,7 +28,6 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -110,18 +109,18 @@ public class ModuleItem extends Item {
 	}
 
 	@Override
-	public void appendHoverText(ItemStack stack, TooltipContext ctx, TooltipDisplay display, Consumer<Component> tooltipAdder, TooltipFlag flag) {
+	public void appendHoverText(ItemStack stack, TooltipContext ctx, List<Component> tooltip, TooltipFlag flag) {
 		if (containsCustomData || canBeCustomized())
-			tooltipAdder.accept(MODIFIABLE);
+			tooltip.add(MODIFIABLE);
 		else
-			tooltipAdder.accept(NOT_MODIFIABLE);
+			tooltip.add(NOT_MODIFIABLE);
 
 		if (containsCustomData) {
 			DataComponentType<ListModuleData> type = SCContent.LIST_MODULE_DATA.get();
 			ListModuleData listModuleData = stack.get(type);
 
-			if (listModuleData != null && display.shows(type))
-				listModuleData.addToTooltip(ctx, tooltipAdder, flag, stack.getComponents());
+			if (listModuleData != null)
+				listModuleData.addToTooltip(ctx, tooltip::add, flag);
 		}
 	}
 

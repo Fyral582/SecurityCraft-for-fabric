@@ -9,7 +9,11 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 /**
  * Hands the {@link ModelData} of block entities to models via Fabric's render data
  */
-@Mixin(BlockEntity.class)
+/**
+ * The priority makes sure this wins against Fabric API's deprecated rendering-data-attachment module, which also implements
+ * getRenderData in 1.21.4 and would otherwise make SecurityCraft's model data (e.g. disguises) disappear
+ */
+@Mixin(value = BlockEntity.class, priority = 1500)
 public abstract class BlockEntityRenderDataMixin implements RenderDataBlockEntity {
 	@Override
 	public Object getRenderData() {
