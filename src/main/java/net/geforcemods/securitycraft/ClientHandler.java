@@ -1,22 +1,25 @@
 package net.geforcemods.securitycraft;
 
+import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+import net.minecraft.world.item.component.DyedItemColor;
+import net.geforcemods.securitycraft.renderers.SecurityCameraItemRenderer;
+import net.geforcemods.securitycraft.renderers.KeypadChestItemRenderer;
+import net.geforcemods.securitycraft.renderers.DisplayCaseItemRenderer;
+import net.geforcemods.securitycraft.inventory.KeycardHolderMenu;
+import net.geforcemods.securitycraft.items.properties.HitCheck;
+import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
+import net.minecraft.client.renderer.item.ItemProperties;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
 import net.geforcemods.securitycraft.platform.menu.MenuDataPayload;
-import net.minecraft.client.color.item.ItemTintSources;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.client.renderer.entity.EntityRenderers;
-import net.minecraft.client.renderer.item.properties.numeric.RangeSelectItemModelProperties;
-import net.minecraft.client.renderer.item.properties.select.SelectItemModelProperties;
-import net.minecraft.client.renderer.special.SpecialModelRenderers;
 
 import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
-import net.fabricmc.fabric.api.client.rendering.v1.HudLayerRegistrationCallback;
-import net.fabricmc.fabric.api.client.rendering.v1.IdentifiedLayer;
 import net.minecraft.client.renderer.ShaderDefines;
 import net.minecraft.client.renderer.ShaderProgram;
 import net.minecraft.client.renderer.block.BlockModelShaper;
@@ -55,8 +58,6 @@ import net.geforcemods.securitycraft.components.SavedBlockState;
 import net.geforcemods.securitycraft.entity.camera.SecurityCamera;
 import net.geforcemods.securitycraft.items.properties.BlockLinked;
 import net.geforcemods.securitycraft.items.properties.CodebreakerState;
-import net.geforcemods.securitycraft.items.properties.KeycardCount;
-import net.geforcemods.securitycraft.items.properties.ReinforcedTint;
 import net.geforcemods.securitycraft.items.properties.SentryLinked;
 import net.geforcemods.securitycraft.misc.LayerToggleHandler;
 import net.geforcemods.securitycraft.misc.TintMode;
@@ -86,7 +87,6 @@ import net.geforcemods.securitycraft.renderers.BulletRenderer;
 import net.geforcemods.securitycraft.renderers.ClaymoreRenderer;
 import net.geforcemods.securitycraft.renderers.DisguisableBlockEntityRenderer;
 import net.geforcemods.securitycraft.renderers.DisplayCaseRenderer;
-import net.geforcemods.securitycraft.renderers.DisplayCaseSpecialRenderer;
 import net.geforcemods.securitycraft.renderers.FrameBlockEntityRenderer;
 import net.geforcemods.securitycraft.renderers.IMSBombRenderer;
 import net.geforcemods.securitycraft.renderers.KeypadChestRenderer;
@@ -98,7 +98,6 @@ import net.geforcemods.securitycraft.renderers.SecretSignRenderer;
 import net.geforcemods.securitycraft.renderers.SecureRedstoneInterfaceRenderer;
 import net.geforcemods.securitycraft.renderers.SecureTradingStationRenderer;
 import net.geforcemods.securitycraft.renderers.SecurityCameraRenderer;
-import net.geforcemods.securitycraft.renderers.SecurityCameraSpecialRenderer;
 import net.geforcemods.securitycraft.renderers.SecuritySeaBoatRenderer;
 import net.geforcemods.securitycraft.renderers.SecuritySeaRaftRenderer;
 import net.geforcemods.securitycraft.renderers.SentryRenderer;
@@ -189,6 +188,10 @@ public class ClientHandler {
 	public static final BlockEntityRenderDelegate DISGUISED_BLOCK_RENDER_DELEGATE = new BlockEntityRenderDelegate();
 	public static final BlockEntityRenderDelegate PROJECTOR_RENDER_DELEGATE = new BlockEntityRenderDelegate();
 	public static final ResourceLocation CAMERA_LAYER = SecurityCraft.resLoc("camera_overlay");
+	public static final ResourceLocation LINKING_STATE_PROPERTY = SecurityCraft.resLoc("linking_state");
+	public static final ResourceLocation CODEBREAKER_STATE_PROPERTY = SecurityCraft.resLoc("codebreaker_state");
+	public static final ResourceLocation KEYCARD_COUNT_PROPERTY = SecurityCraft.resLoc("keycard_count");
+	public static final ResourceLocation LENS_COLOR_PROPERTY = SecurityCraft.resLoc("colored");
 	private static Map<Block, Integer> blocksWithReinforcedTint = new HashMap<>();
 	private static Map<Block, Integer> blocksWithCustomTint = new HashMap<>();
 	//@formatter:off
@@ -252,10 +255,8 @@ public class ClientHandler {
 
 	public static void init() {
 		ModelLoadingPlugin.register(ClientHandler::onInitializeModelLoading);
-		onRegisterRangeSelectItemModelProperty();
-		onRegisterSelectItemModelProperty();
-		onRegisterSpecialModelRenderer();
-		onRegisterItemTintSources();
+		registerItemProperties();
+		registerItemRenderers();
 		onFMLClientSetup();
 		registerMenuScreens();
 		LayerToggleHandler.init();
@@ -265,6 +266,7 @@ public class ClientHandler {
 		registerParticleProviders();
 		onRegisterClientPayloadsHandlers();
 		onRegisterBlockColorHandlers();
+		onRegisterItemColorHandlers();
 	}
 
 	private static void onInitializeModelLoading(ModelLoadingPlugin.Context context) {
@@ -281,8 +283,8 @@ public class ClientHandler {
 		}
 
 		context.addModels(SRI_SENDER_ON_MODEL_LOCATION, SRI_RECEIVER_ON_MODEL_LOCATION);
-		context.modifyBlockModelAfterBake().register((model, ctx) -> {
-			BlockState state = modelLocationToState.get(ctx.id());
+		context.modifyModelAfterBake().register((model, ctx) -> {
+			BlockState state = ctx.topLevelId() == null ? null : modelLocationToState.get(ctx.topLevelId());
 
 			if (state == null)
 				return model;
@@ -305,23 +307,26 @@ public class ClientHandler {
 		});
 	}
 
-	private static void onRegisterRangeSelectItemModelProperty() {
-		RangeSelectItemModelProperties.ID_MAPPER.put(SecurityCraft.resLoc("keycard_count"), KeycardCount.MAP_CODEC);
+	private static void registerItemProperties() {
+		BlockLinked cameraProperty = new BlockLinked(SCContent.BOUND_CAMERAS.get(), HitCheck.SECURITY_CAMERA);
+		BlockLinked mineProperty = new BlockLinked(SCContent.BOUND_MINES.get(), HitCheck.EXPLOSIVE_BLOCK);
+		BlockLinked sssProperty = new BlockLinked(SCContent.SSS_LINKED_BLOCKS.get(), HitCheck.LOCKABLE);
+		CodebreakerState codebreakerProperty = new CodebreakerState(HitCheck.CODEBREAKABLE);
+
+		ItemProperties.register(SCContent.KEYCARD_HOLDER.get(), KEYCARD_COUNT_PROPERTY, (stack, level, entity, id) -> stack.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY).nonEmptyStream().count() / (float) KeycardHolderMenu.CONTAINER_SIZE);
+		ItemProperties.register(SCContent.LENS.get(), LENS_COLOR_PROPERTY, (stack, level, entity, id) -> stack.has(DataComponents.DYED_COLOR) ? 1.0F : 0.0F);
+		ItemProperties.register(SCContent.CAMERA_MONITOR.get(), LINKING_STATE_PROPERTY, cameraProperty::get);
+		ItemProperties.register(SCContent.MINE_REMOTE_ACCESS_TOOL.get(), LINKING_STATE_PROPERTY, mineProperty::get);
+		ItemProperties.register(SCContent.SENTRY_REMOTE_ACCESS_TOOL.get(), LINKING_STATE_PROPERTY, SentryLinked::get);
+		ItemProperties.register(SCContent.SONIC_SECURITY_SYSTEM_ITEM.get(), LINKING_STATE_PROPERTY, sssProperty::get);
+		ItemProperties.register(SCContent.CODEBREAKER.get(), CODEBREAKER_STATE_PROPERTY, codebreakerProperty::get);
 	}
 
-	private static void onRegisterSelectItemModelProperty() {
-		SelectItemModelProperties.ID_MAPPER.put(SecurityCraft.resLoc("block_linked"), BlockLinked.TYPE);
-		SelectItemModelProperties.ID_MAPPER.put(SecurityCraft.resLoc("codebreaker_state"), CodebreakerState.TYPE);
-		SelectItemModelProperties.ID_MAPPER.put(SecurityCraft.resLoc("sentry_linked"), SentryLinked.TYPE);
-	}
-
-	private static void onRegisterSpecialModelRenderer() {
-		SpecialModelRenderers.ID_MAPPER.put(SecurityCraft.resLoc("display_case"), DisplayCaseSpecialRenderer.Unbaked.MAP_CODEC);
-		SpecialModelRenderers.ID_MAPPER.put(SecurityCraft.resLoc("security_camera"), SecurityCameraSpecialRenderer.Unbaked.MAP_CODEC);
-	}
-
-	private static void onRegisterItemTintSources() {
-		ItemTintSources.ID_MAPPER.put(SecurityCraft.resLoc("reinforced"), ReinforcedTint.MAP_CODEC);
+	private static void registerItemRenderers() {
+		BuiltinItemRendererRegistry.INSTANCE.register(SCContent.DISPLAY_CASE_ITEM.get(), new DisplayCaseItemRenderer(false));
+		BuiltinItemRendererRegistry.INSTANCE.register(SCContent.GLOW_DISPLAY_CASE_ITEM.get(), new DisplayCaseItemRenderer(true));
+		BuiltinItemRendererRegistry.INSTANCE.register(SCContent.KEYPAD_CHEST_ITEM.get(), new KeypadChestItemRenderer());
+		BuiltinItemRendererRegistry.INSTANCE.register(SCContent.SECURITY_CAMERA.get(), new SecurityCameraItemRenderer());
 	}
 
 	private static void onFMLClientSetup() {
@@ -394,7 +399,7 @@ public class ClientHandler {
 	}
 
 	private static void registerGuiLayers() {
-		HudLayerRegistrationCallback.EVENT.register(drawer -> drawer.addLayer(IdentifiedLayer.of(CAMERA_LAYER, LayerToggleHandler.wrap(CAMERA_LAYER, SCClientEventHandler::cameraOverlay))));
+		HudRenderCallback.EVENT.register((guiGraphics, deltaTracker) -> LayerToggleHandler.wrap(CAMERA_LAYER, SCClientEventHandler::cameraOverlay).render(guiGraphics, deltaTracker));
 		LayerToggleHandler.disable(CAMERA_LAYER);
 	}
 
@@ -580,6 +585,29 @@ public class ClientHandler {
 
 			return iterateFields(level, pos, direction, ConfigHandler.SERVER.inventoryScannerRange.get(), SCContent.INVENTORY_SCANNER.get(), InventoryScannerBlockEntity.class::isInstance, be -> ((InventoryScannerBlockEntity) be).getLensContainer().getItem(0));
 		}, SCContent.INVENTORY_SCANNER_FIELD.get());
+	}
+
+	private static void onRegisterItemColorHandlers() {
+		blocksWithReinforcedTint.forEach((block, tint) -> ColorProviderRegistry.ITEM.register((stack, tintIndex) -> {
+			if (tintIndex == 0)
+				return mixWithReinforcedTintIfEnabled(tint, null);
+			else
+				return 0xFFFFFFFF;
+		}, block));
+		blocksWithCustomTint.forEach((block, tint) -> ColorProviderRegistry.ITEM.register((stack, tintIndex) -> {
+			if (tintIndex == 0)
+				return tint;
+			else
+				return 0xFFFFFFFF;
+		}, block));
+		ColorProviderRegistry.ITEM.register((stack, tintIndex) -> tintIndex > 0 ? -1 : DyedItemColor.getOrDefault(stack, 0xFF333333), SCContent.BRIEFCASE.get());
+		ColorProviderRegistry.ITEM.register((stack, tintIndex) -> tintIndex > 0 ? -1 : DyedItemColor.getOrDefault(stack, 0xFFFFFFFF), SCContent.LENS.get());
+		ColorProviderRegistry.ITEM.register((stack, tintIndex) -> {
+			if (tintIndex == 1)
+				return mixWithReinforcedTintIfEnabled(GrassColor.get(0.5D, 1.0D), null);
+
+			return mixWithReinforcedTintIfEnabled(0xFFFFFFFF, null);
+		}, SCContent.REINFORCED_GRASS_BLOCK.get());
 	}
 
 	public static int iterateFields(BlockAndTintGetter level, BlockPos pos, Direction direction, int range, Block block, Predicate<BlockEntity> beTest, Function<BlockEntity, ItemStack> lensGetter) {

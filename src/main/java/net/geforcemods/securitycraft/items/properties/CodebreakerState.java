@@ -1,35 +1,21 @@
 package net.geforcemods.securitycraft.items.properties;
 
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
-
 import net.geforcemods.securitycraft.SCContent;
 import net.geforcemods.securitycraft.api.IDisguisable;
 import net.geforcemods.securitycraft.api.IOwnable;
 import net.geforcemods.securitycraft.components.CodebreakerData;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.item.properties.select.SelectItemModelProperty;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.BlockHitResult;
 
-public record CodebreakerState(HitCheck hitCheck) implements SelectItemModelProperty<String> {
-	public static final String DEFAULT = "default", DECODING = "decoding", SUCCESS = "success", FAILURE = "failure";
-	//@formatter:off
-	public static final SelectItemModelProperty.Type<CodebreakerState, String> TYPE = SelectItemModelProperty.Type.create(
-			RecordCodecBuilder.mapCodec(
-					instance -> instance.group(
-							HitCheck.CODEC.fieldOf("hit_check").forGetter(CodebreakerState::hitCheck))
-					.apply(instance, CodebreakerState::new)),
-			Codec.STRING);
-	//@formatter:on
+public record CodebreakerState(HitCheck hitCheck) {
+	public static final float DEFAULT = 0.0F, DECODING = 0.25F, FAILURE = 0.5F, SUCCESS = 0.75F;
 
-	@Override
-	public String get(ItemStack stack, ClientLevel level, LivingEntity entity, int seed, ItemDisplayContext ctx) {
+	public float get(ItemStack stack, ClientLevel level, LivingEntity entity, int seed) {
 		CodebreakerData codebreakerData = stack.getOrDefault(SCContent.CODEBREAKER_DATA, CodebreakerData.DEFAULT);
 		boolean isPlayer = entity instanceof Player;
 
@@ -56,10 +42,5 @@ public record CodebreakerState(HitCheck hitCheck) implements SelectItemModelProp
 		}
 
 		return DEFAULT;
-	}
-
-	@Override
-	public Type<? extends SelectItemModelProperty<String>, String> type() {
-		return TYPE;
 	}
 }

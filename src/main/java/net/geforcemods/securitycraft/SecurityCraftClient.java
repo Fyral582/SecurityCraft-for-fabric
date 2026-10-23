@@ -8,7 +8,6 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.geforcemods.securitycraft.entity.camera.CameraController;
 import net.geforcemods.securitycraft.entity.camera.FrameFeedHandler;
-import net.geforcemods.securitycraft.items.properties.HitCheck;
 import net.geforcemods.securitycraft.misc.KeyBindings;
 import net.geforcemods.securitycraft.misc.Tips;
 import net.geforcemods.securitycraft.platform.PlatformClientHooks;
@@ -20,7 +19,6 @@ public class SecurityCraftClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		NeoForgeConfigRegistry.INSTANCE.register(SecurityCraft.MODID, ModConfig.Type.CLIENT, ConfigHandler.CLIENT_SPEC);
 		ConfigScreenFactoryRegistry.INSTANCE.register(SecurityCraft.MODID, ConfigurationScreen::new);
-		HitCheck.bootstrap();
 		PlatformClientHooks.init();
 		KeyBindings.registerKeyMappings();
 		ClientHandler.init();

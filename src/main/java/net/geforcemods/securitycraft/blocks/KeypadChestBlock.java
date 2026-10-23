@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.blocks;
 
+import net.minecraft.world.level.block.RenderShape;
 import net.geforcemods.securitycraft.SCEventHandler;
 import java.util.Optional;
 
@@ -110,6 +111,11 @@ public class KeypadChestBlock extends ChestBlock implements IOverlayDisplay, IDi
 	public KeypadChestBlock(BlockBehaviour.Properties properties) {
 		super(SCContent.KEYPAD_CHEST_BLOCK_ENTITY, OwnableBlock.withReinforcedDestroyTime(properties));
 		destroyTimeForOwner = OwnableBlock.getStoredDestroyTime();
+	}
+
+	@Override
+	public RenderShape getRenderShape(BlockState state) {
+		return RenderShape.MODEL;
 	}
 
 	@Override

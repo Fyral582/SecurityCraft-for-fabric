@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.blocks;
 
+import net.minecraft.world.level.block.RenderShape;
 import net.geforcemods.securitycraft.SCEventHandler;
 import com.mojang.serialization.MapCodec;
 
@@ -24,6 +25,11 @@ public class OwnableBlock extends BaseEntityBlock {
 	public OwnableBlock(BlockBehaviour.Properties properties) {
 		super(withReinforcedDestroyTime(properties));
 		destroyTimeForOwner = getStoredDestroyTime();
+	}
+
+	@Override
+	public RenderShape getRenderShape(BlockState state) {
+		return RenderShape.MODEL;
 	}
 
 	@Override

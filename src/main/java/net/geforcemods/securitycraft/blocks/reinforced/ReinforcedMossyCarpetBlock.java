@@ -141,7 +141,12 @@ public class ReinforcedMossyCarpetBlock extends BaseReinforcedBlock implements B
 	}
 
 	private static boolean canSupportAtFace(BlockGetter level, BlockPos pos, Direction direction) {
-		return direction != Direction.UP && MultifaceBlock.canAttachTo(level, pos, direction);
+		if (direction == Direction.UP)
+			return false;
+
+		BlockPos relativePos = pos.relative(direction);
+
+		return MultifaceBlock.canAttachTo(level, direction, relativePos, level.getBlockState(relativePos));
 	}
 
 	private static BlockState getUpdatedState(BlockState state, BlockGetter level, BlockPos pos, boolean tip) {

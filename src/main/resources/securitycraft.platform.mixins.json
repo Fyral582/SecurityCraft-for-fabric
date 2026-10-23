@@ -30,7 +30,6 @@
 		"NoteBlockMixin",
 		"PotionBrewingMixin",
 		"RedStoneWireBlockMixin",
-		"ServerGamePacketListenerImplMixin",
 		"ServerPlayerGameModeMixin",
 		"ServerPlayerMenuDataMixin",
 		"SugarCaneBlockMixin",
@@ -60,7 +59,8 @@
 		"client.ScreenLayersGameRendererMixin",
 		"client.AbstractWidgetMixin",
 		"client.AbstractButtonMixin",
-		"client.GuiMixin"
+		"client.GuiMixin",
+		"client.MinecraftPickBlockMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

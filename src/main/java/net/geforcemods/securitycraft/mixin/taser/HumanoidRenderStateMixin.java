@@ -3,6 +3,8 @@ package net.geforcemods.securitycraft.mixin.taser;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
+import net.minecraft.world.InteractionHand;
+
 import net.geforcemods.securitycraft.platform.TaserRenderData;
 import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
 
@@ -22,5 +24,21 @@ public class HumanoidRenderStateMixin implements TaserRenderData {
 	@Override
 	public void securitycraft$setHoldsTaser(boolean holdsTaser) {
 		securitycraft$holdsTaser = holdsTaser;
+	}
+
+	@Unique
+	private boolean securitycraft$holdsTaserInMainHand, securitycraft$holdsTaserInOffhand;
+
+	@Override
+	public boolean securitycraft$holdsTaserIn(InteractionHand hand) {
+		return hand == InteractionHand.MAIN_HAND ? securitycraft$holdsTaserInMainHand : securitycraft$holdsTaserInOffhand;
+	}
+
+	@Override
+	public void securitycraft$setHoldsTaserIn(InteractionHand hand, boolean holdsTaser) {
+		if (hand == InteractionHand.MAIN_HAND)
+			securitycraft$holdsTaserInMainHand = holdsTaser;
+		else
+			securitycraft$holdsTaserInOffhand = holdsTaser;
 	}
 }

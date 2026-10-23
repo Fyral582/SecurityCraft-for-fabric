@@ -43,7 +43,7 @@ public interface SCBlockExtension {
 	}
 
 	default ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state, boolean includeData, Player player) {
-		return state.getCloneItemStack(level, pos, includeData);
+		return self().getCloneItemStack(level, pos, state);
 	}
 
 	default boolean hasDynamicLightEmission(BlockState state) {

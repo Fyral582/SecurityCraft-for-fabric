@@ -65,10 +65,10 @@ extendable method net/minecraft/world/level/block/entity/BrushableBlockEntity ge
 accessible method net/minecraft/world/level/block/entity/BrushableBlockEntity unpackLootTable (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/ItemStack;)V
 extendable method net/minecraft/world/level/block/entity/BrushableBlockEntity unpackLootTable (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/ItemStack;)V
 accessible class net/minecraft/client/renderer/ItemInHandRenderer$HandRenderSelection
-accessible method net/minecraft/client/renderer/blockentity/AbstractSignRenderer renderSignWithText (Lnet/minecraft/world/level/block/entity/SignBlockEntity;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;IILnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/SignBlock;Lnet/minecraft/world/level/block/state/properties/WoodType;Lnet/minecraft/client/model/Model;)V
-extendable method net/minecraft/client/renderer/blockentity/AbstractSignRenderer renderSignWithText (Lnet/minecraft/world/level/block/entity/SignBlockEntity;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;IILnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/SignBlock;Lnet/minecraft/world/level/block/state/properties/WoodType;Lnet/minecraft/client/model/Model;)V
-accessible method net/minecraft/client/renderer/blockentity/AbstractSignRenderer renderSignText (Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/entity/SignText;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;IIIZ)V
-extendable method net/minecraft/client/renderer/blockentity/AbstractSignRenderer renderSignText (Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/entity/SignText;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;IIIZ)V
+accessible method net/minecraft/client/renderer/blockentity/SignRenderer renderSignWithText (Lnet/minecraft/world/level/block/entity/SignBlockEntity;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;IILnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/SignBlock;Lnet/minecraft/world/level/block/state/properties/WoodType;Lnet/minecraft/client/model/Model;)V
+extendable method net/minecraft/client/renderer/blockentity/SignRenderer renderSignWithText (Lnet/minecraft/world/level/block/entity/SignBlockEntity;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;IILnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/SignBlock;Lnet/minecraft/world/level/block/state/properties/WoodType;Lnet/minecraft/client/model/Model;)V
+accessible method net/minecraft/client/renderer/blockentity/SignRenderer renderSignText (Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/entity/SignText;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;IIIZ)V
+extendable method net/minecraft/client/renderer/blockentity/SignRenderer renderSignText (Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/entity/SignText;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;IIIZ)V
 accessible field net/minecraft/world/SimpleContainer items Lnet/minecraft/core/NonNullList;
 accessible method net/minecraft/world/level/block/LayeredCauldronBlock handleEntityOnFireInside (Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)V
 extendable method net/minecraft/world/level/block/LayeredCauldronBlock handleEntityOnFireInside (Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)V
@@ -108,9 +108,9 @@ accessible field net/minecraft/client/renderer/LevelRenderer renderBuffers Lnet/
 accessible method net/minecraft/client/renderer/chunk/SectionRenderDispatcher$RenderSection reset ()V
 extendable method net/minecraft/client/renderer/chunk/SectionRenderDispatcher$RenderSection reset ()V
 accessible field net/minecraft/client/Options serverRenderDistance I
-accessible field net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity litTimeRemaining I
-accessible field net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity litTotalTime I
-accessible field net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity cookingTimer I
+accessible field net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity litTime I
+accessible field net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity litDuration I
+accessible field net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity cookingProgress I
 accessible field net/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity cookingTotalTime I
 accessible field net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase destroySpeed F
 mutable field net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase destroySpeed F
@@ -140,3 +140,9 @@ accessible field net/minecraft/world/entity/animal/horse/AbstractHorse inventory
 accessible method net/minecraft/world/level/GameRules register (Ljava/lang/String;Lnet/minecraft/world/level/GameRules$Category;Lnet/minecraft/world/level/GameRules$Type;)Lnet/minecraft/world/level/GameRules$Key;
 accessible method net/minecraft/world/level/GameRules$BooleanValue create (Z)Lnet/minecraft/world/level/GameRules$Type;
 accessible field net/minecraft/client/renderer/LevelRenderer cullingFrustum Lnet/minecraft/client/renderer/culling/Frustum;
+accessible method net/minecraft/client/renderer/blockentity/SignRenderer translateSign (Lcom/mojang/blaze3d/vertex/PoseStack;FLnet/minecraft/world/level/block/state/BlockState;)V
+extendable method net/minecraft/client/renderer/blockentity/SignRenderer translateSign (Lcom/mojang/blaze3d/vertex/PoseStack;FLnet/minecraft/world/level/block/state/BlockState;)V
+accessible method net/minecraft/client/renderer/blockentity/HangingSignRenderer translateSign (Lcom/mojang/blaze3d/vertex/PoseStack;FLnet/minecraft/world/level/block/state/BlockState;)V
+extendable method net/minecraft/client/renderer/blockentity/HangingSignRenderer translateSign (Lcom/mojang/blaze3d/vertex/PoseStack;FLnet/minecraft/world/level/block/state/BlockState;)V
+accessible method net/minecraft/client/renderer/blockentity/SignRenderer renderSign (Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;IILnet/minecraft/world/level/block/state/properties/WoodType;Lnet/minecraft/client/model/Model;)V
+extendable method net/minecraft/client/renderer/blockentity/SignRenderer renderSign (Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;IILnet/minecraft/world/level/block/state/properties/WoodType;Lnet/minecraft/client/model/Model;)V

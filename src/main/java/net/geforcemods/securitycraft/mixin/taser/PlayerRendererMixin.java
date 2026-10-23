@@ -22,9 +22,9 @@ import net.minecraft.world.item.ItemStack;
  */
 @Mixin(PlayerRenderer.class)
 public class PlayerRendererMixin {
-	@Inject(method = "getArmPose(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/client/model/HumanoidModel$ArmPose;", at = @At("HEAD"), cancellable = true)
-	private static void securitycraft$getTaserArmPose(Player player, ItemStack stack, InteractionHand hand, CallbackInfoReturnable<HumanoidModel.ArmPose> cir) {
-		if (stack.getItem() instanceof TaserItem)
+	@Inject(method = "getArmPose(Lnet/minecraft/client/renderer/entity/state/PlayerRenderState;Lnet/minecraft/client/renderer/entity/state/PlayerRenderState$HandState;Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/client/model/HumanoidModel$ArmPose;", at = @At("HEAD"), cancellable = true)
+	private static void securitycraft$getTaserArmPose(PlayerRenderState renderState, PlayerRenderState.HandState handState, InteractionHand hand, CallbackInfoReturnable<HumanoidModel.ArmPose> cir) {
+		if (!handState.isEmpty && ((TaserRenderData) renderState).securitycraft$holdsTaserIn(hand))
 			cir.setReturnValue(HumanoidModel.ArmPose.CROSSBOW_HOLD);
 	}
 
@@ -33,5 +33,7 @@ public class PlayerRendererMixin {
 		boolean holdsTaser = player.getMainHandItem().getItem() instanceof TaserItem || player.getOffhandItem().getItem() instanceof TaserItem;
 
 		((TaserRenderData) state).securitycraft$setHoldsTaser(holdsTaser);
+		((TaserRenderData) state).securitycraft$setHoldsTaserIn(InteractionHand.MAIN_HAND, player.getMainHandItem().getItem() instanceof TaserItem);
+		((TaserRenderData) state).securitycraft$setHoldsTaserIn(InteractionHand.OFF_HAND, player.getOffhandItem().getItem() instanceof TaserItem);
 	}
 }

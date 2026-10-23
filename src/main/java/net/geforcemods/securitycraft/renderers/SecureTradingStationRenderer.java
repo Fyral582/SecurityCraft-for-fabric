@@ -1,5 +1,7 @@
 package net.geforcemods.securitycraft.renderers;
 
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.renderer.entity.ItemRenderer;
 import org.joml.Quaternionf;
 
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -11,9 +13,6 @@ import net.geforcemods.securitycraft.misc.ModuleType;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.client.renderer.entity.state.ItemClusterRenderState;
-import net.minecraft.client.renderer.item.ItemModelResolver;
-import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemDisplayContext;
@@ -28,11 +27,10 @@ public class SecureTradingStationRenderer implements BlockEntityRenderer<SecureT
 			new Quaternionf(), //north
 			new Quaternionf().rotateY((float) -Math.PI / 2.0F) //east
 	};
-	private final ItemModelResolver itemModelResolver;
-	private final ItemStackRenderState itemStackRenderState = new ItemStackRenderState();
+	private final ItemRenderer itemRenderer;
 
 	public SecureTradingStationRenderer(BlockEntityRendererProvider.Context ctx) {
-		itemModelResolver = ctx.getItemModelResolver();
+		itemRenderer = ctx.getItemRenderer();
 	}
 
 	@Override
@@ -54,16 +52,15 @@ public class SecureTradingStationRenderer implements BlockEntityRenderer<SecureT
 	}
 
 	private void renderItem(Level level, PoseStack pose, ItemStack stack, Direction facing, float sideOffset, MultiBufferSource buffer, int packedLight) {
-		int seed = ItemClusterRenderState.getSeedForItemStack(stack);
+		BakedModel model = itemRenderer.getModel(stack, level, null, 0);
 
-		itemModelResolver.updateForTopItem(itemStackRenderState, stack, ItemDisplayContext.FIXED, false, level, null, seed);
 		pose.pushPose();
-		//1.21.4 has no model bounding boxes, so flat (non-3D) item models are moved forward like thin models are in 1.21.6+
+		//1.21.3 has no model bounding boxes, so flat (non-3D) item models are moved forward like thin models are in 1.21.6+
 		pose.translate(0.5F, 0.4F, 0.5F);
 		pose.mulPose(ROTATIONS[facing.get2DDataValue()]);
-		pose.translate(sideOffset, 0.0F, itemStackRenderState.isGui3d() ? 0.0F : 0.1F);
+		pose.translate(sideOffset, 0.0F, model.isGui3d() ? 0.0F : 0.1F);
 		pose.scale(0.35F, 0.35F, 0.35F);
-		itemStackRenderState.render(pose, buffer, packedLight, OverlayTexture.NO_OVERLAY);
+		itemRenderer.render(stack, ItemDisplayContext.FIXED, false, pose, buffer, packedLight, OverlayTexture.NO_OVERLAY, model);
 		pose.popPose();
 	}
 }

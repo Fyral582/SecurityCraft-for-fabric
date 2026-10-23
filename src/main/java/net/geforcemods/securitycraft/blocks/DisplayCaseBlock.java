@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.blocks;
 
+import net.minecraft.world.level.block.RenderShape;
 import net.geforcemods.securitycraft.SCContent;
 import net.geforcemods.securitycraft.api.IModuleInventory;
 import net.geforcemods.securitycraft.blockentities.DisplayCaseBlockEntity;
@@ -61,6 +62,11 @@ public class DisplayCaseBlock extends OwnableBlock implements SimpleWaterloggedB
 		super(properties);
 		registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(ATTACH_FACE, AttachFace.WALL).setValue(WATERLOGGED, false));
 		this.glowing = glowing;
+	}
+
+	@Override
+	public RenderShape getRenderShape(BlockState state) {
+		return RenderShape.ENTITYBLOCK_ANIMATED;
 	}
 
 	@Override

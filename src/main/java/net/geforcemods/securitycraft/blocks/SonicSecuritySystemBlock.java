@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.blocks;
 
+import net.minecraft.world.level.block.RenderShape;
 import java.util.stream.Stream;
 
 import net.geforcemods.securitycraft.SCContent;
@@ -59,6 +60,11 @@ public class SonicSecuritySystemBlock extends DisguisableBlock implements Simple
 		super(properties);
 
 		registerDefaultState(stateDefinition.any().setValue(POWERED, false).setValue(WATERLOGGED, false));
+	}
+
+	@Override
+	public RenderShape getRenderShape(BlockState state) {
+		return RenderShape.MODEL;
 	}
 
 	@Override

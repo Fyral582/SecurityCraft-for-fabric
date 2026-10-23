@@ -135,8 +135,6 @@ public abstract class AbstractKeypadFurnaceBlockEntity extends AbstractFurnaceBl
 		ValueInput tag = ValueInput.of(compoundTag, lookupProvider);
 
 		super.loadAdditional(tag.tag(), tag.lookup());
-		fixBurnTimeData(tag);
-
 		readModuleInventory(modules, tag);
 		moduleStates = readModuleStates(tag);
 		readOptions(tag);
@@ -370,14 +368,4 @@ public abstract class AbstractKeypadFurnaceBlockEntity extends AbstractFurnaceBl
 		return worldPosition;
 	}
 
-	private void fixBurnTimeData(ValueInput tag) {
-		if (tag.getInt("CookTime").isPresent()) {//Pre-1.12.4 furnace burn time data
-			int burnTime = tag.getIntOr("BurnTime", 0);
-
-			cookingTimer = tag.getIntOr("CookTime", 0);
-			cookingTotalTime = tag.getIntOr("CookTimeTotal", 0);
-			litTimeRemaining = burnTime;
-			litTotalTime = burnTime;
-		}
-	}
 }

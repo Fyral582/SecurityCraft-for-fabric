@@ -1,11 +1,10 @@
 package net.geforcemods.securitycraft.models;
 
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import org.jetbrains.annotations.Nullable;
 
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
+import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.geforcemods.securitycraft.platform.model.ModelData;
 import net.geforcemods.securitycraft.platform.model.ModelProperty;
 import net.minecraft.client.resources.model.BakedModel;
@@ -25,12 +24,12 @@ public class SecureRedstoneInterfaceBlockStateModel extends DisguisableBlockStat
 	}
 
 	@Override
-	public void emitOldQuads(ModelData modelData, QuadEmitter emitter, BlockAndTintGetter level, BlockState state, BlockPos pos, Supplier<RandomSource> random, Predicate<@Nullable Direction> cullTest) {
+	public void emitOldQuads(ModelData modelData, BlockAndTintGetter level, BlockState state, BlockPos pos, Supplier<RandomSource> random, RenderContext context) {
 		Boolean powered = modelData.get(POWERED);
 
 		if (poweredModel != null && powered != null && powered)
-			poweredModel.emitBlockQuads(emitter, level, state, pos, random, cullTest);
+			poweredModel.emitBlockQuads(level, state, pos, random, context);
 		else
-			super.emitOldQuads(modelData, emitter, level, state, pos, random, cullTest);
+			super.emitOldQuads(modelData, level, state, pos, random, context);
 	}
 }

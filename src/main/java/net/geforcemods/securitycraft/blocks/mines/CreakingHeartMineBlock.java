@@ -1,5 +1,6 @@
 package net.geforcemods.securitycraft.blocks.mines;
 
+import net.minecraft.world.level.block.CreakingHeartBlock.CreakingHeartState;
 import net.geforcemods.securitycraft.SCEventHandler;
 import net.geforcemods.securitycraft.ConfigHandler;
 import net.geforcemods.securitycraft.SCContent;
@@ -148,7 +149,7 @@ public class CreakingHeartMineBlock extends CreakingHeartBlock implements IBlock
 
 	@Override
 	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-		return !level.isClientSide && state.getValue(ACTIVE) ? createTickerHelper(type, SCContent.CREAKING_HEART_MINE_BLOCK_ENTITY.get(), CreakingHeartBlockEntity::serverTick) : null;
+		return !level.isClientSide && state.getValue(CREAKING) != CreakingHeartState.DISABLED ? createTickerHelper(type, SCContent.CREAKING_HEART_MINE_BLOCK_ENTITY.get(), CreakingHeartBlockEntity::serverTick) : null;
 	}
 
 	@Override

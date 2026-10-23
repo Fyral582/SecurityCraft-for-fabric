@@ -3,9 +3,6 @@ package net.geforcemods.securitycraft.misc;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.fabricmc.fabric.api.client.rendering.v1.HudLayerRegistrationCallback;
-import net.fabricmc.fabric.api.client.rendering.v1.IdentifiedLayer;
-import net.geforcemods.securitycraft.platform.gui.VanillaGuiLayers;
 import net.minecraft.client.gui.LayeredDraw;
 import net.minecraft.resources.ResourceLocation;
 
@@ -15,16 +12,10 @@ public class LayerToggleHandler {
 	private LayerToggleHandler() {}
 
 	/**
-	 * Makes the vanilla HUD elements that SecurityCraft may disable toggleable. The experience bar and jump meter are not
-	 * separate layers in 1.21.4, so they are toggled via GuiMixin instead.
+	 * Fabric API does not have identified HUD layers in 1.21.2 and 1.21.3, so the vanilla HUD elements that SecurityCraft may
+	 * disable are toggled via GuiMixin instead
 	 */
-	public static void init() {
-		HudLayerRegistrationCallback.EVENT.register(drawer -> {
-			for (ResourceLocation layer : List.of(VanillaGuiLayers.EFFECTS, VanillaGuiLayers.EXPERIENCE_LEVEL)) {
-				drawer.replaceLayer(layer, element -> IdentifiedLayer.of(layer, wrap(layer, element)));
-			}
-		});
-	}
+	public static void init() {}
 
 	/**
 	 * Wraps a HUD element so that it is not rendered while the given layer is disabled

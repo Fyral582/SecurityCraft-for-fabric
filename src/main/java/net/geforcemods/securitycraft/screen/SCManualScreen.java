@@ -160,10 +160,10 @@ public class SCManualScreen extends Screen implements StillValid {
 				guiGraphics.drawString(font, (currentSubpage + 1) + "/" + subpages.size(), startX + 205, 100, 0xFF8E8270, false);
 
 			if (designedBy != null)
-				guiGraphics.drawWordWrap(font, designedBy, startX + 18, 150, 75, CommonColors.BLACK, false);
+				guiGraphics.drawWordWrap(font, designedBy, startX + 18, 150, 75, CommonColors.BLACK);
 
 			guiGraphics.drawString(font, pageTitle, startX + 39, 27, CommonColors.BLACK, false);
-			guiGraphics.drawWordWrap(font, subpages.get(currentSubpage), startX + 18, 45, 225, CommonColors.BLACK, false);
+			guiGraphics.drawWordWrap(font, subpages.get(currentSubpage), startX + 18, 45, 225, CommonColors.BLACK);
 			guiGraphics.drawString(font, pageNumberText, startX + 240 - font.width(pageNumberText), 182, 0xFF8E8270, false);
 			guiGraphics.blitSprite(RenderType::guiTextured, ownable ? OWNABLE_HIGHLIGHTED_SPRITE : OWNABLE_SPRITE, startX + 29, 118, 16, 16);
 			guiGraphics.blitSprite(RenderType::guiTextured, passcodeProtected ? PASSCODE_PROTECTED_HIGHLIGHTED_SPRITE : PASSCODE_PROTECTED_SPRITE, startX + 56, 118, 16, 16);

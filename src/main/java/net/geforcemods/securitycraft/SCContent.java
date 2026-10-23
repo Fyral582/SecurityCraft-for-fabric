@@ -307,7 +307,6 @@ import net.minecraft.world.item.SignItem;
 import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.item.crafting.CustomRecipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
-import net.minecraft.world.item.equipment.EquipmentAssets;
 import net.minecraft.world.item.equipment.Equippable;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.biome.Biome;
@@ -2714,30 +2713,6 @@ public class SCContent {
 	@HasManualPage(PageGroup.REINFORCED)
 	@OwnableBE
 	@Reinforced
-	public static final DeferredBlock<BaseReinforcedBlock> REINFORCED_RESIN_BLOCK = reinforcedBlock("reinforced_resin_block", Blocks.RESIN_BLOCK);
-	@HasManualPage(PageGroup.REINFORCED)
-	@OwnableBE
-	@Reinforced
-	public static final DeferredBlock<BaseReinforcedBlock> REINFORCED_RESIN_BRICKS = reinforcedBlock("reinforced_resin_bricks", Blocks.RESIN_BRICKS);
-	@HasManualPage(PageGroup.REINFORCED)
-	@OwnableBE
-	@Reinforced
-	public static final DeferredBlock<BaseReinforcedBlock> REINFORCED_CHISELED_RESIN_BRICKS = reinforcedBlock("reinforced_chiseled_resin_bricks", Blocks.CHISELED_RESIN_BRICKS);
-	@HasManualPage(PageGroup.REINFORCED)
-	@OwnableBE
-	@Reinforced
-	public static final DeferredBlock<ReinforcedStairsBlock> REINFORCED_RESIN_BRICK_STAIRS = reinforcedBlock("reinforced_resin_brick_stairs", Blocks.RESIN_BRICK_STAIRS, ReinforcedStairsBlock::new);
-	@HasManualPage(PageGroup.REINFORCED)
-	@OwnableBE
-	@Reinforced
-	public static final DeferredBlock<ReinforcedSlabBlock> REINFORCED_RESIN_BRICK_SLAB = reinforcedBlock("reinforced_resin_brick_slab", Blocks.RESIN_BRICK_SLAB, ReinforcedSlabBlock::new);
-	@HasManualPage(PageGroup.REINFORCED)
-	@OwnableBE
-	@Reinforced
-	public static final DeferredBlock<ReinforcedWallBlock> REINFORCED_RESIN_BRICK_WALL = reinforcedBlock("reinforced_resin_brick_wall", Blocks.RESIN_BRICK_WALL, ReinforcedWallBlock::new);
-	@HasManualPage(PageGroup.REINFORCED)
-	@OwnableBE
-	@Reinforced
 	public static final DeferredBlock<ReinforcedMossyCarpetBlock> REINFORCED_PALE_MOSS_CARPET = reinforcedBlock("reinforced_pale_moss_carpet", Blocks.PALE_MOSS_CARPET, ReinforcedMossyCarpetBlock::new, p -> p.pushReaction(PushReaction.NORMAL));
 	@HasManualPage(PageGroup.REINFORCED)
 	@OwnableBE
@@ -2831,7 +2806,7 @@ public class SCContent {
 	public static final DeferredItem<FakeLiquidBucketItem> FAKE_WATER_BUCKET = ITEMS.registerItem("bucket_f_water", p -> new FakeLiquidBucketItem(SCContent.FAKE_WATER.get(), p), itemProp(1));
 	public static final DeferredItem<BlockItem> GLOW_DISPLAY_CASE_ITEM = ITEMS.registerSimpleBlockItem(GLOW_DISPLAY_CASE_PATH, SCContent.GLOW_DISPLAY_CASE, itemProp());
 	@HasManualPage
-	public static final DeferredItem<Item> INCOGNITO_MASK = ITEMS.registerSimpleItem("incognito_mask", itemProp(1).component(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.HEAD).setDispensable(false).setAsset(ResourceKey.create(EquipmentAssets.ROOT_ID, SecurityCraft.resLoc("incognito_mask"))).build()));
+	public static final DeferredItem<Item> INCOGNITO_MASK = ITEMS.registerSimpleItem("incognito_mask", itemProp(1).component(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.HEAD).setDispensable(false).setModel(SecurityCraft.resLoc("incognito_mask")).build()));
 	@HasManualPage
 	public static final DeferredItem<KeycardHolderItem> KEYCARD_HOLDER = ITEMS.registerItem("keycard_holder", KeycardHolderItem::new, itemProp(1).component(DataComponents.CONTAINER, ItemContainerContents.EMPTY));
 	@HasManualPage(PageGroup.KEYCARDS)

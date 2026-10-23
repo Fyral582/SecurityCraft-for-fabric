@@ -15,8 +15,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
  */
 @Mixin(ServerGamePacketListenerImpl.class)
 public class ServerGamePacketListenerImplMixin {
-	@ModifyVariable(method = "addBlockDataToItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;registryAccess()Lnet/minecraft/core/RegistryAccess;"))
-	private static BlockEntity securitycraft$markBlockEntityForSaltSaving(BlockEntity original) {
+	@ModifyVariable(method = "handleSetCreativeModeSlot", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;registryAccess()Lnet/minecraft/core/RegistryAccess;"))
+	private BlockEntity securitycraft$markBlockEntityForSaltSaving(BlockEntity original) {
 		if (original instanceof IPasscodeProtected passcodeProtected)
 			passcodeProtected.setSaveSalt(true);
 

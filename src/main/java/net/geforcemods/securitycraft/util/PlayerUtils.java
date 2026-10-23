@@ -158,7 +158,7 @@ public class PlayerUtils {
 	}
 
 	private static String getNameFromMask(ItemStack mask) {
-		return mask.has(DataComponents.CUSTOM_NAME) ? mask.getCustomName().getString() : "owner";
+		return mask.has(DataComponents.CUSTOM_NAME) ? mask.getHoverName().getString() : "owner";
 	}
 
 	/**
